@@ -1,0 +1,15 @@
+16.6  RAG Pipeline Plain‑Language Explanation
+
+Periodic Content IngestionInstead of constantly scanning, the system kicks off ingestion when the creator first activates the avatar and then runs on a regular schedule (e.g., nightly or weekly).  It looks at new posts, videos, or blog entries created since the last run.
+
+Engagement‑Based SelectionTo focus on the most relevant material, the system checks each new item’s engagement (likes, comments, shares).  Only content above a threshold of engagement (e.g., top 20%) is pulled in for deeper processing.
+
+Chunking & CleaningSelected content is split into small, meaningful snippets.  Personal or sensitive information is automatically filtered out, keeping only public-facing text that illustrates the creator’s style and expertise.
+
+Embedding & StorageEach snippet is converted into an embedding (a numerical representation) and stored in a searchable vector database 
+
+Context RetrievalWhen a fan sends a DM, the system runs a similarity search on these embeddings to fetch the top relevant snippets—like finding the best quotes or tutorial steps the creator has shared.
+
+AI‑Powered ReplyThose relevant snippets form the context for the AI.  The model uses them along with the incoming message to craft a personalised, on‑brand response that feels authentically the creator’s voice.
+
+Feedback LoopAfter each reply, the creator can review and rate or edit the response.  Approved feedback helps the system refine engagement thresholds and the quality of retrieved context, improving future replies.

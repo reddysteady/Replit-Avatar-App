@@ -1,0 +1,104 @@
+1. Verify your database & schema
+Make sure your Message model (however you’re storing these) actually has a parentMessageId column (nullable) and that your ORM/schema defines it. For example, in Prisma:
+
+prisma
+Copy
+Edit
+model Message {
+  id               Int       @id @default(autoincrement())
+  threadId         Int
+  content          String
+  timestamp        DateTime  @default(now())
+  parentMessageId  Int?      // ← this must be nullable
+  // … other fields …
+}
+And in your shared TypeScript types, confirm you have:
+
+ts
+Copy
+Edit
+export interface MessageType {
+  id: number;
+  threadId: number;
+  content: string;
+  timestamp: string;
+  parentMessageId?: number;   // ← make sure this exists
+  // … etc …
+}
+2. Persist the parentMessageId on reply
+In your reply endpoint (POST /api/threads/[threadId]/reply), ensure you’re actually writing that field into the database:
+
+ts
+Copy
+Edit
+// pages/api/threads/[threadId]/reply.ts
+import { prisma } from '@/lib/prisma';
+
+export default async function handler(req, res) {
+  const threadId = Number(req.query.threadId);
+  const { content, parentMessageId } = req.body;
+
+  const newMsg = await prisma.message.create({
+    data: {
+      threadId,
+      content,
+      parentMessageId: parentMessageId ?? null,  // ← save it
+      isOutbound: true,
+      timestamp: new Date(),
+    }
+  });
+
+  res.status(201).json(newMsg);
+}
+3. Return parentMessageId in your “get messages” API
+When you fetch the list of messages for a thread (GET /api/threads/[threadId]/messages), include that column in your select:
+
+ts
+Copy
+Edit
+// pages/api/threads/[threadId]/messages.ts
+import { prisma } from '@/lib/prisma';
+
+export default async function handler(req, res) {
+  const threadId = Number(req.query.threadId);
+  const messages = await prisma.message.findMany({
+    where: { threadId },
+    orderBy: { timestamp: 'asc' },
+    select: {
+      id: true,
+      content: true,
+      timestamp: true,
+      parentMessageId: true,   // ← must be here
+      sender: true,
+      isOutbound: true,
+      isAiGenerated: true,
+      // …others you need…
+    }
+  });
+  res.status(200).json(messages);
+}
+Why this fixes it
+Once your front-end useQuery(['/api/threads', threadId, 'messages']) returns a list where some messages have parentMessageId = <some id>, then:
+
+ts
+Copy
+Edit
+if (message.parentMessageId != null && message.parentMessageId > 0) {
+  replyMessageIds.add(message.id);
+  parentChildMap.get(message.parentMessageId).push(message.id);
+}
+will correctly classify replies, and your <ConversationThread> component will nest them under their parent in the right‐hand pane.
+
+Next steps:
+
+Deploy those backend changes (or update your schema/ORM).
+
+Hit the reply endpoint again and load the thread.
+
+You should see console logs like
+
+pgsql
+Copy
+Edit
+FOUND CHILD MESSAGE: Message 7 is a reply to parent 3
+Your conversation view will automatically render the nested replies.
