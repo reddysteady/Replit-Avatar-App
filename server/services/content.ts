@@ -6,8 +6,7 @@
 import { db } from "../db";
 import { storage } from "../storage";
 import { aiService } from "./openai";
-import { log } from "../logger";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { contentItems, type InsertContentItem } from "@shared/schema";
 
 interface ContentSource {
@@ -81,7 +80,7 @@ export class ContentService {
       .select({ timestamp: contentItems.createdAt })
       .from(contentItems)
       .where(eq(contentItems.userId, userId))
-      .orderBy(contentItems.createdAt, "desc")
+      .orderBy(desc(contentItems.createdAt))
       .limit(1);
     
     return latestItem?.timestamp || new Date(0);

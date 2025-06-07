@@ -58,7 +58,7 @@ const MessageQueue = ({ messages, isLoading, source }: MessageQueueProps) => {
   return (
     <div id="message-queue-container" className="space-y-4 mb-6 custom-scrollbar max-h-[calc(100vh-12rem)] overflow-y-auto pb-4">
       {messages.map((message) => (
-        <MessageItem key={message.id} message={message} source={source} />
+        <MessageItem key={message.id} message={message} />
       ))}
     </div>
   );

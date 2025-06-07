@@ -39,7 +39,7 @@ export class InstagramService {
       
       try {
         // Try to use the Instagram Graph API if we have a token
-        const accessToken = settings.apiKeys?.instagram;
+        const accessToken = (settings.apiKeys as any)?.instagram;
         
         if (accessToken) {
           log(`Fetching Instagram messages using Graph API with token: ${accessToken.substring(0, 10)}...`);
@@ -176,7 +176,7 @@ export class InstagramService {
     try {
       // Get Instagram credentials from user settings
       const settings = await storage.getSettings(userId);
-      const accessToken = settings.apiKeys?.instagram;
+      const accessToken = (settings.apiKeys as any)?.instagram;
       
       if (!accessToken) {
         return { 

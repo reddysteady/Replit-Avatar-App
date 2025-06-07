@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { useMessages } from "@/hooks/useMessages";
 import FilterButtons from "@/components/FilterButtons";
 import MessageQueue from "@/components/MessageQueue";
-import StatusInfo from "@/components/StatusInfo";
 import { InstagramAuth } from "@/components/InstagramAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Settings } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +34,7 @@ const Instagram = () => {
 
   // Fetch settings to check if Instagram is connected and get current toggle state
   // Initialize toggle state from server settings
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
   });
   
@@ -290,10 +290,9 @@ const Instagram = () => {
               {isConnected ? (
                 <>
                   <FilterButtons
-                    activeFilter={activeFilter}
-                    onFilterChange={setActiveFilter}
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
+                    active={activeFilter}
+                    onFilterChange={(f) => setActiveFilter(f as any)}
+                    filters={[]}
                   />
                   
                   <MessageQueue
@@ -304,12 +303,10 @@ const Instagram = () => {
                   
 
                   
-                  <StatusInfo
-                    count={messages.length}
-                    total={allMessages.length}
-                    lastUpdated={lastUpdated}
-                    isRefreshing={isRefreshing}
-                  />
+                  {/* Message status display placeholder */}
+                  <div className="text-sm text-gray-500 mt-2">
+                    Showing {messages.length} of {allMessages.length} messages
+                  </div>
                 </>
               ) : (
                 <div className="text-center py-12">

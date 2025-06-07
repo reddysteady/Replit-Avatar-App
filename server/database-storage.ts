@@ -37,12 +37,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getThreads(userId: number, source?: string): Promise<ThreadType[]> {
-    let query = db.select().from(messageThreads).where(eq(messageThreads.userId, userId));
-    
+    let query = db
+      .select()
+      .from(messageThreads)
+      .where(eq(messageThreads.userId, userId));
+
     if (source) {
-      query = query.where(eq(messageThreads.source, source));
+      query = db
+        .select()
+        .from(messageThreads)
+        .where(
+          and(eq(messageThreads.userId, userId), eq(messageThreads.source, source))
+        );
     }
-    
+
     // Order by most recent message
     const threads = await query.orderBy(desc(messageThreads.lastMessageAt));
     
@@ -95,7 +103,7 @@ export class DatabaseStorage implements IStorage {
     });
     
     // Convert to a regular object for console logging
-    const parentChildObj = {};
+    const parentChildObj: Record<number, number[]> = {};
     parentChildMap.forEach((children, parentId) => {
       parentChildObj[parentId] = children;
     });
@@ -129,8 +137,7 @@ export class DatabaseStorage implements IStorage {
     const [updatedThread] = await db
       .update(messageThreads)
       .set({
-        ...updates,
-        updatedAt: new Date()
+        ...updates
       })
       .where(eq(messageThreads.id, id))
       .returning();
@@ -216,7 +223,6 @@ export class DatabaseStorage implements IStorage {
         .update(messageThreads)
         .set({
           unreadCount: 0,
-          updatedAt: new Date()
         })
         .where(eq(messageThreads.id, threadId));
       
@@ -312,7 +318,7 @@ export class DatabaseStorage implements IStorage {
       status: msg.status as 'new' | 'replied' | 'auto-replied',
       isHighIntent: msg.isHighIntent || false,
       reply: msg.reply || undefined,
-      threadId: msg.threadId,
+        threadId: msg.threadId ?? undefined,
       parentMessageId: parentId,
       isOutbound: msg.isOutbound || false,
       isAiGenerated: msg.isAiGenerated || false
@@ -356,7 +362,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(settings.userId, userId));
     
     if (existingSettings) {
-      return existingSettings;
+      return existingSettings as Settings;
     }
     
     // Create default settings with JSON fields if not found
@@ -408,8 +414,8 @@ export class DatabaseStorage implements IStorage {
       notifyOnSensitiveTopics: true
     };
     
-    const [newSettings] = await db.insert(settings).values(defaultSettings).returning();
-    return newSettings;
+      const [newSettings] = await db.insert(settings).values(defaultSettings).returning();
+      return newSettings as Settings;
   }
 
   async updateSettings(userId: number, updates: Partial<Settings>): Promise<Settings> {
@@ -420,8 +426,8 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(settings.id, existingSettings.id))
       .returning();
-    
-    return updatedSettings;
+
+    return updatedSettings as Settings;
   }
 
   // Automation rules methods

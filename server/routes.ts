@@ -584,7 +584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   from: {
                     id: messagingEvent.sender.id,
                     username: "instagram_user", // In production, use Profile API to get real username
-                    profile_pic_url: null
+                    profile_pic_url: undefined
                   },
                   message: messagingEvent.message.text,
                   timestamp: messagingEvent.timestamp
@@ -595,15 +595,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 
                 // Check if auto-reply is enabled
                 const settings = await storage.getSettings(1);
-                
-                if (settings.aiSettings?.autoReplyInstagram) {
+                const aiSettings = settings.aiSettings as any;
+
+                if (aiSettings?.autoReplyInstagram) {
                   // Generate AI reply
                   const aiReply = await aiService.generateReply({
                     content: instagramMessage.message,
                     senderName: instagramMessage.from.username,
-                    creatorToneDescription: settings.aiSettings.creatorToneDescription || "",
-                    temperature: (settings.aiSettings.temperature || 70) / 100,
-                    maxLength: settings.aiSettings.maxResponseLength || 500,
+                    creatorToneDescription: aiSettings.creatorToneDescription || "",
+                    temperature: (aiSettings.temperature || 70) / 100,
+                    maxLength: aiSettings.maxResponseLength || 500,
                   });
                   
                   // Send reply to Instagram
@@ -806,8 +807,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: message.content,
         senderName: message.senderName,
         creatorToneDescription: settings.creatorToneDescription || "",
-        temperature: settings.aiTemperature / 100,
-        maxLength: settings.maxResponseLength,
+        temperature: (settings.aiTemperature || 70) / 100,
+        maxLength: settings.maxResponseLength || 500,
       });
       
       // Send reply to YouTube
@@ -842,7 +843,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const settings = await storage.getSettings(1); // For MVP, assume user ID 1
       
       // Get relevant content snippets if context is requested
-      let contextSnippets = [];
+        let contextSnippets: string[] = [];
       if (data.useContext) {
         // In production, these would come from contentService.retrieveRelevantContent
         // For MVP demo, we'll use sample content that mimics what would come from the RAG pipeline
@@ -1156,8 +1157,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.apiKeys) {
         // Update JSON fields
         updates.apiKeys = {
-          ...existingSettings.apiKeys,
-          ...data.apiKeys
+          ...(existingSettings.apiKeys as any),
+          ...(data.apiKeys as any)
         };
         
         // Also update legacy fields for backward compatibility
@@ -1184,8 +1185,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.aiSettings) {
         // Update JSON field
         updates.aiSettings = {
-          ...existingSettings.aiSettings,
-          ...data.aiSettings
+          ...(existingSettings.aiSettings as any),
+          ...(data.aiSettings as any)
         };
         
         // Also update legacy fields for backward compatibility
@@ -1212,8 +1213,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.notificationSettings) {
         // Update JSON field
         updates.notificationSettings = {
-          ...existingSettings.notificationSettings,
-          ...data.notificationSettings
+          ...(existingSettings.notificationSettings as any),
+          ...(data.notificationSettings as any)
         };
         
         // Also update legacy fields for backward compatibility

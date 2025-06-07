@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -8,6 +8,7 @@ import { Instagram, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Settings } from "@shared/schema";
 
 export function InstagramAuth() {
   const { toast } = useToast();
@@ -16,7 +17,7 @@ export function InstagramAuth() {
   const [authState, setAuthState] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   
   // Get current Instagram settings
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
   });
   
@@ -100,7 +101,7 @@ export function InstagramAuth() {
   };
   
   // Set up window message listener for the popup authentication window
-  useState(() => {
+  useEffect(() => {
     // Function to handle messages from the auth popup window
     const handleAuthMessage = (event: MessageEvent) => {
       if (event.data?.type === "INSTAGRAM_AUTH_SUCCESS") {

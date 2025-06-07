@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Settings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { InstagramAuth } from "@/components/InstagramAuth";
 import { Link } from "wouter";
@@ -9,7 +10,7 @@ const ConnectInstagram = () => {
   const [isConnected, setIsConnected] = useState(false);
   
   // Fetch settings to check connection status
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<Settings>({
     queryKey: ["/api/settings"],
     refetchOnWindowFocus: false,
   });

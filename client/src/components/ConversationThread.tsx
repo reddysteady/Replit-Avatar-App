@@ -121,32 +121,39 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
-  // Fetch threaded messages using the new recursive API
-  const { 
-    data: threadedMessages, 
-    isLoading, 
-    error 
+  // Fetch flat messages for the thread and build the threaded hierarchy on the client
+  const {
+    data: fetchedMessages,
+    isLoading,
+    error
   } = useQuery({
-    queryKey: ['threaded-messages', threadId],
+    queryKey: ['thread-messages', threadId],
     queryFn: async () => {
       if (!threadId) return [];
-      const response = await fetch(`/api/messages/threaded?conversationId=${threadId}`);
+      const response = await fetch(`/api/threads/${threadId}/messages`);
       if (!response.ok) {
-        throw new Error('Failed to fetch threaded messages');
+        throw new Error('Failed to fetch thread messages');
       }
       return response.json();
     },
     enabled: !!threadId && !propMessages,
     refetchInterval: 5000,
   });
+
+  // Use messages from props if available, otherwise thread the fetched messages
+  const finalMessages = propMessages
+    ? useMessageThreading(propMessages).threadedMessages
+    : useMessageThreading(fetchedMessages).threadedMessages;
   
-  // Use messages from props if available, otherwise use fetched threaded messages
-  const finalMessages = propMessages ? useMessageThreading(propMessages).threadedMessages : (threadedMessages || []);
-  
-  // debug info can be added here if needed
+ console.log("Message render triggered", {
+    messagesLoaded: finalMessages ? finalMessages.length : 0,
+    threadId,
+    fetchedCount: fetchedMessages ? fetchedMessages.length : 0
+  });
   
   if (finalMessages && finalMessages.length > 0) {
-    // console.debug('Rendering Thread #' + threadId);
+    console.log("Rendering Thread #" + threadId + " with enhanced conversation threading");
+    console.log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
   }
 
   // Scroll to bottom on new messages
