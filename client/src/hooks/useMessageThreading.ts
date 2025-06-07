@@ -26,76 +26,37 @@ export function useMessageThreading(messages?: MessageType[]) {
       map.set(msg.id, { ...msg, childMessages: [], depth: 0 });
     });
 
-    // Build a parent → children map for debugging
-    const parentChildMap: Record<number, number[]> = {};
-    messages.forEach(msg => {
-      if (msg.parentMessageId) {
-        const parentId = Number(msg.parentMessageId);
-        if (!parentChildMap[parentId]) {
-          parentChildMap[parentId] = [];
-        }
-        parentChildMap[parentId].push(msg.id);
+    // 2. Build parent → children relationships without relying on iteration order
+    map.forEach(msg => {
+      const parentId = msg.parentMessageId != null ? Number(msg.parentMessageId) : null;
+      if (parentId && map.has(parentId)) {
+        const parent = map.get(parentId)!;
+        parent.childMessages.push(msg);
       }
     });
 
+    // 3. Identify root messages (no valid parent in this set)
     const roots: ThreadedMessageType[] = [];
-    const messageIdsWithParents = new Set<number>();
-
-    // 2. Attach replies to their parents
     map.forEach(msg => {
-      // Handle parentMessageId conversion more carefully
-      let parentId: number | null = null;
-      
-      if (msg.parentMessageId !== undefined && msg.parentMessageId !== null) {
-        if (typeof msg.parentMessageId === 'string') {
-          parentId = parseInt(msg.parentMessageId, 10);
-          if (isNaN(parentId)) {
-            parentId = null;
-          }
-        } else if (typeof msg.parentMessageId === 'number') {
-          parentId = msg.parentMessageId;
-        }
-      }
-      
-      console.log(`Processing message ${msg.id}: parentId=${parentId} (original: ${msg.parentMessageId}, type: ${typeof msg.parentMessageId})`);
-      
-      // Check if the parent exists in our message map
-      if (parentId && parentId > 0 && map.has(parentId)) {
-        const parent = map.get(parentId)!;
-        msg.depth = parent.depth + 1;
-        parent.childMessages.push(msg);
-        messageIdsWithParents.add(msg.id);
-        console.log(`→ Message ${msg.id} attached to parent ${parentId} at depth ${msg.depth}`);
-      } else {
-        if (parentId) {
-          console.log(`→ Message ${msg.id} has parentId ${parentId} but parent not found in this thread`);
-        } else {
-          console.log(`→ Top-level: Message ${msg.id}`);
-        }
+      const parentId = msg.parentMessageId != null ? Number(msg.parentMessageId) : null;
+      if (!parentId || !map.has(parentId)) {
         roots.push(msg);
       }
     });
 
-    // Log all parent-child relationships for debugging
-    console.log("All parent-child relationships:");
-    console.log("Top-Level Messages:", roots.map(m => m.id));
-    console.log("All Message IDs:", Array.from(map.keys()).join(", "));
-    console.log("Parent → Child Map:", JSON.stringify(parentChildMap));
+    // 4. Recursively assign depth now that the tree is built
+    const assignDepth = (node: ThreadedMessageType, depth: number) => {
+      node.depth = depth;
+      node.childMessages.forEach(child => assignDepth(child, depth + 1));
+    };
+    roots.forEach(root => assignDepth(root, 0));
 
-    // 3. Sort messages chronologically at each level
+    // 5. Sort messages chronologically at each level
     const sortRecursively = (items: ThreadedMessageType[]) => {
       items.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       items.forEach(child => sortRecursively(child.childMessages));
     };
     sortRecursively(roots);
-
-    // Debug the final message hierarchy
-    const logMessageHierarchy = (msg: ThreadedMessageType, prefix = "") => {
-      console.log(`${prefix}Rendering message ${msg.id} at depth ${msg.depth}, content: "${(msg.content || '').substring(0, 20)}..."`);
-      msg.childMessages.forEach(child => logMessageHierarchy(child, prefix + "  "));
-    };
-    
-    roots.forEach(root => logMessageHierarchy(root));
 
     return { threadedMessages: roots };
   }, [messages]);

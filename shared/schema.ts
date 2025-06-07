@@ -176,7 +176,11 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
 
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
-export type Settings = typeof settings.$inferSelect;
+export type Settings = typeof settings.$inferSelect & {
+  apiKeys: Record<string, any>;
+  aiSettings: Record<string, any>;
+  notificationSettings: Record<string, any>;
+};
 
 export type InsertAutomationRule = z.infer<typeof insertAutomationRuleSchema>;
 export type AutomationRule = typeof automationRules.$inferSelect;

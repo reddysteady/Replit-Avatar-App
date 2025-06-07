@@ -126,7 +126,7 @@ export class OAuthService {
       // Update settings with Instagram credentials
       const updatedSettings = await storage.updateSettings(userId, {
         apiKeys: {
-          ...settings.apiKeys,
+          ...(settings.apiKeys as any),
           instagram: longLivedToken,
           instagramUserId: profile.id,
         }

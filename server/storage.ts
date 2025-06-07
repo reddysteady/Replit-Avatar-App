@@ -22,7 +22,8 @@ import {
   type SenderType,
   type MessageThread,
   type InsertMessageThread,
-  type ThreadType
+  type ThreadType,
+  type ContentItem
 } from "@shared/schema";
 
 // Extend storage interface with necessary methods
@@ -93,7 +94,7 @@ export interface IStorage {
   markThreadAsRead(threadId: number): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
+export class MemStorage {
   private users: Map<number, User>;
   private msgs: Map<number, Message>;
   private settingsMap: Map<number, Settings>;
@@ -116,6 +117,7 @@ export class MemStorage implements IStorage {
     this.rules = new Map();
     this.leadsMap = new Map();
     this.analyticsMap = new Map();
+    this.contentItems = new Map();
     
     this.userId = 1;
     this.messageId = 1;
@@ -144,6 +146,9 @@ export class MemStorage implements IStorage {
     const defaultSettings: Settings = {
       id: 1,
       userId: 1,
+      apiKeys: {},
+      aiSettings: {},
+      notificationSettings: {},
       aiAutoRepliesInstagram: false,
       aiAutoRepliesYoutube: false,
       instagramToken: "",
@@ -280,13 +285,10 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    sampleMessages.forEach(msg => {
-      const message: Message = {
-        ...msg,
-        id: this.messageId++,
-      };
-      this.msgs.set(message.id, message);
-    });
+      sampleMessages.forEach(msg => {
+        const message: Message = { ...msg, id: this.messageId++ } as Message;
+        this.msgs.set(message.id, message);
+      });
 
     // Add sample automation rules
     const sampleRules: InsertAutomationRule[] = [
@@ -317,15 +319,15 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    sampleRules.forEach(rule => {
-      const automationRule: AutomationRule = {
-        ...rule,
-        id: this.ruleId++,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      this.rules.set(automationRule.id, automationRule);
-    });
+      sampleRules.forEach(rule => {
+        const automationRule: AutomationRule = {
+          ...rule,
+          id: this.ruleId++,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        } as AutomationRule;
+        this.rules.set(automationRule.id, automationRule);
+      });
   }
 
   // User methods
@@ -373,7 +375,7 @@ export class MemStorage implements IStorage {
     const sender: SenderType = {
       id: msg.senderId,
       name: msg.senderName,
-      avatar: msg.senderAvatar
+      avatar: msg.senderAvatar ?? undefined
     };
 
     return {
@@ -384,14 +386,14 @@ export class MemStorage implements IStorage {
       timestamp: msg.timestamp.toISOString(),
       status: msg.status as 'new' | 'replied' | 'auto-replied',
       isHighIntent: msg.isHighIntent || false,
-      reply: msg.reply,
-      isAiGenerated: msg.isAiGenerated
+      reply: msg.reply ?? undefined,
+      isAiGenerated: msg.isAiGenerated ?? undefined
     };
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = this.messageId++;
-    const newMessage: Message = { ...message, id };
+    const newMessage: Message = { ...message, id } as Message;
     this.msgs.set(id, newMessage);
     return newMessage;
   }
@@ -428,6 +430,9 @@ export class MemStorage implements IStorage {
       settings = {
         id: this.settingsId++,
         userId,
+        apiKeys: {},
+        aiSettings: {},
+        notificationSettings: {},
         aiAutoRepliesInstagram: false,
         aiAutoRepliesYoutube: false,
         instagramToken: "",
@@ -477,13 +482,13 @@ export class MemStorage implements IStorage {
   async createAutomationRule(rule: InsertAutomationRule): Promise<AutomationRule> {
     const id = this.ruleId++;
     const now = new Date();
-    
+
     const newRule: AutomationRule = {
       ...rule,
       id,
       createdAt: now,
       updatedAt: now
-    };
+    } as AutomationRule;
     
     this.rules.set(id, newRule);
     return newRule;
@@ -494,12 +499,12 @@ export class MemStorage implements IStorage {
     if (!rule) {
       return undefined;
     }
-    
+
     const updatedRule: AutomationRule = {
       ...rule,
       ...updates,
       updatedAt: new Date()
-    };
+    } as AutomationRule;
     
     this.rules.set(id, updatedRule);
     return updatedRule;
@@ -531,7 +536,7 @@ export class MemStorage implements IStorage {
       ...lead,
       id,
       createdAt: new Date()
-    };
+    } as Lead;
     
     this.leadsMap.set(id, newLead);
     return newLead;
@@ -546,7 +551,7 @@ export class MemStorage implements IStorage {
     const updatedLead: Lead = {
       ...lead,
       ...updates
-    };
+    } as Lead;
     
     this.leadsMap.set(id, updatedLead);
     return updatedLead;
@@ -581,14 +586,30 @@ export class MemStorage implements IStorage {
 
   async updateAnalytics(userId: number, updates: Partial<Analytics>): Promise<Analytics> {
     const analytics = await this.getAnalytics(userId);
-    
+
     const updatedAnalytics: Analytics = {
       ...analytics,
       ...updates
     };
-    
+
     this.analyticsMap.set(userId, updatedAnalytics);
     return updatedAnalytics;
+  }
+
+  // Content methods
+  async createContentItem(contentItem: ContentItem): Promise<ContentItem> {
+    const id = this.contentItems.size + 1;
+    const item = { ...contentItem, id };
+    this.contentItems.set(id, item);
+    return item;
+  }
+
+  async findSimilarContent(
+    _userId: number,
+    _embedding: number[],
+    _limit: number,
+  ): Promise<string[]> {
+    return [];
   }
 }
 

@@ -3,7 +3,6 @@
  * Handles interactions with the YouTube Data API
  */
 
-import { apiRequest } from "../utils/apiUtils";
 import { storage } from "../storage";
 import { type InsertMessage } from "@shared/schema";
 

@@ -3,7 +3,6 @@ import { Switch } from "@/components/ui/switch";
 import { useMessages } from "@/hooks/useMessages";
 import FilterButtons from "@/components/FilterButtons";
 import MessageQueue from "@/components/MessageQueue";
-import StatusInfo from "@/components/StatusInfo";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -81,10 +80,9 @@ const YouTube = () => {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
           <FilterButtons
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
+            active={activeFilter}
+            onFilterChange={(f) => setActiveFilter(f as any)}
+            filters={[]}
           />
           
           <MessageQueue
@@ -93,12 +91,9 @@ const YouTube = () => {
             source="youtube"
           />
           
-          <StatusInfo
-            count={messages.length}
-            total={allMessages.length}
-            lastUpdated={lastUpdated}
-            isRefreshing={isRefreshing}
-          />
+          <div className="text-sm text-gray-500 mt-2">
+            Showing {messages.length} of {allMessages.length} messages
+          </div>
         </div>
       </div>
     </main>

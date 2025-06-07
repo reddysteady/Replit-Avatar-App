@@ -4,6 +4,7 @@ import MessageItem from "@/components/MessageItem";
 import FilterButtons from "@/components/FilterButtons";
 import StatusInfo from "@/components/StatusInfo";
 import { useQuery } from "@tanstack/react-query";
+import { Settings } from "@shared/schema";
 import { Link } from "wouter";
 import { ChevronDown, ChevronUp, RefreshCw, MessageSquare, FileQuestion, Search } from "lucide-react";
 import AutoRepliesToggle from "../../components/AutoRepliesToggle";
@@ -45,7 +46,7 @@ const Messages = () => {
   });
 
   // Query settings to check connection status
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
   });
   

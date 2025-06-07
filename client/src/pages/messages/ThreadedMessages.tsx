@@ -62,7 +62,7 @@ const ThreadedMessages: React.FC = () => {
       });
     } else if (threads) {
       // Find thread data in the threads list
-      const selectedThread = threads.find((t: any) => t.id === threadId);
+      const selectedThread = (threads as any[]).find((t: any) => t.id === threadId);
       if (selectedThread) {
         setActiveThreadData({
           ...selectedThread,
