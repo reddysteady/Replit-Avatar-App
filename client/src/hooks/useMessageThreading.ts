@@ -10,15 +10,10 @@ export interface ThreadedMessageType extends MessageType {
 export function useMessageThreading(messages?: MessageType[]) {
   return useMemo(() => {
     if (!messages || !Array.isArray(messages)) {
-      console.log("No messages array provided to useMessageThreading");
       return { threadedMessages: [] as ThreadedMessageType[] };
     }
 
-    console.log("Message content check:", messages.map(m => ({ 
-      id: m.id, 
-      content: (m.content || '').substring(0, 20) + '...',
-      parentId: m.parentMessageId
-    })));
+
 
     // 1. Create a map of all messages by ID, initializing threading fields
     const map = new Map<number, ThreadedMessageType>();
@@ -57,7 +52,7 @@ export function useMessageThreading(messages?: MessageType[]) {
         }
       }
       
-      console.log(`Processing message ${msg.id}: parentId=${parentId} (original: ${msg.parentMessageId}, type: ${typeof msg.parentMessageId})`);
+      // debug info for threading
       
       // Check if the parent exists in our message map
       if (parentId && parentId > 0 && map.has(parentId)) {
@@ -65,22 +60,15 @@ export function useMessageThreading(messages?: MessageType[]) {
         msg.depth = parent.depth + 1;
         parent.childMessages.push(msg);
         messageIdsWithParents.add(msg.id);
-        console.log(`→ Message ${msg.id} attached to parent ${parentId} at depth ${msg.depth}`);
       } else {
-        if (parentId) {
-          console.log(`→ Message ${msg.id} has parentId ${parentId} but parent not found in this thread`);
-        } else {
-          console.log(`→ Top-level: Message ${msg.id}`);
+        if (!parentId) {
+          // top-level message
         }
         roots.push(msg);
       }
     });
 
-    // Log all parent-child relationships for debugging
-    console.log("All parent-child relationships:");
-    console.log("Top-Level Messages:", roots.map(m => m.id));
-    console.log("All Message IDs:", Array.from(map.keys()).join(", "));
-    console.log("Parent → Child Map:", JSON.stringify(parentChildMap));
+
 
     // 3. Sort messages chronologically at each level
     const sortRecursively = (items: ThreadedMessageType[]) => {
@@ -89,13 +77,7 @@ export function useMessageThreading(messages?: MessageType[]) {
     };
     sortRecursively(roots);
 
-    // Debug the final message hierarchy
-    const logMessageHierarchy = (msg: ThreadedMessageType, prefix = "") => {
-      console.log(`${prefix}Rendering message ${msg.id} at depth ${msg.depth}, content: "${(msg.content || '').substring(0, 20)}..."`);
-      msg.childMessages.forEach(child => logMessageHierarchy(child, prefix + "  "));
-    };
-    
-    roots.forEach(root => logMessageHierarchy(root));
+    // Debugging helper can be added here if needed
 
     return { threadedMessages: roots };
   }, [messages]);

@@ -145,7 +145,6 @@ const Messages = () => {
                             return res.json();
                           })
                           .then(data => {
-                            console.log('Success:', data);
                             queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
                             queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
                             toast({
@@ -179,7 +178,6 @@ const Messages = () => {
                             return res.json();
                           })
                           .then(data => {
-                            console.log('High-intent success:', data);
                             queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
                             queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
                             toast({

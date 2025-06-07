@@ -143,15 +143,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   // Use messages from props if available, otherwise use fetched threaded messages
   const finalMessages = propMessages ? useMessageThreading(propMessages).threadedMessages : (threadedMessages || []);
   
-  console.log("Message render triggered", {
-    messagesLoaded: finalMessages ? finalMessages.length : 0,
-    threadId,
-    threadedCount: threadedMessages ? threadedMessages.length : 0
-  });
+  // debug info can be added here if needed
   
   if (finalMessages && finalMessages.length > 0) {
-    console.log("Rendering Thread #" + threadId + " with enhanced conversation threading");
-    console.log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.replies?.length || 0 })));
+    // console.debug('Rendering Thread #' + threadId);
   }
 
   // Scroll to bottom on new messages

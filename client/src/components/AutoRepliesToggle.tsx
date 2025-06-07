@@ -54,7 +54,6 @@ const AutoRepliesToggle: React.FC<AutoRepliesToggleProps> = ({ source }) => {
 
   // Handle toggle change
   const handleToggleChange = (isChecked: boolean) => {
-    console.log("Setting toggle state to:", isChecked);
     setEnabled(isChecked);
     updateToggle(isChecked);
   };

@@ -11,6 +11,7 @@ import { airtableService } from "./services/airtable";
 import { aiService } from "./services/openai";
 import { contentService } from "./services/content";
 import { oauthService } from "./services/oauth";
+import { log } from "./logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Threaded messages API endpoint with recursive SQL
@@ -283,13 +284,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/threads/:id/messages', async (req, res) => {
     try {
       const threadId = parseInt(req.params.id);
-      console.log("Fetching messages for thread ID:", threadId);
+      log(`Fetching messages for thread ID: ${threadId}`);
       
       // Get messages from storage
       const threadMessages = await storage.getThreadMessages(threadId);
       
       // More detailed logging to trace parent-child relationships
-      console.log(`Thread #${threadId} contains ${threadMessages.length} messages`);
+      log(`Thread #${threadId} contains ${threadMessages.length} messages`);
       
       // Track parent-child relationships for better debugging
       const parentMap = new Map();
@@ -305,22 +306,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           childrenMap.get(msg.parentMessageId).push(msg.id);
           parentMap.set(msg.id, msg.parentMessageId);
           
-          console.log(`Message ${msg.id} is a reply to parent ${msg.parentMessageId}`);
+          log(`Message ${msg.id} is a reply to parent ${msg.parentMessageId}`);
         } else {
-          console.log(`Message ${msg.id} is a top-level message`);
+          log(`Message ${msg.id} is a top-level message`);
         }
       });
       
       // Log detailed information with full message content
-      console.log("Thread messages with parentIds:", 
-        threadMessages.map(m => ({
-          id: m.id, 
-          content: (m.content || "").substring(0, 50), // Show more content for debugging
-          parentId: m.parentMessageId,
-          isReply: !!m.parentMessageId,
-          hasReplies: childrenMap.has(m.id),
-          timestamp: m.timestamp
-        }))
+      log(
+        `Thread messages with parentIds: ${JSON.stringify(
+          threadMessages.map(m => ({
+            id: m.id,
+            content: (m.content || "").substring(0, 50),
+            parentId: m.parentMessageId,
+            isReply: !!m.parentMessageId,
+            hasReplies: childrenMap.has(m.id),
+            timestamp: m.timestamp
+          }))
+        )}`
       );
       
       // Make sure all messages have parentMessageId explicitly set as a number or null
@@ -340,8 +343,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         };
       });
       
-      console.log("Processed messages with parentIds:", 
-        processedMessages.map(m => ({ id: m.id, parentId: m.parentMessageId, type: typeof m.parentMessageId }))
+      log(
+        `Processed messages with parentIds: ${JSON.stringify(
+          processedMessages.map(m => ({
+            id: m.id,
+            parentId: m.parentMessageId,
+            type: typeof m.parentMessageId
+          }))
+        )}`
       );
       
       res.json(processedMessages);
@@ -387,7 +396,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log(`Creating reply to message ${parentId}, original value: ${parentMessageId}`);
+      log(`Creating reply to message ${parentId}, original value: ${parentMessageId}`);
       
       // Create outbound message (creator's reply)
       const message = await storage.addMessageToThread(threadId, {
@@ -542,7 +551,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // Facebook requires this verification step
     if (mode === "subscribe" && token === verifyToken) {
-      console.log("Instagram webhook verified");
+      log("Instagram webhook verified");
       res.status(200).send(challenge);
     } else {
       console.error("Instagram webhook verification failed");
@@ -553,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instagram webhook POST endpoint to receive DM notifications
   app.post("/webhook/instagram", async (req, res) => {
     try {
-      console.log("Received Instagram webhook:", JSON.stringify(req.body, null, 2));
+      log(`Received Instagram webhook: ${JSON.stringify(req.body, null, 2)}`);
       
       // Respond to Facebook/Instagram immediately (required)
       res.status(200).send("EVENT_RECEIVED");
@@ -722,7 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         await instagramService.sendReply(message.externalId, aiReply);
       } catch (instagramError) {
-        console.log("Note: Instagram reply simulation - would fail in production app");
+        log("Note: Instagram reply simulation - would fail in production app");
         // In development, we'll continue even if this fails
       }
       
@@ -985,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.redirect("/?error=instagram_auth_failed&message=No%20authorization%20code%20received");
       }
       
-      console.log("Received Instagram authorization code");
+      log("Received Instagram authorization code");
       
       // For now, we'll use user ID 1 (will be dynamic with real user system)
       const userId = 1;
@@ -1005,7 +1014,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       if (result) {
-        console.log("Instagram authentication completed successfully");
+        log("Instagram authentication completed successfully");
         
         // Close the popup and redirect to Instagram page
         const html = `
@@ -1228,7 +1237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/settings/ai-auto-replies", async (req, res) => {
     try {
-      console.log("API Request received: /api/settings/ai-auto-replies", req.body);
+      log(`API Request received: /api/settings/ai-auto-replies ${JSON.stringify(req.body)}`);
       
       const schema = z.object({
         enabled: z.boolean(),
@@ -1238,11 +1247,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { enabled, source } = schema.parse(req.body);
       const userId = 1; // For MVP, assume user ID 1
       
-      console.log(`Updating ${source} auto-replies to: ${enabled}`);
+      log(`Updating ${source} auto-replies to: ${enabled}`);
       
       // First get existing settings
       const existingSettings = await storage.getSettings(userId);
-      console.log("Current settings:", JSON.stringify(existingSettings));
+      log(`Current settings: ${JSON.stringify(existingSettings)}`);
       
       let updates: any = {};
       if (source === "instagram") {
@@ -1289,10 +1298,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      console.log("Applying updates:", JSON.stringify(updates));
+      log(`Applying updates: ${JSON.stringify(updates)}`);
       
       const updatedSettings = await storage.updateSettings(userId, updates);
-      console.log("Settings updated successfully:", JSON.stringify(updatedSettings));
+      log(`Settings updated successfully: ${JSON.stringify(updatedSettings)}`);
       
       res.json({ success: true, settings: updatedSettings });
     } catch (error: any) {
