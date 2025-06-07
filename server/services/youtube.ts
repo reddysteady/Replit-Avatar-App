@@ -6,6 +6,7 @@
 import { apiRequest } from "../utils/apiUtils";
 import { storage } from "../storage";
 import { type InsertMessage } from "@shared/schema";
+import { log } from "../logger";
 
 interface YouTubeComment {
   id: string;
@@ -36,7 +37,7 @@ export class YouTubeService {
       // In a real implementation, this would use the YouTube Data API
       // to fetch comments from the user's videos
       // For the MVP we'll use the messages already in storage
-      console.log("Fetching YouTube comments for user ID:", userId);
+      log(`Fetching YouTube comments for user ID: ${userId}`);
       
       // Simulate checking for new comments from YouTube
       // In a real implementation, this would be replaced with actual API calls
@@ -54,8 +55,8 @@ export class YouTubeService {
     try {
       // For MVP, we're simulating the reply process
       // In a real implementation, this would make a POST request to YouTube Data API
-      console.log(`Sending reply to YouTube comment ID: ${commentId}`);
-      console.log(`Reply content: ${reply}`);
+      log(`Sending reply to YouTube comment ID: ${commentId}`);
+      log(`Reply content: ${reply}`);
       
       // Simulate successful reply
       return { success: true, message: "Reply sent successfully" };
@@ -111,7 +112,7 @@ export class YouTubeService {
     try {
       // In a real implementation, this would set up a periodic job
       // to poll the YouTube API for new comments
-      console.log(`Setting up YouTube comment polling every ${intervalMinutes} minutes for user ID: ${userId}`);
+      log(`Setting up YouTube comment polling every ${intervalMinutes} minutes for user ID: ${userId}`);
       
       return { success: true, message: "YouTube polling setup successfully" };
     } catch (error: any) {

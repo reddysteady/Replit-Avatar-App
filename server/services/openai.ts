@@ -6,6 +6,7 @@
 
 import OpenAI from "openai";
 import { storage } from "../storage";
+import { log } from "../logger";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const DEFAULT_MODEL = "gpt-4o";
@@ -71,7 +72,7 @@ export class AIService {
 
       // Check if OPENAI_API_KEY is available
       if (!process.env.OPENAI_API_KEY) {
-        console.log("OpenAI API key not found. Using fallback reply.");
+        log("OpenAI API key not found. Using fallback reply.");
         return this.generateFallbackReply(content, senderName);
       }
 
@@ -132,7 +133,7 @@ export class AIService {
       
       // If there's an API quota error, use fallback reply
       if (error.message.includes("429") || error.message.includes("quota exceeded")) {
-        console.log("OpenAI quota exceeded. Using fallback reply.");
+        log("OpenAI quota exceeded. Using fallback reply.");
         return this.generateFallbackReply(params.content, params.senderName);
       }
       

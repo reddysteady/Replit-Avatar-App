@@ -4,6 +4,7 @@
  */
 
 import { storage } from "../storage";
+import { log } from "../logger";
 
 interface AirtableRecord {
   id?: string;
@@ -38,7 +39,7 @@ export class AirtableService {
         throw new Error("Airtable Base ID is not configured");
       }
       
-      console.log(`Adding lead to Airtable: ${leadData.name} from ${leadData.source}`);
+      log(`Adding lead to Airtable: ${leadData.name} from ${leadData.source}`);
       
       // In a real implementation, this would make a POST request to Airtable API
       // For MVP, we'll simulate the creation of a record
@@ -73,7 +74,7 @@ export class AirtableService {
         throw new Error("Airtable API token is not configured");
       }
       
-      console.log(`Updating Airtable record: ${recordId}`);
+      log(`Updating Airtable record: ${recordId}`);
       
       // In a real implementation, this would make a PATCH request to Airtable API
       // For MVP, we'll simulate the update
@@ -96,7 +97,7 @@ export class AirtableService {
         throw new Error("Airtable API token is not configured");
       }
       
-      console.log(`Fetching leads from Airtable base: ${baseId}, table: ${tableName}`);
+      log(`Fetching leads from Airtable base: ${baseId}, table: ${tableName}`);
       
       // In a real implementation, this would make a GET request to Airtable API
       // For MVP, we'll return an empty array
@@ -113,7 +114,7 @@ export class AirtableService {
    */
   async validateCredentials(token: string, baseId: string, tableName: string) {
     try {
-      console.log(`Validating Airtable credentials for base: ${baseId}, table: ${tableName}`);
+      log(`Validating Airtable credentials for base: ${baseId}, table: ${tableName}`);
       
       // In a real implementation, this would make a GET request to Airtable API
       // to verify the credentials
