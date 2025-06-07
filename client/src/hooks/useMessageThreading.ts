@@ -10,15 +10,8 @@ export interface ThreadedMessageType extends MessageType {
 export function useMessageThreading(messages?: MessageType[]) {
   return useMemo(() => {
     if (!messages || !Array.isArray(messages)) {
-      console.log("No messages array provided to useMessageThreading");
       return { threadedMessages: [] as ThreadedMessageType[] };
     }
-
-    console.log("Message content check:", messages.map(m => ({ 
-      id: m.id, 
-      content: (m.content || '').substring(0, 20) + '...',
-      parentId: m.parentMessageId
-    })));
 
     // 1. Create a map of all messages by ID, initializing threading fields
     const map = new Map<number, ThreadedMessageType>();
@@ -43,21 +36,19 @@ export function useMessageThreading(messages?: MessageType[]) {
         roots.push(msg);
       }
     });
-
     // 4. Recursively assign depth now that the tree is built
     const assignDepth = (node: ThreadedMessageType, depth: number) => {
       node.depth = depth;
       node.childMessages.forEach(child => assignDepth(child, depth + 1));
     };
     roots.forEach(root => assignDepth(root, 0));
-
     // 5. Sort messages chronologically at each level
     const sortRecursively = (items: ThreadedMessageType[]) => {
       items.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       items.forEach(child => sortRecursively(child.childMessages));
     };
     sortRecursively(roots);
-
+    // Debugging helper can be added here if needed
     return { threadedMessages: roots };
   }, [messages]);
 }

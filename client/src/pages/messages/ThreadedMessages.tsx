@@ -47,7 +47,6 @@ const ThreadedMessages: React.FC = () => {
 
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
-    console.log("Thread selected:", threadId);
     setActiveThreadId(threadId);
     
     // Store thread data for consistent profile rendering
@@ -81,7 +80,6 @@ const ThreadedMessages: React.FC = () => {
   
   // Handle back button click
   const handleBackClick = () => {
-    console.log("Back button clicked, showing thread list");
     if (isMobile) {
       setShowThreadList(true);
     }

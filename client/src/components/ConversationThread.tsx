@@ -145,7 +145,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
-  console.log("Message render triggered", {
+ console.log("Message render triggered", {
     messagesLoaded: finalMessages ? finalMessages.length : 0,
     threadId,
     fetchedCount: fetchedMessages ? fetchedMessages.length : 0

@@ -31,7 +31,7 @@ export class ContentService {
    */
   async ingestContent(userId: number, forceRefresh: boolean = false) {
     try {
-      console.log(`Starting content ingestion for user ${userId}`);
+      log(`Starting content ingestion for user ${userId}`);
       
       // Step 1: Fetch content from various sources
       const lastIngestedDate = forceRefresh ? 
@@ -54,7 +54,7 @@ export class ContentService {
       const successful = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
       
-      console.log(`Content ingestion complete: ${successful} items processed, ${failed} failed`);
+      log(`Content ingestion complete: ${successful} items processed, ${failed} failed`);
       
       return {
         success: true,
@@ -172,7 +172,7 @@ export class ContentService {
    */
   private async processContent(source: ContentSource, userId: number) {
     try {
-      console.log(`Processing content: ${source.id}`);
+      log(`Processing content: ${source.id}`);
       
       // Step 1: Chunk content into appropriate sizes
       // For simplicity in Phase 1, we'll use the content as-is

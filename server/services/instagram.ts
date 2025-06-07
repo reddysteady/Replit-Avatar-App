@@ -7,6 +7,7 @@ import axios from 'axios';
 import { storage } from "../storage";
 import { type InsertMessage, type MessageType } from "@shared/schema";
 import { aiService } from "./openai";
+import { log } from "../logger";
 
 interface InstagramMessage {
   id: string;
@@ -41,7 +42,7 @@ export class InstagramService {
         const accessToken = (settings.apiKeys as any)?.instagram;
         
         if (accessToken) {
-          console.log("Fetching Instagram messages using Graph API with token:", accessToken.substring(0, 10) + "...");
+          log(`Fetching Instagram messages using Graph API with token: ${accessToken.substring(0, 10)}...`);
           
           try {
             // Try to fetch real messages using Graph API
@@ -69,7 +70,7 @@ export class InstagramService {
             return { success: false, message: "Error communicating with Instagram API: " + error.message };
           }
         } else {
-          console.log("No Instagram access token found, using sample data");
+          log("No Instagram access token found, using sample data");
           
           // Generate one message to demonstrate functionality
           const instagramMessage: InstagramMessage = {
@@ -104,8 +105,8 @@ export class InstagramService {
   async sendReply(messageId: string, reply: string) {
     try {
       // For MVP, we're simulating the reply process
-      console.log(`Sending reply to Instagram message ID: ${messageId}`);
-      console.log(`Reply content: ${reply}`);
+      log(`Sending reply to Instagram message ID: ${messageId}`);
+      log(`Reply content: ${reply}`);
       
       return { success: true, message: "Reply sent successfully" };
     } catch (error: any) {
@@ -119,11 +120,11 @@ export class InstagramService {
    */
   async processNewMessage(message: InstagramMessage, userId: number) {
     try {
-      console.log("Processing new Instagram message:", message.id);
+      log(`Processing new Instagram message: ${message.id}`);
       
       // Analyze with AI to determine intent and sentiment
       const intentResult = await aiService.classifyIntent(message.message);
-      console.log("Intent classification results:", intentResult);
+      log(`Intent classification results: ${JSON.stringify(intentResult)}`);
       
       // Create a new message record
       // Convert confidence from float (0-1) to integer percentage (0-100)
@@ -184,7 +185,7 @@ export class InstagramService {
         };
       }
       
-      console.log(`Setting up Instagram webhook for callback URL: ${callbackUrl}`);
+      log(`Setting up Instagram webhook for callback URL: ${callbackUrl}`);
       
       // In a production app with extended permissions, we would:
       // 1. Create a webhook subscription
@@ -214,7 +215,7 @@ export class InstagramService {
     // Set up a polling mechanism to check for new messages periodically
     const interval = intervalMinutes * 60 * 1000; // Convert to milliseconds
     
-    console.log(`Setting up polling for Instagram messages every ${intervalMinutes} minute(s)`);
+    log(`Setting up polling for Instagram messages every ${intervalMinutes} minute(s)`);
     
     // Clear any existing interval for this user
     if (this.pollingIntervals.has(userId)) {
@@ -223,7 +224,7 @@ export class InstagramService {
     
     // Create a new interval
     const intervalId = setInterval(async () => {
-      console.log(`Polling for new Instagram messages for user ${userId}`);
+      log(`Polling for new Instagram messages for user ${userId}`);
       await this.fetchMessages(userId);
     }, interval);
     

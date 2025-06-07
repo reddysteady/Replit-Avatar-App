@@ -42,7 +42,6 @@ const Instagram = () => {
   useEffect(() => {
     if (settings) {
       setAiAutoReplies(Boolean(settings.aiAutoRepliesInstagram));
-      console.log("Setting toggle state to:", Boolean(settings.aiAutoRepliesInstagram));
     }
   }, [settings]);
   

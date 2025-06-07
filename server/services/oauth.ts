@@ -3,6 +3,7 @@
  */
 import axios from 'axios';
 import { storage } from '../storage';
+import { log } from '../logger';
 
 interface InstagramTokenResponse {
   access_token: string;
@@ -27,7 +28,7 @@ export class OAuthService {
    */
   async exchangeInstagramCode(code: string, redirectUri: string, clientId: string, clientSecret: string): Promise<InstagramTokenResponse> {
     try {
-      console.log('Exchanging Instagram authorization code for access token');
+      log('Exchanging Instagram authorization code for access token');
       
       const formData = new URLSearchParams();
       formData.append('client_id', clientId);
@@ -42,7 +43,7 @@ export class OAuthService {
         },
       });
       
-      console.log('Instagram token exchange successful');
+      log('Instagram token exchange successful');
       
       return {
         access_token: response.data.access_token,
@@ -59,13 +60,13 @@ export class OAuthService {
    */
   async getLongLivedToken(shortLivedToken: string, clientSecret: string): Promise<string> {
     try {
-      console.log('Exchanging short-lived token for long-lived token');
+      log('Exchanging short-lived token for long-lived token');
       
       const response = await axios.get(
         `${this.instagramGraphUrl}/access_token?grant_type=ig_exchange_token&client_secret=${clientSecret}&access_token=${shortLivedToken}`
       );
       
-      console.log('Successfully exchanged for long-lived token');
+      log('Successfully exchanged for long-lived token');
       return response.data.access_token;
     } catch (error: any) {
       console.error('Error getting long-lived Instagram token:', error.message);
@@ -78,13 +79,13 @@ export class OAuthService {
    */
   async getInstagramUserProfile(accessToken: string): Promise<InstagramUserProfileResponse> {
     try {
-      console.log('Getting Instagram user profile');
+      log('Getting Instagram user profile');
       
       const response = await axios.get(
         `${this.instagramGraphUrl}/me?fields=id,username,account_type,media_count&access_token=${accessToken}`
       );
       
-      console.log('Successfully retrieved Instagram profile');
+      log('Successfully retrieved Instagram profile');
       return response.data;
     } catch (error: any) {
       console.error('Error getting Instagram user profile:', error.message);

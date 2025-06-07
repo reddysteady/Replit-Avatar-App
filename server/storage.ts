@@ -80,18 +80,6 @@ export interface IStorage {
   ): Promise<MessageThread>;
   addMessageToThread(threadId: number, message: InsertMessage): Promise<Message>;
   markThreadAsRead(threadId: number): Promise<boolean>;
-  getThreadMessages(threadId: number): Promise<MessageType[]>;
-  createThread(thread: InsertMessageThread): Promise<MessageThread>;
-  updateThread(id: number, updates: Partial<MessageThread>): Promise<MessageThread | undefined>;
-  findOrCreateThreadByParticipant(
-    userId: number, 
-    externalParticipantId: string, 
-    participantName: string, 
-    source: string,
-    participantAvatar?: string
-  ): Promise<MessageThread>;
-  addMessageToThread(threadId: number, message: InsertMessage): Promise<Message>;
-  markThreadAsRead(threadId: number): Promise<boolean>;
 }
 
 export class MemStorage {

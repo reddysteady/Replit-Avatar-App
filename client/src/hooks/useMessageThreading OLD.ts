@@ -36,13 +36,7 @@ export function useMessageThreading(messages: MessageType[] | undefined) {
     const topLevelMessageIds: number[] = [];
     
     // DEBUG: Log the raw messages and their parent IDs
-    console.log('RAW MESSAGES WITH PARENT IDs:', 
-      sortedMessages.map(m => ({
-        id: m.id, 
-        content: m.content?.substring(0, 15) || '',
-        parentId: m.parentMessageId
-      }))
-    );
+    // debug: raw messages with parent ids
     
     // Build thread structure with proper type handling
     sortedMessages.forEach((message) => {
@@ -59,7 +53,7 @@ export function useMessageThreading(messages: MessageType[] | undefined) {
         }
       }
       
-      console.log(`Message ${message.id} has parentId: ${parentId} (original: ${message.parentMessageId}, type: ${typeof message.parentMessageId})`);
+      // debug info
         
       if (parentId && parentId > 0) {
         // This is a reply to another message
@@ -71,11 +65,11 @@ export function useMessageThreading(messages: MessageType[] | undefined) {
         }
         parentChildMap.get(parentId)?.push(message.id);
         
-        console.log(`Thread: Message ${message.id} → Parent ${parentId}`);
+        // thread relation
       } else {
         // Top-level message (no parent or invalid parent)
         topLevelMessageIds.push(message.id);
-        console.log(`Root: Message ${message.id} (no valid parent)`);
+        // root message
       }
     });
     
@@ -103,25 +97,15 @@ export function useMessageThreading(messages: MessageType[] | undefined) {
     });
     
     // Log the parent-child map for debugging
-    console.log('PARENT-CHILD MAP:', Object.fromEntries(parentChildMap));
+    // debug map
     
     // Log all organized threads with their relationships
-    console.log('ORGANIZED MESSAGES:', 
-      organizedMessages.map(m => ({
-        id: m.id, 
-        content: m.content?.substring(0, 15) || '',
-        parentId: m.parentMessageId,
-        hasReplies: m.hasReplies,
-        isReply: m.isReply,
-        childCount: m.childMessages.length,
-        childIds: m.childMessages
-      }))
-    );
+    // debug organized messages
     
     // Get the actual top-level message objects (not just IDs)
     const topLevelMessages = organizedMessages.filter(message => !message.isReply);
     
-    console.log('TOP-LEVEL MESSAGES:', topLevelMessages.map(m => m.id));
+    // debug top level messages
 
     return {
       organizedMessages,

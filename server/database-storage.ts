@@ -27,6 +27,7 @@ import {
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { IStorage } from "./storage";
+import { log } from "./logger";
 
 export class DatabaseStorage implements IStorage {
   // Thread methods for conversation continuity
@@ -68,7 +69,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getThreadMessages(threadId: number): Promise<MessageType[]> {
-    console.log(`Fetching thread messages for thread ID ${threadId}`);
+    log(`Fetching thread messages for thread ID ${threadId}`);
     
     // Get ALL messages for the thread, including threaded conversations
     const threadMessages = await db
@@ -77,7 +78,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(messages.threadId, threadId))
       .orderBy(messages.timestamp);
     
-    console.log(`Found ${threadMessages.length} messages for thread ID ${threadId}`);
+    log(`Found ${threadMessages.length} messages for thread ID ${threadId}`);
     
     // Log message details for debugging
     const messageDetails = threadMessages.map(m => ({
@@ -88,7 +89,7 @@ export class DatabaseStorage implements IStorage {
       timestamp: m.timestamp
     }));
     
-    console.log("Thread messages with details:", JSON.stringify(messageDetails));
+    log(`Thread messages with details: ${JSON.stringify(messageDetails)}`);
     
     // Build parent-child relationships for debugging
     const parentChildMap = new Map();
@@ -107,7 +108,7 @@ export class DatabaseStorage implements IStorage {
       parentChildObj[parentId] = children;
     });
     
-    console.log("Parent-child relationships:", JSON.stringify(parentChildObj));
+    log(`Parent-child relationships: ${JSON.stringify(parentChildObj)}`);
     
     // Map database messages to MessageType with proper parent-child relationships
     const mappedMessages = threadMessages.map(msg => {
@@ -298,12 +299,12 @@ export class DatabaseStorage implements IStorage {
     
     if (msg.parentMessageId !== undefined && msg.parentMessageId !== null) {
       parentId = Number(msg.parentMessageId);
-      console.log(`Converting parentMessageId for message ${msg.id}: ${msg.parentMessageId} -> ${parentId}`);
+      log(`Converting parentMessageId for message ${msg.id}: ${msg.parentMessageId} -> ${parentId}`);
       
       // Check if it's a valid number after conversion
       if (isNaN(parentId)) {
         parentId = undefined;
-        console.log(`Invalid parentMessageId for message ${msg.id}, setting to undefined`);
+        log(`Invalid parentMessageId for message ${msg.id}, setting to undefined`);
       }
     }
 
