@@ -7,3 +7,6 @@ All notable changes to this project will be documented in this file.
 
 ## 2025-06-08
 - [Fixed] Missing `parentMessageId` from in-memory storage caused replies to show as top-level messages.
+
+## 2025-06-09
+- [Added] GitHub Actions workflow running TypeScript and test checks.
