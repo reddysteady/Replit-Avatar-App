@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +22,7 @@ interface AutomationRule {
 
 const Automation = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedRule, setSelectedRule] = useState<AutomationRule | null>(null);
   const [newRule, setNewRule] = useState<Omit<AutomationRule, "id">>({
     name: "",

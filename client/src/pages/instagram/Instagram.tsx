@@ -6,10 +6,9 @@ import FilterButtons from "@/components/FilterButtons";
 import MessageQueue from "@/components/MessageQueue";
 import { InstagramAuth } from "@/components/InstagramAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, ChevronUp, RefreshCw, Link2, Wrench } from "lucide-react";
 
@@ -17,6 +16,7 @@ const Instagram = () => {
   const [aiAutoReplies, setAiAutoReplies] = useState(false);
   const [bannerExpanded, setBannerExpanded] = useState(false); // Controls if the testing banner is expanded
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const {
     messages,

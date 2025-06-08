@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +43,7 @@ interface SettingsData {
 
 const Settings = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [settings, setSettings] = useState<SettingsData>({
     apiKeys: {
       instagram: "",

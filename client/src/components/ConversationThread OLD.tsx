@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { queryClient } from '@/lib/queryClient';
 
 interface ConversationThreadProps {
   threadId: number;
@@ -59,6 +58,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch thread info
   const { data: thread, isLoading: isLoadingThread } = useQuery({

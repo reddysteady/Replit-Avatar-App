@@ -3,14 +3,14 @@ import { Switch } from "@/components/ui/switch";
 import { useMessages } from "@/hooks/useMessages";
 import FilterButtons from "@/components/FilterButtons";
 import MessageQueue from "@/components/MessageQueue";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 const YouTube = () => {
   const [aiAutoReplies, setAiAutoReplies] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const {
     messages,

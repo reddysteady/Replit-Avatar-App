@@ -19,9 +19,8 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MessageType } from "@shared/schema";
@@ -36,6 +35,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const [replyText, setReplyText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { mutate: sendReply, isPending: isSending } = useMutation({
     mutationFn: (data: { reply: string; isAiGenerated: boolean }) => 
