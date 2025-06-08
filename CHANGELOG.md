@@ -14,5 +14,9 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-08
 - [Changed] Reply endpoint switched to `/api/${source}/reply` and payload now includes `messageId`.
 
+## 2025-06-08
+- [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
+- [Added] README notes that `npm install` must be run so the `vitest` runner is available.
+
 
 
