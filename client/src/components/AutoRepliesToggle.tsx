@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Settings } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface AutoRepliesToggleProps {
@@ -13,6 +12,7 @@ interface AutoRepliesToggleProps {
 const AutoRepliesToggle: React.FC<AutoRepliesToggleProps> = ({ source }) => {
   const [enabled, setEnabled] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch current toggle state from settings
   const { data: settings } = useQuery<Settings>({

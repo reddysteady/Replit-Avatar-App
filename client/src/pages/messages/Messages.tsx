@@ -3,12 +3,11 @@ import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
 import FilterButtons from "@/components/FilterButtons";
 import StatusInfo from "@/components/StatusInfo";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings } from "@shared/schema";
 import { Link } from "wouter";
 import { ChevronDown, ChevronUp, RefreshCw, MessageSquare, FileQuestion, Search } from "lucide-react";
 import AutoRepliesToggle from "../../components/AutoRepliesToggle";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { MessageType } from "@shared/schema";
 import { Input } from "@/components/ui/input";
@@ -29,6 +28,7 @@ const Messages = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Query messages data
   const { data: instagramMessages = [], isLoading: loadingInstagram } = useQuery<MessageType[]>({
