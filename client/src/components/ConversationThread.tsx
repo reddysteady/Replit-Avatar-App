@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
+// See CHANGELOG.md for 2025-06-08 [Fixed]
 import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
@@ -24,7 +25,7 @@ function ThreadedMessage({ msg, threadId }: { msg: ThreadedMessageType; threadId
   const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
   const { mutate: postReply } = useMutation({
-    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+    mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${msg.threadId}/reply`, payload).then(res => res.json()),
   });
   
@@ -180,6 +181,8 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     if (!replyText.trim() || !threadId) return;
 
     try {
+
+      // parentMessageId of 0 caused server-side issues; see CHANGELOG.md for 2025-06-08 [Fixed]
       postMessage({ content: replyText, parentMessageId: null });
 
       // Reset form
