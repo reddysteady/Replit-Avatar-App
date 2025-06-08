@@ -196,6 +196,17 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
       });
     }
   };
+
+  const handleComposerKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+      e.preventDefault();
+      if (replyText.trim()) {
+        handleSendMessage(e as unknown as React.FormEvent);
+      }
+    }
+  };
   
   // Loading state
   if (isLoading) {
@@ -282,19 +293,24 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
       <div className="p-3 border-t bg-white">
         <form onSubmit={handleSendMessage} className="flex">
           <Textarea
+            aria-label="Message input"
             placeholder="Type your message..."
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={handleComposerKeyDown}
             className="flex-1 min-h-[60px] resize-none"
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="ml-2 self-end"
             disabled={!replyText.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>
         </form>
+        <div className="text-xs text-gray-500 mt-1">
+          Press Enter to send • Shift + Enter for new line
+        </div>
       </div>
     </div>
   );
