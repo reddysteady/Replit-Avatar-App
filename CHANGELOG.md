@@ -13,6 +13,17 @@ All notable changes to this project will be documented in this file.
 
 ## 2025-06-08
 - [Changed] Reply endpoint switched to `/api/${source}/reply` and payload now includes `messageId`.
+- [Fixed] Messages with parentMessageId of 0 are now stored as null; client sends null for new parent messages.
+
+## 2025-06-09
+- [Fixed] `ConversationThread` mutation now accepts `parentMessageId: number | null`.
+
+## 2025-06-08
+- [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
+- [Added] README notes that `npm install` must be run so the `vitest` runner is available.
 
 
+
+## 2025-06-10
+- [Added] Gated client logger and removed legacy ConversationThread files.
 
