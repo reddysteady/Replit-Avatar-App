@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-08 [Changed]
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +74,7 @@ export function InstagramAuth() {
   const handleConnectInstagram = () => {
     // Use real Instagram authentication with your App ID
     const instagramAuthUrl = 'https://api.instagram.com/oauth/authorize';
-    const instagramAppId = '1709713779604323'; // Your real App ID
+    const instagramAppId = import.meta.env.VITE_INSTAGRAM_APP_ID;
     const redirectUri = `${window.location.origin}/api/instagram/callback`;
     
     // Open Instagram OAuth authentication window
