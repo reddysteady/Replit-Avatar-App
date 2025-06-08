@@ -18,5 +18,9 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-09
 - [Fixed] `ConversationThread` mutation now accepts `parentMessageId: number | null`.
 
+## 2025-06-08
+- [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
+- [Added] README notes that `npm install` must be run so the `vitest` runner is available.
+
 
 
