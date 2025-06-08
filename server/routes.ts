@@ -1,4 +1,4 @@
-// See CHANGELOG.md for 2025-06-08 [Changed]
+// See CHANGELOG.md for 2025-06-09 [Fixed]
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
