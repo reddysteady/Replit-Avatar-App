@@ -179,7 +179,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     if (!replyText.trim() || !threadId) return;
 
     try {
-      postMessage({ content: replyText, parentMessageId: 0 });
+      postMessage({ content: replyText, parentMessageId: null });
 
       // Reset form
       setReplyText('');
