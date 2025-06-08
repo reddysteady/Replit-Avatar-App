@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-08 [Changed]
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -1002,8 +1003,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Use the OAuth service to exchange code for token
       const redirectUri = `${req.protocol}://${req.get('host')}/api/instagram/callback`;
-      const instagramAppId = "1709713779604323";  // Your real App ID
-      const instagramAppSecret = "7fbb2e3b559cf3989f720095741c21a4";  // Your real App Secret
+      const instagramAppId = process.env.INSTAGRAM_APP_ID || "";
+      const instagramAppSecret = process.env.INSTAGRAM_APP_SECRET || "";
       
       // Complete the auth flow (exchange code, get long-lived token, get profile)
       const result = await oauthService.completeInstagramAuth(
