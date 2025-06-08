@@ -1,4 +1,5 @@
-import { 
+// [Fixed] 2025-06-09 - add in-memory thread support for conversation threads
+import {
   messages, 
   users, 
   settings, 
@@ -90,9 +91,11 @@ export class MemStorage {
   private leadsMap: Map<number, Lead>;
   private analyticsMap: Map<number, Analytics>;
   private contentItems: Map<number, ContentItem>;
-  
+  private threads: Map<number, MessageThread>;
+
   private userId: number;
   private messageId: number;
+  private threadId: number;
   private settingsId: number;
   private ruleId: number;
   private leadId: number;
@@ -106,9 +109,11 @@ export class MemStorage {
     this.leadsMap = new Map();
     this.analyticsMap = new Map();
     this.contentItems = new Map();
+    this.threads = new Map();
     
     this.userId = 1;
     this.messageId = 1;
+    this.threadId = 1;
     this.settingsId = 1;
     this.ruleId = 1;
     this.leadId = 1;
@@ -273,10 +278,49 @@ export class MemStorage {
       }
     ];
 
-      sampleMessages.forEach(msg => {
-        const message: Message = { ...msg, id: this.messageId++ } as Message;
-        this.msgs.set(message.id, message);
-      });
+    const threadLookup = new Map<string, number>();
+    sampleMessages.forEach(msg => {
+      const key = `${msg.senderId}-${msg.source}`;
+      let tId = threadLookup.get(key);
+      if (!tId) {
+        const newThread: MessageThread = {
+          id: this.threadId++,
+          userId: msg.userId,
+          externalParticipantId: msg.senderId,
+          participantName: msg.senderName,
+          participantAvatar: msg.senderAvatar ?? null,
+          source: msg.source as 'instagram' | 'youtube',
+          lastMessageAt: msg.timestamp,
+          lastMessageContent: msg.content,
+          status: 'active',
+          unreadCount: msg.isOutbound ? 0 : 1,
+          createdAt: new Date(),
+          metadata: {}
+        } as MessageThread;
+        this.threads.set(newThread.id, newThread);
+        threadLookup.set(key, newThread.id);
+        tId = newThread.id;
+      } else {
+        const existing = this.threads.get(tId)!;
+        const msgTime = msg.timestamp ?? new Date();
+        if (existing.lastMessageAt < msgTime) {
+          existing.lastMessageAt = msgTime;
+          existing.lastMessageContent = msg.content;
+        }
+        if (!msg.isOutbound) {
+          existing.unreadCount = (existing.unreadCount ?? 0) + 1;
+        }
+        this.threads.set(tId, existing);
+      }
+
+      const message: Message = {
+        ...msg,
+        id: this.messageId++,
+        threadId: tId,
+        timestamp: msg.timestamp ?? new Date()
+      } as Message;
+      this.msgs.set(message.id, message);
+    });
 
     // Add sample automation rules
     const sampleRules: InsertAutomationRule[] = [
@@ -366,6 +410,17 @@ export class MemStorage {
       avatar: msg.senderAvatar ?? undefined
     };
 
+    // Normalize parent ID to avoid threading issues when running without the
+    // database. Missing parentMessageId was causing replies to render as
+    // top-level messages. Ref: [Fixed] 2025-06-08 in CHANGELOG.md
+    let parentId: number | undefined = undefined;
+    if (msg.parentMessageId !== undefined && msg.parentMessageId !== null) {
+      const numeric = Number(msg.parentMessageId);
+      if (!Number.isNaN(numeric)) {
+        parentId = numeric;
+      }
+    }
+
     return {
       id: msg.id,
       source: msg.source as 'instagram' | 'youtube',
@@ -375,7 +430,10 @@ export class MemStorage {
       status: msg.status as 'new' | 'replied' | 'auto-replied',
       isHighIntent: msg.isHighIntent || false,
       reply: msg.reply ?? undefined,
-      isAiGenerated: msg.isAiGenerated ?? undefined
+      threadId: msg.threadId ?? undefined,
+      parentMessageId: parentId,
+      isOutbound: msg.isOutbound || false,
+      isAiGenerated: msg.isAiGenerated ?? false
     };
   }
 
@@ -387,9 +445,9 @@ export class MemStorage {
   }
 
   async updateMessageStatus(
-    id: number, 
-    status: string, 
-    reply: string, 
+    id: number,
+    status: string,
+    reply: string,
     isAiGenerated: boolean
   ): Promise<Message> {
     const message = this.msgs.get(id);
@@ -407,6 +465,107 @@ export class MemStorage {
 
     this.msgs.set(id, updatedMessage);
     return updatedMessage;
+  }
+
+  // Thread methods for conversation continuity
+  async getThread(id: number): Promise<MessageThread | undefined> {
+    return this.threads.get(id);
+  }
+
+  async getThreads(userId: number, source?: string): Promise<ThreadType[]> {
+    const threads = Array.from(this.threads.values()).filter(
+      t => t.userId === userId && (!source || t.source === source)
+    ).sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
+
+    return threads.map(t => ({
+      id: t.id,
+      externalParticipantId: t.externalParticipantId,
+      participantName: t.participantName,
+      participantAvatar: t.participantAvatar || undefined,
+      source: t.source as 'instagram' | 'youtube',
+      lastMessageAt: t.lastMessageAt.toISOString(),
+      lastMessageContent: t.lastMessageContent || undefined,
+      status: t.status as 'active' | 'archived' | 'snoozed',
+      unreadCount: t.unreadCount || 0
+    }));
+  }
+
+  async getThreadMessages(threadId: number): Promise<MessageType[]> {
+    return Array.from(this.msgs.values())
+      .filter(m => m.threadId === threadId)
+      .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
+      .map(m => this.mapMessageToMessageType(m));
+  }
+
+  async createThread(thread: InsertMessageThread): Promise<MessageThread> {
+    const id = this.threadId++;
+    const now = new Date();
+    const newThread: MessageThread = {
+      ...thread,
+      id,
+      createdAt: now,
+      lastMessageAt: now,
+      unreadCount: 0
+    } as MessageThread;
+    this.threads.set(id, newThread);
+    return newThread;
+  }
+
+  async updateThread(id: number, updates: Partial<MessageThread>): Promise<MessageThread | undefined> {
+    const thread = this.threads.get(id);
+    if (!thread) return undefined;
+    const updated = { ...thread, ...updates } as MessageThread;
+    this.threads.set(id, updated);
+    return updated;
+  }
+
+  async findOrCreateThreadByParticipant(
+    userId: number,
+    externalParticipantId: string,
+    participantName: string,
+    source: string,
+    participantAvatar?: string
+  ): Promise<MessageThread> {
+    const existing = Array.from(this.threads.values()).find(
+      t => t.userId === userId &&
+        t.externalParticipantId === externalParticipantId &&
+        t.source === source
+    );
+    if (existing) return existing;
+    return this.createThread({
+      userId,
+      externalParticipantId,
+      participantName,
+      participantAvatar: participantAvatar || null,
+      source,
+      metadata: {}
+    } as InsertMessageThread);
+  }
+
+  async addMessageToThread(threadId: number, message: InsertMessage): Promise<Message> {
+    const thread = this.threads.get(threadId);
+    if (!thread) {
+      throw new Error(`Thread with ID ${threadId} not found`);
+    }
+    const id = this.messageId++;
+    const now = message.timestamp ?? new Date();
+    const newMessage: Message = { ...message, id, threadId, timestamp: now } as Message;
+    this.msgs.set(id, newMessage);
+
+    this.threads.set(threadId, {
+      ...thread,
+      lastMessageAt: now,
+      lastMessageContent: message.content,
+      unreadCount: message.isOutbound ? thread.unreadCount : (thread.unreadCount || 0) + 1
+    });
+    return newMessage;
+  }
+
+  async markThreadAsRead(threadId: number): Promise<boolean> {
+    const thread = this.threads.get(threadId);
+    if (!thread) return false;
+    this.threads.set(threadId, { ...thread, unreadCount: 0 });
+    return true;
   }
 
   // Settings methods
