@@ -24,3 +24,6 @@ All notable changes to this project will be documented in this file.
 
 
 
+## 2025-06-10
+- [Added] Gated client logger and removed legacy ConversationThread files.
+
