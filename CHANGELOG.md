@@ -14,5 +14,8 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-08
 - [Changed] Reply endpoint switched to `/api/${source}/reply` and payload now includes `messageId`.
 
+## 2025-06-09
+- [Fixed] `ConversationThread` mutation now accepts `parentMessageId: number | null`.
+
 
 

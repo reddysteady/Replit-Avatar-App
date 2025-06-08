@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
 import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -127,7 +128,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { mutate: postMessage } = useMutation({
-    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+    mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
   });
   
@@ -179,7 +180,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     if (!replyText.trim() || !threadId) return;
 
     try {
-      postMessage({ content: replyText, parentMessageId: 0 });
+      postMessage({ content: replyText, parentMessageId: null });
 
       // Reset form
       setReplyText('');
