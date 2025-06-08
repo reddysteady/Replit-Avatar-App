@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-08 [Fixed]
