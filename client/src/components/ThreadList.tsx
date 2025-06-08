@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Instagram, Youtube, Search } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import ThreadRow from './ThreadRow';
+import { Search } from 'lucide-react';
 import { ThreadType } from '@shared/schema';
 
 interface ThreadListProps {
@@ -55,26 +53,6 @@ const ThreadList: React.FC<ThreadListProps> = ({
       });
   }, [threads, source, searchTerm]);
   
-  // Function to get source icon
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case 'instagram':
-        return <Instagram className="h-4 w-4 mr-1" />;
-      case 'youtube':
-        return <Youtube className="h-4 w-4 mr-1" />;
-      default:
-        return null;
-    }
-  };
-  
-  // Format timestamp
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    } catch (error) {
-      return "Unknown time";
-    }
-  };
 
   return (
     <div className="flex flex-col h-full">
@@ -103,44 +81,11 @@ const ThreadList: React.FC<ThreadListProps> = ({
           </div>
         ) : (
           filteredThreads.map((thread: ThreadType) => (
-            <div
+            <ThreadRow
               key={thread.id}
-              className={`border-b border-gray-200 hover:bg-gray-50 cursor-pointer ${
-                activeThreadId === thread.id ? 'bg-gray-100' : ''
-              }`}
+              thread={thread}
               onClick={() => onSelectThread(thread.id, thread)}
-            >
-              <div className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Avatar className={`h-10 w-10 mr-3 ${thread?.isHighIntent ? 'ring-2 ring-amber-500' : ''}`}>
-                      <AvatarImage 
-                        src={thread?.participantAvatar} 
-                        alt={thread?.participantName || 'User'} 
-                      />
-                      <AvatarFallback>{(thread?.participantName || 'U').charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="overflow-hidden">
-                      <div className="font-medium text-sm flex items-center">
-                        <span className="truncate">{thread?.participantName || 'User'}</span>
-                        <span className="flex items-center text-xs text-gray-500 ml-2">
-                          {getSourceIcon(thread?.source || '')}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">
-                        {formatTimestamp(thread?.lastMessageAt || new Date().toISOString())}
-                      </p>
-                    </div>
-                  </div>
-                  {thread?.unreadCount && thread.unreadCount > 0 && (
-                    <Badge className="bg-blue-500 text-white">{thread.unreadCount}</Badge>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600 mt-1 truncate">
-                  {thread?.lastMessageContent || 'No messages yet'}
-                </p>
-              </div>
-            </div>
+            />
           ))
         )}
       </div>
