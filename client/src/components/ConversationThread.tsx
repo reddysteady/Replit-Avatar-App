@@ -1,6 +1,6 @@
 // ===== client/src/components/ConversationThread.tsx =====
 import React, { useRef, useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType } from '@shared/schema';
 import { Loader2, Send } from 'lucide-react';
@@ -22,22 +22,9 @@ function ThreadedMessage({ msg, threadId }: { msg: ThreadedMessageType; threadId
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { mutate: postReply } = useMutation({
-    mutationFn: (payload: { text: string; threadId: number; parentMessageId: number }) =>
-      apiRequest('POST', '/messages', payload).then(res => res.json()),
-    onSuccess: (newMsg: any) => {
-      queryClient.setQueryData(['thread', threadId], (old: any[] = []) => [...old, newMsg]);
-      setReplyText('');
-      setIsReplying(false);
-    },
-    onError: () => {
-      toast({
-        title: 'Error sending reply',
-        description: 'Please try again.',
-        variant: 'destructive',
-      });
-    },
+    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+      apiRequest('POST', `/api/threads/${msg.threadId}/reply`, payload).then(res => res.json()),
   });
   
   // Display default avatar if none provided
@@ -48,7 +35,11 @@ function ThreadedMessage({ msg, threadId }: { msg: ThreadedMessageType; threadId
     e.preventDefault();
     if (!replyText.trim()) return;
 
-    postReply({ text: replyText, threadId, parentMessageId: msg.id });
+    postReply({ content: replyText, parentMessageId: msg.id });
+
+    // Reset form
+    setReplyText('');
+    setIsReplying(false);
   };
   
   return (
@@ -135,21 +126,9 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const [replyText, setReplyText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { mutate: postMessage } = useMutation({
-    mutationFn: (payload: { text: string; threadId: number; parentMessageId: number | null }) =>
-      apiRequest('POST', '/messages', payload).then(res => res.json()),
-    onSuccess: (newMsg: any) => {
-      queryClient.setQueryData(['thread', threadId], (old: any[] = []) => [...old, newMsg]);
-      setReplyText('');
-    },
-    onError: () => {
-      toast({
-        title: 'Error sending message',
-        description: 'There was a problem sending your message. Please try again.',
-        variant: 'destructive',
-      });
-    },
+    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+      apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
   });
   
   // Fetch flat messages for the thread and build the threaded hierarchy on the client
@@ -199,7 +178,18 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     e.preventDefault();
     if (!replyText.trim() || !threadId) return;
 
-    postMessage({ text: replyText, threadId, parentMessageId: null });
+    try {
+      postMessage({ content: replyText, parentMessageId: 0 });
+
+      // Reset form
+      setReplyText('');
+    } catch (error) {
+      toast({
+        title: "Error sending message",
+        description: "There was a problem sending your message. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
   
   // Loading state
