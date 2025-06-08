@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-08 [Changed]
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -38,8 +39,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const { toast } = useToast();
 
   const { mutate: sendReply, isPending: isSending } = useMutation({
-    mutationFn: (data: { reply: string; isAiGenerated: boolean }) => 
-      apiRequest('POST', `/api/messages/${message.id}/reply`, data),
+    mutationFn: (data: { messageId: number; reply: string }) =>
+      apiRequest("POST", `/api/${message.source}/reply`, data),
     onSuccess: () => {
       setIsReplying(false);
       setReplyText("");
@@ -113,7 +114,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
       });
       return;
     }
-    sendReply({ reply: replyText, isAiGenerated: false });
+    sendReply({ messageId: message.id, reply: replyText });
   };
 
   const handleGenerateReply = () => {
