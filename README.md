@@ -4,6 +4,14 @@
 
 This project powers an avatar messenger application built with Node.js and React.
 
+## Environment Variables
+
+Create a `.env` file with the following variables:
+
+- `INSTAGRAM_APP_ID` – Facebook App ID for Instagram OAuth
+- `INSTAGRAM_APP_SECRET` – Facebook App Secret for Instagram OAuth
+- `VITE_INSTAGRAM_APP_ID` – Front-end copy of `INSTAGRAM_APP_ID`
+
 ## Updating this README
 
 Before making any changes, please:
