@@ -366,6 +366,17 @@ export class MemStorage {
       avatar: msg.senderAvatar ?? undefined
     };
 
+    // Normalize parent ID to avoid threading issues when running without the
+    // database. Missing parentMessageId was causing replies to render as
+    // top-level messages. Ref: [Fixed] 2025-06-08 in CHANGELOG.md
+    let parentId: number | undefined = undefined;
+    if (msg.parentMessageId !== undefined && msg.parentMessageId !== null) {
+      const numeric = Number(msg.parentMessageId);
+      if (!Number.isNaN(numeric)) {
+        parentId = numeric;
+      }
+    }
+
     return {
       id: msg.id,
       source: msg.source as 'instagram' | 'youtube',
@@ -375,7 +386,10 @@ export class MemStorage {
       status: msg.status as 'new' | 'replied' | 'auto-replied',
       isHighIntent: msg.isHighIntent || false,
       reply: msg.reply ?? undefined,
-      isAiGenerated: msg.isAiGenerated ?? undefined
+      threadId: msg.threadId ?? undefined,
+      parentMessageId: parentId,
+      isOutbound: msg.isOutbound || false,
+      isAiGenerated: msg.isAiGenerated ?? false
     };
   }
 

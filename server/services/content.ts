@@ -8,6 +8,7 @@ import { storage } from "../storage";
 import { aiService } from "./openai";
 import { eq, desc } from "drizzle-orm";
 import { contentItems, type InsertContentItem } from "@shared/schema";
+import { log } from "../logger";
 
 interface ContentSource {
   id: string;
