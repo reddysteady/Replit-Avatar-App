@@ -1,5 +1,7 @@
 # Replit-Avatar-App
 
+![CI](https://github.com/owner/repo/actions/workflows/ci.yml/badge.svg)
+
 This project powers an avatar messenger application built with Node.js and React.
 
 ## Environment Variables
@@ -21,3 +23,8 @@ Before making any changes, please:
 5. Submit small, atomic commits.
 
 Following these steps keeps the README and the project history clear for everyone.
+
+## Continuous Integration
+
+This project uses a GitHub Actions workflow located at `.github/workflows/ci.yml` to
+run TypeScript checks and tests on every push.
