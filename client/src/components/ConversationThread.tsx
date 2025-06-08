@@ -1,12 +1,14 @@
 // ===== client/src/components/ConversationThread.tsx =====
+// [Changed] 2025-06-08 - Updated posting logic to use /api/threads endpoints.
 import React, { useRef, useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType } from '@shared/schema';
 import { Loader2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConversationThreadProps {
   threadId?: number;
@@ -20,6 +22,11 @@ interface ConversationThreadProps {
 function ThreadedMessage({ msg }: { msg: ThreadedMessageType }) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
+
+  const { mutate: postReply } = useMutation({
+    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+      apiRequest('POST', `/api/threads/${msg.threadId}/reply`, payload).then(res => res.json()),
+  });
   
   // Display default avatar if none provided
   const avatarUrl = msg.sender?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.sender?.name || 'User');
@@ -28,9 +35,9 @@ function ThreadedMessage({ msg }: { msg: ThreadedMessageType }) {
   const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    
-    // API call would go here
-    
+
+    postReply({ content: replyText, parentMessageId: msg.id });
+
     // Reset form
     setReplyText('');
     setIsReplying(false);
@@ -120,6 +127,11 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const [replyText, setReplyText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const { mutate: postMessage } = useMutation({
+    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+      apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
+  });
   
   // Fetch flat messages for the thread and build the threaded hierarchy on the client
   const {
@@ -167,10 +179,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim() || !threadId) return;
-    
+
     try {
-      // API call would go here
-      
+      postMessage({ content: replyText, parentMessageId: 0 });
+
       // Reset form
       setReplyText('');
     } catch (error) {

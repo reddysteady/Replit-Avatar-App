@@ -13,3 +13,6 @@ All notable changes to this project will be documented in this file.
 
 
 
+
+## 2025-06-08
+- [Changed] Updated ConversationThread posting logic to send replies and messages via /api/threads endpoints.
