@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { log } from '@/lib/logger';
 
 interface ConversationThreadProps {
   threadId?: number;
@@ -155,15 +156,15 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
- console.log("Message render triggered", {
+ log("Message render triggered", {
     messagesLoaded: finalMessages ? finalMessages.length : 0,
     threadId,
     fetchedCount: fetchedMessages ? fetchedMessages.length : 0
   });
   
   if (finalMessages && finalMessages.length > 0) {
-    console.log("Rendering Thread #" + threadId + " with enhanced conversation threading");
-    console.log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
+    log("Rendering Thread #" + threadId + " with enhanced conversation threading");
+    log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
   }
 
   // Scroll to bottom on new messages
