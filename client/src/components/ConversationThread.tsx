@@ -33,6 +33,8 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const [replyText, setReplyText] = useState('');
   const { mutate: postReply } = useMutation({
     mutationFn: (payload: { content: string; parentMessageId: number }) =>
+        apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
+});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -163,13 +165,20 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
 }
 
 const ConversationThread: React.FC<ConversationThreadProps> = ({
-  threadId,
-  threadData,
-  messages: propMessages,
-  showBackButton = false,
-  onBack,
-  onDeleted
+    threadId,
+    threadData,
+    messages: propMessages,
+    showBackButton = false,
+    onBack,
+    onDeleted
 }) => {
+    // Component logic and JSX
+    return (
+        <div>
+            {/* JSX content */}
+        </div>
+    );
+};
   const [replyText, setReplyText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
