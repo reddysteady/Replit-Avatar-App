@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-08 [Changed]
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -19,9 +20,8 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { MessageType } from "@shared/schema";
@@ -36,10 +36,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const [replyText, setReplyText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { mutate: sendReply, isPending: isSending } = useMutation({
-    mutationFn: (data: { reply: string; isAiGenerated: boolean }) => 
-      apiRequest('POST', `/api/messages/${message.id}/reply`, data),
+    mutationFn: (data: { messageId: number; reply: string }) =>
+      apiRequest("POST", `/api/${message.source}/reply`, data),
     onSuccess: () => {
       setIsReplying(false);
       setReplyText("");
@@ -113,7 +114,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
       });
       return;
     }
-    sendReply({ reply: replyText, isAiGenerated: false });
+    sendReply({ messageId: message.id, reply: replyText });
   };
 
   const handleGenerateReply = () => {

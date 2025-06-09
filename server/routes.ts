@@ -1,4 +1,6 @@
-// See CHANGELOG.md for 2025-06-08 [Changed]
+// See CHANGELOG.md for 2025-06-11 [Added]
+
+// See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -36,9 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sender_id::text,
             0 as depth,
             ARRAY[id] as path
-          FROM messages 
-          WHERE thread_id = ${conversationId}::integer 
-            AND parent_message_id IS NULL
+          FROM messages
+          WHERE thread_id = ${conversationId}::integer
+            AND (parent_message_id IS NULL OR parent_message_id = 0)
           
           UNION ALL
           
@@ -389,10 +391,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure parentMessageId is properly handled
       let parentId = null;
-      
+
       if (parentMessageId !== undefined && parentMessageId !== null) {
         parentId = Number(parentMessageId);
-        if (isNaN(parentId)) {
+
+        // Treat 0 as null to maintain proper root messages
+        if (isNaN(parentId) || parentId === 0) {
           parentId = null;
         }
       }
@@ -468,6 +472,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/threads/:id', async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.id);
+      const success = await storage.deleteThread(threadId);
+      if (!success) {
+        return res.status(404).json({ message: 'Thread not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      res.status(500).json({ message: 'Failed to delete thread' });
+    }
+  });
+
   // API endpoints to get messages from different platforms
   app.get('/api/messages/instagram', async (req, res) => {
     try {
@@ -488,6 +506,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching YouTube messages:', error);
       res.status(500).json({ error: String(error) });
+    }
+  });
+
+  app.delete('/api/messages/:id', async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const success = await storage.deleteMessage(messageId);
+      if (!success) {
+        return res.status(404).json({ message: 'Message not found' });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      res.status(500).json({ message: 'Failed to delete message' });
     }
   });
   

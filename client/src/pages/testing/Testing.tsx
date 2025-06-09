@@ -2,11 +2,11 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Testing = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   const { refetch: refetchInstagramMessages } = useQuery({
     queryKey: ['/api/instagram/messages'],
