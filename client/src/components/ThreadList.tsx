@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Fixed]
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -27,9 +28,11 @@ const ThreadList: React.FC<ThreadListProps> = ({
     staleTime: 10000, // 10 seconds
   });
 
-  const threadsData: ThreadType[] | undefined = threads && Array.isArray(threads)
-    ? threads as ThreadType[]
-    : sampleConversations;
+  // Use sample conversations when the API returns an empty list
+  const threadsData: ThreadType[] | undefined =
+    threads && Array.isArray(threads) && threads.length > 0
+      ? (threads as ThreadType[])
+      : sampleConversations;
   
   // Filter threads by source and search term
   const filteredThreads = React.useMemo(() => {
