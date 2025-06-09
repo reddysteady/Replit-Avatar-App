@@ -31,4 +31,7 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
 
+## 2025-06-10
+- [Codex][Fixed] Thread list messages now truncate within the container and show the full text on hover or long press.
+
 
