@@ -31,4 +31,9 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
 
+## 2025-06-11
+- [Codex][Changed] Conversation chips are lighter gray; selected threads now use a darker highlight.
+- [Codex][Fixed] Selected thread styling broke due to missing `selected` prop in `ThreadRow`.
+- [Codex][Fixed] `selected` defaults to `false` in `ThreadRow` to prevent runtime errors.
+
 
