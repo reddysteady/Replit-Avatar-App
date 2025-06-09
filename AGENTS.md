@@ -45,6 +45,9 @@
   * Are not permitted to deploy code or merge to production branches autonomously.
   * May generate boilerplate, code fixes, refactoring, and unit tests.
   * Should include inline comments describing what was changed and why.
+  * After generating code or tests, agents must run `npm run check` to validate correctness.
+  * If errors are returned, the agent should attempt to fix them or create a new task to fix the error before the code is committed.
+
 
 ---
 ## 🧪 Unit Testing Expectations for AI-Generated Code
