@@ -47,6 +47,22 @@
   * Should include inline comments describing what was changed and why.
 
 ---
+## 🧪 Unit Testing Expectations for AI-Generated Code
+
+* All AI-generated functions must include unit tests using **Jest**.
+* Tests must cover:
+  - Standard (happy path) behavior
+  - Common edge cases, including:
+    - Missing or malformed input
+    - External API or system failures
+    - Invalid user behavior
+    - Duplicate or out-of-order requests
+    - Configuration or environment errors
+* External dependencies (e.g., API calls) must be mocked.
+* Tests should fail if logic is broken and clearly describe the scenario being validated.
+* Agents must use the prompt suffix:  
+  > “Also generate a Jest unit test that covers expected behavior and edge cases such as input validation errors, API failures, and misconfiguration.”
+
 
 ## Best Practices & Limitations
 
