@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-08 [Added]
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ThreadType, MessageType } from '@shared/schema';
@@ -29,10 +30,12 @@ const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'cre
       className="flex items-center rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 mb-2"
       onClick={onClick}
     >
-      <img
-        src={thread.participantAvatar ?? fallbackUrl}
-        className="w-10 h-10 rounded-full mr-3"
-      />
+        <img
+          src={thread.participantAvatar ?? fallbackUrl}
+          className={`w-10 h-10 rounded-full mr-3 ring-2 ${
+            thread.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
+          }`}
+        />
       <div className="flex-1">
         <div className="flex items-center">
           <span className="font-semibold text-blue-700">{thread.participantName}</span>

@@ -21,6 +21,7 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-08
 - [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
 - [Added] README notes that `npm install` must be run so the `vitest` runner is available.
+- [Codex][Added] Orange avatar ring for high intent conversations in `ThreadRow` and `ConversationThread`.
 
 
 
