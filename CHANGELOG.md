@@ -27,4 +27,6 @@ All notable changes to this project will be documented in this file.
 
 ## 2025-06-10
 - [Codex][Added] Gated client logger and removed legacy ConversationThread files.
+- [Codex][Changed] Updated conversation chip styling in `ThreadRow.tsx` to use a grayscale palette.
+- [Codex][Fixed] Serialized objects in `ConversationThread.tsx` when logging to avoid TypeScript errors.
 

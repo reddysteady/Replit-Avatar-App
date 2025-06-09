@@ -45,8 +45,27 @@
   * Are not permitted to deploy code or merge to production branches autonomously.
   * May generate boilerplate, code fixes, refactoring, and unit tests.
   * Should include inline comments describing what was changed and why.
+  * After generating code or tests, agents must run `npm run check` to validate correctness.
+  * If errors are returned, the agent should attempt to fix them or create a new task to fix the error before the code is committed.
+
 
 ---
+## 🧪 Unit Testing Expectations for AI-Generated Code
+
+* All AI-generated functions must include unit tests using **Jest**.
+* Tests must cover:
+  - Standard (happy path) behavior
+  - Common edge cases, including:
+    - Missing or malformed input
+    - External API or system failures
+    - Invalid user behavior
+    - Duplicate or out-of-order requests
+    - Configuration or environment errors
+* External dependencies (e.g., API calls) must be mocked.
+* Tests should fail if logic is broken and clearly describe the scenario being validated.
+* Agents must use the prompt suffix:  
+  > “Also generate a Jest unit test that covers expected behavior and edge cases such as input validation errors, API failures, and misconfiguration.”
+
 
 ## Best Practices & Limitations
 
