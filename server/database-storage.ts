@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Added]
 import { 
   messages, 
   users, 
@@ -225,12 +226,25 @@ export class DatabaseStorage implements IStorage {
           unreadCount: 0,
         })
         .where(eq(messageThreads.id, threadId));
-      
+
       return true;
     } catch (error) {
       console.error("Error marking thread as read:", error);
       return false;
     }
+  }
+
+  async deleteMessage(id: number): Promise<boolean> {
+    await db.delete(messages).where(eq(messages.id, id));
+    const [message] = await db.select().from(messages).where(eq(messages.id, id));
+    return message === undefined;
+  }
+
+  async deleteThread(id: number): Promise<boolean> {
+    await db.delete(messages).where(eq(messages.threadId, id));
+    await db.delete(messageThreads).where(eq(messageThreads.id, id));
+    const [thread] = await db.select().from(messageThreads).where(eq(messageThreads.id, id));
+    return thread === undefined;
   }
 
   // Content methods for RAG pipeline
