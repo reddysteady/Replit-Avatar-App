@@ -84,9 +84,10 @@
 
 ## Agent Change Documentation
 
-* All agent actions and generated code must be referenced in the changelog, with a note indicating “AI-generated” (e.g., `[Codex]`, `[Replit Assistant]`). Date should be in Pacific Time. If that date already exist add change item with the existing date section.
-* Example changelog entry:
-
+* All agent actions and generated code must be referenced in the changelog, with a note indicating AI-generated (e.g., [Codex], [Replit Assistant]).
+* The changelog date must be the current date in Pacific Time, in the format YYYY-MM-DD.
+* Agents must not reuse or increment existing dates from prior entries.
+* If the date already exists, append new entries under that same section.
   ```
   ## [2025-06-05]
   ### Added
