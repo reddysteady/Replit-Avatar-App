@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-10 [Added]
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import ThreadRow from './ThreadRow';
 import { Search } from 'lucide-react';
 import { ThreadType } from '@shared/schema';
+import { sampleConversations } from '@/sampleConversations';
 
 interface ThreadListProps {
   activeThreadId?: number | null;
@@ -24,12 +26,16 @@ const ThreadList: React.FC<ThreadListProps> = ({
     queryKey: ['/api/threads'],
     staleTime: 10000, // 10 seconds
   });
+
+  const threadsData: ThreadType[] | undefined = threads && Array.isArray(threads)
+    ? threads as ThreadType[]
+    : sampleConversations;
   
   // Filter threads by source and search term
   const filteredThreads = React.useMemo(() => {
-    if (!threads) return [];
-    
-    return Array.isArray(threads) ? threads
+    if (!threadsData) return [];
+
+    return Array.isArray(threadsData) ? threadsData
       .filter((thread: ThreadType) => {
         // Filter by source or high intent
         if (source === 'high-intent' && !thread?.isHighIntent) {
@@ -51,7 +57,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
         // Sort by last message date (newest first)
         return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
       });
-  }, [threads, source, searchTerm]);
+  }, [threadsData, source, searchTerm]);
   
 
   return (

@@ -159,15 +159,24 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
- log("Message render triggered", {
-    messagesLoaded: finalMessages ? finalMessages.length : 0,
-    threadId,
-    fetchedCount: fetchedMessages ? fetchedMessages.length : 0
-  });
+  // Stringify metadata for logging to match logger signature
+  log(
+    "Message render triggered " +
+      JSON.stringify({
+        messagesLoaded: finalMessages ? finalMessages.length : 0,
+        threadId,
+        fetchedCount: fetchedMessages ? fetchedMessages.length : 0,
+      })
+  );
   
   if (finalMessages && finalMessages.length > 0) {
     log("Rendering Thread #" + threadId + " with enhanced conversation threading");
-    log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
+    log(
+      "Top-level threaded messages: " +
+        JSON.stringify(
+          finalMessages.map((m) => ({ id: m.id, hasChildren: m.childMessages.length }))
+        )
+    );
   }
 
   // Scroll to bottom on new messages
