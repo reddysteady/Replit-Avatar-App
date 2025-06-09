@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-12 [Fixed]
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -15,6 +16,7 @@ import { Loader2, SearchX, ChevronDown, ArrowLeft } from 'lucide-react';
 
 const ThreadedMessages: React.FC = () => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
+  const [hasSelectedThread, setHasSelectedThread] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'instagram' | 'youtube' | 'high-intent'>('all');
   const [isMobile, setIsMobile] = useState(false);
   const [showThreadList, setShowThreadList] = useState(true);
@@ -49,6 +51,7 @@ const ThreadedMessages: React.FC = () => {
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
     setActiveThreadId(threadId);
+    setHasSelectedThread(true);
     
     // Store thread data for consistent profile rendering
     if (threadData) {
@@ -113,10 +116,12 @@ const ThreadedMessages: React.FC = () => {
       );
     }
     
-    // No active thread selected yet
-    if (!activeThreadId && threads && Array.isArray(threads) && threads.length > 0) {
-      // Automatically select the first thread
-      setTimeout(() => setActiveThreadId(threads[0]?.id), 0);
+    // Automatically select the first thread only on initial load
+    if (!hasSelectedThread && !activeThreadId && threads && Array.isArray(threads) && threads.length > 0) {
+      setTimeout(() => {
+        setActiveThreadId(threads[0]?.id);
+        setHasSelectedThread(true);
+      }, 0);
     }
     
     // Mobile view - show either thread list or conversation based on showThreadList state
@@ -153,7 +158,10 @@ const ThreadedMessages: React.FC = () => {
                     threadId={activeThreadId}
                     threadData={activeThreadData}
                     showBackButton={false}
-                    onDeleted={() => setActiveThreadId(null)}
+                    onDeleted={() => {
+                      setActiveThreadId(null);
+                      setActiveThreadData(null);
+                    }}
                   />
                 )}
               </div>
@@ -182,7 +190,10 @@ const ThreadedMessages: React.FC = () => {
             threadId={activeThreadId}
             threadData={activeThreadData}
             showBackButton={false}
-            onDeleted={() => setActiveThreadId(null)}
+            onDeleted={() => {
+              setActiveThreadId(null);
+              setActiveThreadData(null);
+            }}
           />
           </div>
         </div>
@@ -203,7 +214,13 @@ const ThreadedMessages: React.FC = () => {
         {/* Conversation thread */}
         <div className="hidden md:block md:w-2/3 lg:w-3/4 h-full">
           {activeThreadId ? (
-            <ConversationThread threadId={activeThreadId} onDeleted={() => setActiveThreadId(null)} />
+            <ConversationThread
+              threadId={activeThreadId}
+              onDeleted={() => {
+                setActiveThreadId(null);
+                setActiveThreadData(null);
+              }}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-center p-4">
               <div>

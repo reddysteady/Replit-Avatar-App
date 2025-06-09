@@ -31,4 +31,8 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
 
+## 2025-06-12
+### Fixed
+- [Codex] Stopped auto-selecting the first thread after deletion so the conversation pane clears.
+
 
