@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-08 [Fixed]
@@ -159,15 +160,23 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
- log("Message render triggered", {
-    messagesLoaded: finalMessages ? finalMessages.length : 0,
-    threadId,
-    fetchedCount: fetchedMessages ? fetchedMessages.length : 0
-  });
+ log(
+    "Message render triggered: " +
+      JSON.stringify({
+        messagesLoaded: finalMessages ? finalMessages.length : 0,
+        threadId,
+        fetchedCount: fetchedMessages ? fetchedMessages.length : 0,
+      })
+  );
   
   if (finalMessages && finalMessages.length > 0) {
     log("Rendering Thread #" + threadId + " with enhanced conversation threading");
-    log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
+    log(
+      "Top-level threaded messages: " +
+        JSON.stringify(
+          finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length }))
+        )
+    );
   }
 
   // Scroll to bottom on new messages
