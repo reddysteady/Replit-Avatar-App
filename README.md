@@ -12,6 +12,12 @@ Create a `.env` file with the following variables:
 - `INSTAGRAM_APP_SECRET` – Facebook App Secret for Instagram OAuth
 - `VITE_INSTAGRAM_APP_ID` – Front-end copy of `INSTAGRAM_APP_ID`
 
+## Setup
+
+Run `npm install` before executing tests or starting the server so the
+project's dev dependencies, including the `vitest` test runner, are available.
+Running `npm test` will automatically install dependencies if they are missing.
+
 ## Updating this README
 
 Before making any changes, please:

@@ -1,4 +1,7 @@
+// See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
+// See CHANGELOG.md for 2025-06-08 [Fixed]
 import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
@@ -8,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { log } from '@/lib/logger';
 
 interface ConversationThreadProps {
   threadId?: number;
@@ -23,7 +27,7 @@ function ThreadedMessage({ msg, threadId }: { msg: ThreadedMessageType; threadId
   const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
   const { mutate: postReply } = useMutation({
-    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+    mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${msg.threadId}/reply`, payload).then(res => res.json()),
   });
   
@@ -127,7 +131,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const endRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { mutate: postMessage } = useMutation({
-    mutationFn: (payload: { content: string; parentMessageId: number }) =>
+    mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
   });
   
@@ -155,15 +159,15 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
- console.log("Message render triggered", {
+ log("Message render triggered", {
     messagesLoaded: finalMessages ? finalMessages.length : 0,
     threadId,
     fetchedCount: fetchedMessages ? fetchedMessages.length : 0
   });
   
   if (finalMessages && finalMessages.length > 0) {
-    console.log("Rendering Thread #" + threadId + " with enhanced conversation threading");
-    console.log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
+    log("Rendering Thread #" + threadId + " with enhanced conversation threading");
+    log("Top-level threaded messages:", finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length })));
   }
 
   // Scroll to bottom on new messages
@@ -179,6 +183,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     if (!replyText.trim() || !threadId) return;
 
     try {
+      // parentMessageId of 0 caused server-side issues; see CHANGELOG.md for 2025-06-08 [Fixed]
       postMessage({ content: replyText, parentMessageId: null });
 
       // Reset form
@@ -189,6 +194,17 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
         description: "There was a problem sending your message. Please try again.",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleComposerKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+      e.preventDefault();
+      if (replyText.trim()) {
+        handleSendMessage(e as unknown as React.FormEvent);
+      }
     }
   };
   
@@ -277,19 +293,24 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
       <div className="p-3 border-t bg-white">
         <form onSubmit={handleSendMessage} className="flex">
           <Textarea
+            aria-label="Message input"
             placeholder="Type your message..."
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={handleComposerKeyDown}
             className="flex-1 min-h-[60px] resize-none"
           />
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="ml-2 self-end"
             disabled={!replyText.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>
         </form>
+        <div className="text-xs text-gray-500 mt-1">
+          Press Enter to send • Shift + Enter for new line
+        </div>
       </div>
     </div>
   );
