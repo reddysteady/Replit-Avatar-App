@@ -189,6 +189,8 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
         ['/api/threads'],
         (old) => old?.filter((t) => t.id !== threadId) || []
       );
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+
       toast({ title: 'Thread deleted' });
       onDeleted?.();
     },
