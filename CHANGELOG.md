@@ -37,3 +37,4 @@ All notable changes to this project will be documented in this file.
 - [Codex] [Fixed] Stopped auto-selecting the first thread after deletion so the conversation pane clears.
 - [Codex][Fixed] Conversation list now shows the latest message with the sender's first name.
 - [Codex][Fixed] Restored conversation chip rendering in `ThreadRow` and added unit test.
+- [Codex][Fixed] Thread list now refreshes immediately after sending a reply so the left pane chip updates.

@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
+// See CHANGELOG.md for 2025-06-09 [Fixed-2]
 // ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Added]
@@ -180,6 +181,27 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const { mutate: postMessage } = useMutation({
     mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
+    onSuccess: (msg: MessageType) => {
+      // Immediately append new message to thread cache
+      queryClient.setQueryData<MessageType[]>(
+        ['thread-messages', threadId],
+        (old) => (old ? [...old, msg] : [msg])
+      );
+
+      // Update thread list snippet and timestamp
+      queryClient.setQueryData<ThreadType[]>(['/api/threads'], (threads) =>
+        threads?.map((t) =>
+          t.id === threadId
+            ? {
+                ...t,
+                lastMessageAt: new Date().toISOString(),
+                lastMessageContent: msg.content,
+                unreadCount: 0,
+              }
+            : t
+        ) || []
+      );
+    },
   });
 
   const { mutate: deleteThread } = useMutation({
