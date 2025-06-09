@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // [Fixed] 2025-06-09 - add in-memory thread support for conversation threads
+// [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
 import {
   messages, 
   users, 
@@ -478,17 +479,23 @@ export class MemStorage {
       t => t.userId === userId && (!source || t.source === source)
     ).sort((a, b) => b.lastMessageAt.getTime() - a.lastMessageAt.getTime());
 
-    return threads.map(t => ({
-      id: t.id,
-      externalParticipantId: t.externalParticipantId,
-      participantName: t.participantName,
-      participantAvatar: t.participantAvatar || undefined,
-      source: t.source as 'instagram' | 'youtube',
-      lastMessageAt: t.lastMessageAt.toISOString(),
-      lastMessageContent: t.lastMessageContent || undefined,
-      status: t.status as 'active' | 'archived' | 'snoozed',
-      unreadCount: t.unreadCount || 0
-    }));
+    return threads.map(t => {
+      const highIntent = Array.from(this.msgs.values()).some(
+        m => m.threadId === t.id && m.isHighIntent
+      );
+      return {
+        id: t.id,
+        externalParticipantId: t.externalParticipantId,
+        participantName: t.participantName,
+        participantAvatar: t.participantAvatar || undefined,
+        source: t.source as 'instagram' | 'youtube',
+        lastMessageAt: t.lastMessageAt.toISOString(),
+        lastMessageContent: t.lastMessageContent || undefined,
+        status: t.status as 'active' | 'archived' | 'snoozed',
+        unreadCount: t.unreadCount || 0,
+        isHighIntent: highIntent
+      };
+    });
   }
 
   async getThreadMessages(threadId: number): Promise<MessageType[]> {

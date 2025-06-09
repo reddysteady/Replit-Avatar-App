@@ -1,7 +1,7 @@
-// See CHANGELOG.md for 2025-06-11 [Added]
-import { 
-  messages, 
-  users, 
+// [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
+import {
+  messages,
+  users,
   settings, 
   automationRules, 
   leads, 
@@ -26,7 +26,7 @@ import {
   type ThreadType
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { IStorage } from "./storage";
 import { log } from "./logger";
 
@@ -54,7 +54,22 @@ export class DatabaseStorage implements IStorage {
 
     // Order by most recent message
     const threads = await query.orderBy(desc(messageThreads.lastMessageAt));
-    
+
+    if (threads.length === 0) return [];
+
+    const intentRows = await db
+      .select({
+        threadId: messages.threadId,
+        highIntent: sql<boolean>`bool_or(${messages.isHighIntent})`
+      })
+      .from(messages)
+      .where(inArray(messages.threadId, threads.map(t => t.id)))
+      .groupBy(messages.threadId);
+
+    const intentMap = new Map<number, boolean>(
+      intentRows.map(r => [r.threadId!, Boolean(r.highIntent)])
+    );
+
     // Map to ThreadType
     return threads.map(thread => ({
       id: thread.id,
@@ -65,7 +80,8 @@ export class DatabaseStorage implements IStorage {
       lastMessageAt: thread.lastMessageAt.toISOString(),
       lastMessageContent: thread.lastMessageContent || undefined,
       status: thread.status as 'active' | 'archived' | 'snoozed',
-      unreadCount: thread.unreadCount || 0
+      unreadCount: thread.unreadCount || 0,
+      isHighIntent: intentMap.get(thread.id) ?? false
     }));
   }
   
