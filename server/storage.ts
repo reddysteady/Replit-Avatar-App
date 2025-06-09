@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Added]
 // [Fixed] 2025-06-09 - add in-memory thread support for conversation threads
 // [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
 import {
@@ -572,6 +573,23 @@ export class MemStorage {
     const thread = this.threads.get(threadId);
     if (!thread) return false;
     this.threads.set(threadId, { ...thread, unreadCount: 0 });
+    return true;
+  }
+
+  async deleteMessage(id: number): Promise<boolean> {
+    if (!this.msgs.has(id)) return false;
+    this.msgs.delete(id);
+    return true;
+  }
+
+  async deleteThread(id: number): Promise<boolean> {
+    if (!this.threads.has(id)) return false;
+    this.threads.delete(id);
+    for (const [mid, msg] of Array.from(this.msgs.entries())) {
+      if (msg.threadId === id) {
+        this.msgs.delete(mid);
+      }
+    }
     return true;
   }
 
