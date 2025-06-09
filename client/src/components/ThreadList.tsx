@@ -1,6 +1,5 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
-// See CHANGELOG.md for 2025-06-11 [Changed]
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -95,7 +94,6 @@ const ThreadList: React.FC<ThreadListProps> = ({
               key={thread.id}
               thread={thread}
               onClick={() => onSelectThread(thread.id, thread)}
-              selected={thread.id === activeThreadId}
             />
           ))
         )}
