@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Added]
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -148,10 +149,11 @@ const ThreadedMessages: React.FC = () => {
               </div>
               <div className="flex-1 overflow-auto">
                 {activeThreadId && (
-                  <ConversationThread 
+                  <ConversationThread
                     threadId={activeThreadId}
                     threadData={activeThreadData}
                     showBackButton={false}
+                    onDeleted={() => setActiveThreadId(null)}
                   />
                 )}
               </div>
@@ -176,11 +178,12 @@ const ThreadedMessages: React.FC = () => {
           
           {/* Conversation thread */}
           <div className="md:w-2/3 lg:w-3/4 h-full">
-            <ConversationThread 
-              threadId={activeThreadId}
-              threadData={activeThreadData}
-              showBackButton={false}
-            />
+          <ConversationThread
+            threadId={activeThreadId}
+            threadData={activeThreadData}
+            showBackButton={false}
+            onDeleted={() => setActiveThreadId(null)}
+          />
           </div>
         </div>
       );
@@ -200,7 +203,7 @@ const ThreadedMessages: React.FC = () => {
         {/* Conversation thread */}
         <div className="hidden md:block md:w-2/3 lg:w-3/4 h-full">
           {activeThreadId ? (
-            <ConversationThread threadId={activeThreadId} />
+            <ConversationThread threadId={activeThreadId} onDeleted={() => setActiveThreadId(null)} />
           ) : (
             <div className="flex items-center justify-center h-full text-center p-4">
               <div>

@@ -32,3 +32,7 @@ All notable changes to this project will be documented in this file.
 
 - [Codex][Added] Sample conversation data for UI testing with high-intent flag.
 - [Codex][Fixed] Converted object logging calls in ConversationThread to strings for TypeScript compatibility.
+
+## 2025-06-11
+- [Codex][Added] Message and thread deletion with WhatsApp-style actions.
+- [Codex][Fixed] Deletion actions now immediately update the UI cache.
