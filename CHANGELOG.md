@@ -32,3 +32,6 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
 
 
+
+## 2025-06-12
+- [Codex][Fixed] Conversation list now shows the latest message with the sender's first name.
