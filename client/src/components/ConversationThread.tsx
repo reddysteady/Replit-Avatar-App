@@ -1,7 +1,9 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-08 [Fixed]
+// See CHANGELOG.md for 2025-06-08 [Added]
 import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
@@ -159,6 +161,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
+
   // Stringify metadata for logging to match logger signature
   log(
     "Message render triggered " +
@@ -254,11 +257,15 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             </Button>
           )}
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-gray-200 mr-3 flex-shrink-0 overflow-hidden">
+            <div
+              className={`w-10 h-10 rounded-full mr-3 flex-shrink-0 overflow-hidden ring-2 ${
+                threadData.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
+              } bg-gray-200`}
+            >
               {threadData.participantAvatar ? (
-                <img 
-                  src={threadData.participantAvatar} 
-                  alt={threadData.participantName} 
+                <img
+                  src={threadData.participantAvatar}
+                  alt={threadData.participantName}
                   className="w-full h-full object-cover" 
                 />
               ) : (

@@ -21,11 +21,14 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-08
 - [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
 - [Added] README notes that `npm install` must be run so the `vitest` runner is available.
+- [Codex][Added] Orange avatar ring for high intent conversations in `ThreadRow` and `ConversationThread`.
 
 
 
 ## 2025-06-10
 - [Codex][Added] Gated client logger and removed legacy ConversationThread files.
+- [Codex][Changed] Updated conversation chip styling in `ThreadRow.tsx` to use a grayscale palette.
+- [Codex][Fixed] Serialized objects in `ConversationThread.tsx` when logging to avoid TypeScript errors.
 
 - [Codex][Added] Sample conversation data for UI testing with high-intent flag.
 - [Codex][Fixed] Converted object logging calls in ConversationThread to strings for TypeScript compatibility.
