@@ -47,7 +47,11 @@
   * Should include inline comments describing what was changed and why.
   * After generating code or tests, agents must run `npm run check` to validate correctness.
   * If errors are returned, the agent should attempt to fix them or create a new task to fix the error before the code is committed.
-
+  * Before creating or committing changes, agents must:
+  - Pull the latest code from the target branch (`git pull origin main`)
+  - Check for potential file conflicts in modified or related files
+  - Run `git diff` or `git status` to detect uncommitted or overlapping changes
+  - If conflicts are detected, agents must regenerate or adjust code to merge cleanly before creating a PR
 
 ---
 ## 🧪 Unit Testing Expectations for AI-Generated Code
