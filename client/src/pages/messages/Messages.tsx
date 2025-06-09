@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-09 [Added]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -17,11 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+
 
 const Messages = () => {
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -118,89 +115,68 @@ const Messages = () => {
             Messages
           </h1>
           <div className="flex items-center space-x-2">
-            {/* Test Tools Dropdown */}
+            {/* Test Tools Accordion */}
             <div className="relative">
-              <Collapsible>
-                <CollapsibleTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-gray-900 text-white px-4 py-2 rounded flex items-center h-9 border-gray-900 hover:bg-gray-800"
-                  >
+              <Accordion type="single" collapsible>
+                <AccordionItem value="tools">
+                  <AccordionTrigger className="bg-gray-900 text-white px-4 py-2 rounded flex items-center h-9 border-gray-900 hover:bg-gray-800">
                     <FileQuestion className="h-4 w-4 mr-2" />
-                    Test Tools
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="absolute z-10 mt-1 pt-2 bg-white rounded border border-gray-200 shadow-lg w-64">
-                  <div className="px-4 py-3">
-                    <Button 
-                      className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
-                      onClick={() => {
-                        fetch('/api/test/generate-messages', { method: 'POST' })
-                          .then(res => {
-                            if (!res.ok) {
-                              return res.text().then(errorText => {
-                                throw new Error(`Server error: ${errorText}`);
-                              });
-                            }
-                            return res.json();
-                          })
-                          .then(data => {
-                            queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                            queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
-                            toast({
-                              title: 'Test messages generated',
-                              description: 'New test messages have been created',
+                    Tools
+                  </AccordionTrigger>
+                  <AccordionContent className="absolute z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
+                    <div className="px-4 py-3">
+                      <Button
+                        className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
+                        onClick={() => {
+                          fetch('/api/test/generate-batch', { method: 'POST' })
+                            .then(res => {
+                              if (!res.ok) {
+                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+                              }
+                              return res.json();
+                            })
+                            .then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                              toast({ title: 'Batch generated', description: '10 messages created' });
+                            })
+                            .catch(err => {
+                              console.error('Batch error:', err);
+                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
                             });
-                          })
-                          .catch(err => {
-                            console.error('Error details:', err);
-                            toast({
-                              title: 'Error',
-                              description: String(err),
-                              variant: 'destructive',
+                        }}
+                      >
+                        Generate Batch Messages
+                      </Button>
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          const id = window.prompt('Thread ID');
+                          if (!id) return;
+                          fetch(`/api/test/generate-for-user/${id}`, { method: 'POST' })
+                            .then(res => {
+                              if (!res.ok) {
+                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+                              }
+                              return res.json();
+                            })
+                            .then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+                              toast({ title: 'Message generated', description: `Message added to thread ${id}` });
+                            })
+                            .catch(err => {
+                              console.error('Generate error:', err);
+                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
                             });
-                          });
-                      }}
-                    >
-                      Generate 10 Messages
-                    </Button>
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => {
-                        fetch('/api/test/generate-high-intent', { method: 'POST' })
-                          .then(res => {
-                            if (!res.ok) {
-                              return res.text().then(errorText => {
-                                throw new Error(`Server error: ${errorText}`);
-                              });
-                            }
-                            return res.json();
-                          })
-                          .then(data => {
-                            queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                            queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
-                            toast({
-                              title: 'High-intent message generated',
-                              description: 'A new high-intent message has been created',
-                            });
-                          })
-                          .catch(err => {
-                            console.error('High-intent error details:', err);
-                            toast({
-                              title: 'Error',
-                              description: String(err),
-                              variant: 'destructive',
-                            });
-                          });
-                      }}
-                    >
-                      Generate High-Intent Message
-                    </Button>
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+                        }}
+                      >
+                        Generate For Thread
+                      </Button>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
             
             <div className="flex items-center space-x-2">
