@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed]
+// See CHANGELOG.md for 2025-06-09 [Fixed-3]
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -38,5 +39,12 @@ describe('ThreadRow', () => {
     expect(html).toContain('John Doe');
     expect(html).toContain('Hello there');
     expect(html).toContain('bg-gray-300');
+  });
+
+  it('includes min-w-0 class for snippet truncation', () => {
+    const html = renderToStaticMarkup(
+      <ThreadRow thread={sampleThread} selected={false} />
+    );
+    expect(html).toContain('min-w-0');
   });
 });

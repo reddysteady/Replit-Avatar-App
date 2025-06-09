@@ -38,3 +38,4 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed] Conversation list now shows the latest message with the sender's first name.
 - [Codex][Fixed] Restored conversation chip rendering in `ThreadRow` and added unit test.
 - [Codex][Fixed] Thread list now refreshes immediately after sending a reply so the left pane chip updates.
+- [Codex][Fixed-3] Added `min-w-0` to `ThreadRow` container so conversation chips truncate correctly.

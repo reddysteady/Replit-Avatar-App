@@ -4,6 +4,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Fixed-2]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
+// See CHANGELOG.md for 2025-06-09 [Fixed-3]
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
@@ -46,7 +47,8 @@ const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'cre
             thread.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
           }`}
         />
-      <div className="flex-1">
+      {/* Ensure flex item can shrink so the snippet truncates correctly */}
+      <div className="flex-1 min-w-0">
         <div className="flex items-center">
           <span className="font-semibold text-gray-900">{thread.participantName}</span>
           {thread.isHighIntent && (
