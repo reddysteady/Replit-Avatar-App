@@ -1,7 +1,9 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-09 [Added]
 
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
+import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
@@ -255,7 +257,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ success: false, error: String(error) });
     }
   });
-  
+
+  app.post('/api/test/generate-batch', async (_req, res) => {
+    try {
+      const messages = [] as any[];
+      const highIntentIndexes = new Set<number>();
+      while (highIntentIndexes.size < 3) {
+        highIntentIndexes.add(Math.floor(Math.random() * 10));
+      }
+
+      for (let i = 0; i < 10; i++) {
+        const isHighIntent = highIntentIndexes.has(i);
+        const source = Math.random() > 0.5 ? 'instagram' : 'youtube';
+
+        const message = await storage.createMessage({
+          source,
+          content: faker.lorem.sentence(),
+          externalId: `faker-${Date.now()}-${i}`,
+          senderId: faker.internet.userName().toLowerCase(),
+          senderName: faker.person.fullName(),
+          senderAvatar: faker.image.avatar(),
+          timestamp: new Date(),
+          status: 'new',
+          isHighIntent,
+          intentCategory: isHighIntent ? 'purchase_interest' : undefined,
+          intentConfidence: isHighIntent
+            ? faker.number.int({ min: 80, max: 100 })
+            : undefined,
+          userId: 1,
+        });
+
+        messages.push(message);
+      }
+
+      res.json({ success: true, count: messages.length });
+    } catch (err) {
+      console.error('Error generating batch:', err);
+      res.status(500).json({ success: false, error: String(err) });
+    }
+  });
+
+  app.post('/api/test/generate-for-user/:threadId', async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.threadId);
+      const thread = await storage.getThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: 'Thread not found' });
+      }
+
+      const msg = await storage.addMessageToThread(threadId, {
+        source: thread.source || 'instagram',
+        content: faker.lorem.sentence(),
+        externalId: `faker-${Date.now()}`,
+        senderId: faker.internet.userName().toLowerCase(),
+        senderName: faker.person.fullName(),
+        senderAvatar: faker.image.avatar(),
+        timestamp: new Date(),
+        status: 'new',
+        isHighIntent: false,
+        userId: thread.userId,
+        metadata: {},
+      });
+
+      res.json(msg);
+    } catch (err) {
+      console.error('Error generating for user:', err);
+      res.status(500).json({ success: false, error: String(err) });
+    }
+  });
+
   // Thread-based message endpoints
   app.get('/api/threads', async (req, res) => {
     try {
