@@ -1,7 +1,8 @@
-// [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
-import {
-  messages,
-  users,
+
+// See CHANGELOG.md for 2025-06-11 [Added]
+import { 
+  messages, 
+  users, 
   settings, 
   automationRules, 
   leads, 

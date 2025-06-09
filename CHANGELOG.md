@@ -27,3 +27,8 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed] UI now displays sample threads when no data is returned.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 
+## 2025-06-09
+- [Codex][Added] Message and thread deletion with WhatsApp-style actions.
+- [Codex][Fixed] Deletion actions now immediately update the UI cache.
+
+

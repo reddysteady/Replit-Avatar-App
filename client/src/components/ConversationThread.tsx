@@ -8,7 +8,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
-import { MessageType } from '@shared/schema';
+import { MessageType, ThreadType } from '@shared/schema';
 import { Loader2, Send, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,8 +37,11 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const holdTimer = useRef<NodeJS.Timeout | null>(null);
   const { mutate: deleteMessage } = useMutation({
     mutationFn: (id: number) => apiRequest('DELETE', `/api/messages/${id}`, {}),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['thread-messages', threadId] });
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<MessageType[]>(
+        ['thread-messages', threadId],
+        (old) => old?.filter((m) => m.id !== id) || []
+      );
       toast({ title: 'Message deleted' });
     },
     onError: () => {
@@ -182,7 +185,12 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const { mutate: deleteThread } = useMutation({
     mutationFn: () => apiRequest('DELETE', `/api/threads/${threadId}`, {}),
     onSuccess: () => {
+      queryClient.setQueryData<ThreadType[]>(
+        ['/api/threads'],
+        (old) => old?.filter((t) => t.id !== threadId) || []
+      );
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+
       toast({ title: 'Thread deleted' });
       onDeleted?.();
     },
