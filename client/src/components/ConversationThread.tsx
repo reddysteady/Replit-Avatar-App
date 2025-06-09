@@ -161,8 +161,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
   
- log(
-    "Message render triggered: " +
+
+  // Stringify metadata for logging to match logger signature
+  log(
+    "Message render triggered " +
       JSON.stringify({
         messagesLoaded: finalMessages ? finalMessages.length : 0,
         threadId,
@@ -175,7 +177,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     log(
       "Top-level threaded messages: " +
         JSON.stringify(
-          finalMessages.map(m => ({ id: m.id, hasChildren: m.childMessages.length }))
+          finalMessages.map((m) => ({ id: m.id, hasChildren: m.childMessages.length }))
         )
     );
   }
