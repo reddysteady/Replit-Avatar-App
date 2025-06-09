@@ -1,4 +1,5 @@
-// See CHANGELOG.md for 2025-06-08 [Changed]
+
+// See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -392,7 +393,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (parentMessageId !== undefined && parentMessageId !== null) {
         parentId = Number(parentMessageId);
-        if (isNaN(parentId)) {
+        // Treat 0 as null to maintain proper root messages
+        if (isNaN(parentId) || parentId === 0) {
           parentId = null;
         }
       }
