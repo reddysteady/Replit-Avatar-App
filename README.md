@@ -30,6 +30,12 @@ Before making any changes, please:
 
 Following these steps keeps the README and the project history clear for everyone.
 
+## Admin Tools
+
+When running the dev server, open the **Messages** page and expand the **Tools** accordion.
+Use **Generate Batch Messages** to create 10 demo messages (at least three flagged high intent).
+Use **Generate For Thread** to add a fake incoming message to a specific thread ID.
+
 ## Continuous Integration
 
 This project uses a GitHub Actions workflow located at `.github/workflows/ci.yml` to

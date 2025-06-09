@@ -28,6 +28,7 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 
 ## 2025-06-09
+- [Codex][Added] Faker-based message generation endpoints with tests and UI accordion tools.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
 - [Codex][Changed] Conversation chips are lighter gray; selected threads now use a darker highlight.
