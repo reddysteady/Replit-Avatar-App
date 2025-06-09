@@ -1,7 +1,8 @@
 
 // See CHANGELOG.md for 2025-06-08 [Added]
 // See CHANGELOG.md for 2025-06-10 [Changed]
-// See CHANGELOG.md for 2025-06-12 [Fixed]
+// See CHANGELOG.md for 2025-06-09 [Fixed]
+
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
@@ -34,8 +35,6 @@ const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'cre
         : (lastMsg.sender?.name.split(' ')[0] || thread.participantName.split(' ')[0]) + ':')
     : '';
 
-  const snippet =
-    lastContent.length > 60 ? lastContent.slice(0, 57) + '…' : lastContent;
 
   return (
     <div
@@ -63,9 +62,12 @@ const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'cre
             <span className="ml-1 w-2 h-2 bg-red-500 rounded-full" />
           )}
         </div>
-        <div className="text-gray-700 text-sm truncate">
+        <div
+          className="text-gray-700 text-sm truncate w-full"
+          title={`${lastMsg ? senderPrefix + ' ' : ''}${lastContent}`}
+        >
           {lastMsg && <span className="font-medium">{senderPrefix}</span>}{' '}
-          {snippet}
+          {lastContent}
         </div>
       </div>
     </div>
