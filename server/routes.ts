@@ -37,9 +37,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             sender_id::text,
             0 as depth,
             ARRAY[id] as path
-          FROM messages 
-          WHERE thread_id = ${conversationId}::integer 
-            AND parent_message_id IS NULL
+          FROM messages
+          WHERE thread_id = ${conversationId}::integer
+            AND (parent_message_id IS NULL OR parent_message_id = 0)
           
           UNION ALL
           
@@ -390,9 +390,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Ensure parentMessageId is properly handled
       let parentId = null;
-      
+
       if (parentMessageId !== undefined && parentMessageId !== null) {
         parentId = Number(parentMessageId);
+
         // Treat 0 as null to maintain proper root messages
         if (isNaN(parentId) || parentId === 0) {
           parentId = null;

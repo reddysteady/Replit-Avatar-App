@@ -183,7 +183,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     if (!replyText.trim() || !threadId) return;
 
     try {
-
       // parentMessageId of 0 caused server-side issues; see CHANGELOG.md for 2025-06-08 [Fixed]
       postMessage({ content: replyText, parentMessageId: null });
 
