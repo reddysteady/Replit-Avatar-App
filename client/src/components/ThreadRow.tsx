@@ -2,7 +2,9 @@
 // See CHANGELOG.md for 2025-06-08 [Added]
 // See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
-// See CHANGELOG.md for 2025-06-09 [Fixed]
+// See CHANGELOG.md for 2025-06-11 [Fixed-2]
+  const isSelected = Boolean(selected);
+        isSelected ? 'bg-gray-300' : 'bg-gray-50 hover:bg-gray-100'
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
