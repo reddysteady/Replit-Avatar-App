@@ -36,3 +36,6 @@ All notable changes to this project will be documented in this file.
 - [Codex] Stopped auto-selecting the first thread after deletion so the conversation pane clears.
 
 
+
+## 2025-06-12
+- [Codex][Fixed] Conversation list now shows the latest message with the sender's first name.
