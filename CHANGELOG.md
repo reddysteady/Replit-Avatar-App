@@ -24,4 +24,6 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Sample conversation data for UI testing with high-intent flag.
 - [Codex][Fixed] Converted object logging calls in ConversationThread to strings for TypeScript compatibility.
 - [Codex][Fixed] High-intent threads are now flagged correctly.
+- [Codex][Fixed] UI now displays sample threads when no data is returned.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
+
