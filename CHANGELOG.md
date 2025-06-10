@@ -52,3 +52,5 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-10
 ### Added
 - [Codex] Added "Generate Reply" button in `ConversationThread` for AI-assisted replies.
+### Fixed
+- [Codex] Message deletion now fades out and doesn't scroll to the bottom.
