@@ -35,7 +35,7 @@ Following these steps keeps the README and the project history clear for everyon
 Open the **Testing Tools** page from the sidebar when running the dev server.
 Use **Generate Batch Messages** to create 10 demo messages (at least three flagged high intent).
 Use **Generate For Thread** to add a fake incoming message to a specific thread ID.
-The previous Tools accordion on the Messages page has been replaced with this dedicated page.
+The Tools dropdown has returned to the Messages page header for quick access, but the dedicated Testing Tools page remains available.
 
 ## Continuous Integration
 

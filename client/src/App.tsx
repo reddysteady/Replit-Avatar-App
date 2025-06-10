@@ -7,7 +7,6 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 
 import NotFound from "@/pages/not-found";
 import Instagram from "@/pages/instagram/Instagram";
-import Messages from "@/pages/messages/Messages";
 import ThreadedMessages from "@/pages/messages/ThreadedMessages";
 import ConnectInstagram from "@/pages/connect/ConnectInstagram";
 import Settings from "@/pages/settings/Settings";

@@ -42,6 +42,7 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed-3] Added `min-w-0` to `ThreadRow` container so conversation chips truncate correctly.
 - [Codex][Added] Sidebar now includes a link to the Testing Tools page.
 - [Replit Assistant][Changed] README now directs users to the Testing Tools page instead of the Messages page Tools accordion.
+- [Codex][Changed] Tools menu restored to the main Messages interface for easier access.
 
 ## 2025-06-10
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
