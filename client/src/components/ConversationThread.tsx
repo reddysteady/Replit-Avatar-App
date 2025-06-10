@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
@@ -152,8 +153,6 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
     }
   });
   
-  // Display default avatar if none provided
-  const avatarUrl = msg.sender?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.sender?.name || 'User');
   
   // Handle reply submission
   const handleReplySubmit = async (e: React.FormEvent) => {
@@ -198,20 +197,16 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         />
       )}
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
-        <div className="flex items-start">
-          <img
-            src={avatarUrl}
-            alt={msg.sender?.name || 'User'}
-            className="w-8 h-8 rounded-full mr-2"
-          />
-          <div className="flex-1">
-            <div className="text-sm font-semibold">{msg.sender?.name || 'User'}</div>
-            {/* Message content with truncation and hover/long-press support */}
-            <MessageContent content={msg.content} showFullContent={showFullContent} setShowFullContent={setShowFullContent} isMobile={isMobile} />
-            <div className="flex justify-between items-center mt-1" onTouchStart={startHold} onTouchEnd={cancelHold}>
-              <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</div>
-              {!isMobile && (
+      <div className={`flex ${msg.isOutbound ? 'justify-end' : ''}`}> 
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 max-w-[75%]">
+          <div className={`flex items-start ${msg.isOutbound ? 'flex-row-reverse text-right' : ''}`}>
+            <div className="flex-1">
+              <div className="text-sm font-semibold">{msg.sender?.name || 'User'}</div>
+              {/* Message content with truncation and hover/long-press support */}
+              <MessageContent content={msg.content} showFullContent={showFullContent} setShowFullContent={setShowFullContent} isMobile={isMobile} />
+              <div className="flex justify-between items-center mt-1" onTouchStart={startHold} onTouchEnd={cancelHold}>
+                <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</div>
+                {!isMobile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -268,7 +263,8 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
           </div>
         </div>
       </div>
-      
+    </div>
+
       {/* Render child messages */}
       {msg.childMessages.length > 0 && (
         <div className="mt-2">
