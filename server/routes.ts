@@ -1,8 +1,7 @@
-// See CHANGELOG.md for 2025-06-11 [Added]
+
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
-
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
@@ -308,6 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const content = `Hi ${thread.participantName}, this is a test message.`;
+
 
       const rawMsg = await storage.addMessageToThread(threadId, {
         source: thread.source || 'instagram',
