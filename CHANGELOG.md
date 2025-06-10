@@ -57,3 +57,5 @@ All notable changes to this project will be documented in this file.
 - [Codex] [Changed] Conversation thread now aligns outbound messages to the right and removes avatars for a WhatsApp-style view.
 - [Codex] [Added] Composer "Generate Reply" button populates the message input.
 
+- [Codex][Removed] Vertical thread lines from conversation and reply UI.
+

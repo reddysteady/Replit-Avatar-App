@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-08 [Changed]
+// See CHANGELOG.md for 2025-06-10 [Removed]
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -203,7 +204,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
           
           {/* Show reply if message has been replied to */}
           {(message.status === 'replied' || message.status === 'auto-replied') && message.reply && (
-            <div className="mt-3 pl-3 border-l-2 border-gray-300 p-2">
+            <div className="mt-3 pl-3 p-2">
               <p className="text-sm text-gray-500 mb-1">
                 {message.isAiGenerated 
                   ? <Badge variant="outline" className="text-xs bg-blue-100 text-blue-900 border-blue-200 font-medium">AI Generated</Badge>

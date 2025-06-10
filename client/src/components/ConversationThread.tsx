@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-10 [Removed]
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
@@ -189,14 +190,7 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   };
   
   return (
-    <div style={{ paddingLeft: msg.depth * 20 }} className="mb-4 relative">
-      {/* Vertical line connecting replies */}
-      {msg.depth > 0 && (
-        <div 
-          className="absolute left-0 top-0 bottom-0 border-l-2 border-gray-200" 
-          style={{ left: (msg.depth * 20) - 10 + 'px' }}
-        />
-      )}
+    <div style={{ paddingLeft: msg.depth * 20 }} className="mb-4">
       
       <div className={`flex ${msg.isOutbound ? 'justify-end' : ''}`}> 
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 max-w-[75%]">
