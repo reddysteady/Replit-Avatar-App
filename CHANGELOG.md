@@ -48,3 +48,7 @@ All notable changes to this project will be documented in this file.
 - [Codex][Changed] `/api/test/generate-for-user` now uses thread participant details and generates content referencing the participant.
 - [Codex][Fixed] `/api/test/generate-for-user` returns messages with nested sender info so avatars display.
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
+
+## 2025-06-10
+### Added
+- [Codex] Added "Generate Reply" button in `ConversationThread` for AI-assisted replies.
