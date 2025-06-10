@@ -41,4 +41,13 @@ describe('ConversationThread layout', () => {
     expect(count).toBe(1);
     expect(html.includes('<img')).toBe(false);
   });
+
+  it('renders Generate Reply button in the composer', () => {
+    const html = renderToStaticMarkup(
+      <QueryClientProvider client={new QueryClient()}>
+        <ConversationThread threadId={1} messages={messages} />
+      </QueryClientProvider>
+    );
+    expect(html.includes('data-testid="composer-generate"')).toBe(true);
+  });
 });

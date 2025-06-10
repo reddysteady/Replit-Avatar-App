@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
+// See CHANGELOG.md for 2025-06-10 [Added-3]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
@@ -338,6 +339,36 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
       toast({ title: 'Failed to delete thread', variant: 'destructive' });
     }
   });
+
+  const { mutate: generateThreadReply, isPending: isGeneratingThreadReply } = useMutation({
+    mutationFn: async () => {
+      if (!threadId) return { generatedReply: '' };
+      const response = await apiRequest('POST', `/api/threads/${threadId}/generate-reply`);
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      if (data && typeof data === 'object' && 'generatedReply' in data) {
+        setReplyText(data.generatedReply as string);
+        toast({
+          title: 'Reply generated',
+          description: 'AI has generated a reply. You can edit it before sending.',
+        });
+      } else {
+        toast({
+          title: 'Error generating reply',
+          description: 'Unexpected response from server.',
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: 'Error generating reply',
+        description: 'There was a problem generating the AI reply.',
+        variant: 'destructive',
+      });
+    }
+  });
   
   // Fetch flat messages for the thread and build the threaded hierarchy on the client
   const {
@@ -545,6 +576,20 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             onKeyDown={handleComposerKeyDown}
             className="flex-1 min-h-[60px] resize-none"
           />
+          <Button
+            type="button"
+            aria-label="Generate AI reply"
+            className="ml-2 self-end"
+            onClick={() => generateThreadReply()}
+            disabled={isGeneratingThreadReply}
+            data-testid="composer-generate"
+          >
+            {isGeneratingThreadReply ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ThumbsUp className="h-4 w-4" />
+            )}
+          </Button>
           <Button
             type="submit"
             className="ml-2 self-end"
