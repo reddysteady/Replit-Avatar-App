@@ -90,11 +90,9 @@
 * **If the date already exists, append new entries under that same section.**
   ```
   ## [2025-06-05]
-  ### Added
-  - [Codex] Generated new function for match result signing in backend/server.js.
-  - [Replit Assistant] Refactored wallet connection logic in frontend/game.js for better error handling.
+  - [Codex][Added] "Generated new function for match result signing in backend/server.js."
+  - [Replit Assistant][Changed] "Refactored wallet connection logic in frontend/game.js for better error handling."
   ```
-
 ---
 
 ## Issue Reporting & Feedback

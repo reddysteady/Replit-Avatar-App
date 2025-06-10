@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+Example entry format:
+`- [AGENT_NAME][Fixed/Changed/Added] "Description of change"`
+
 ## 2025-06-07
 - [Added] Created `CHANGELOG.md` and added contribution instructions to `README.md`.
 - [Fixed] Missing `parentMessageId` from in-memory storage caused replies to show as top-level messages.
@@ -63,6 +66,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - [Codex] Generate Reply buttons now use a robot icon with a blue background.
+- [Codex][Changed] "Updated bullet format examples in README.md, AGENTS.md, and CHANGELOG.md."
+- [Codex][Changed] "Fixed spacing after agent name in README and CHANGELOG examples."
 ### Added
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
 
