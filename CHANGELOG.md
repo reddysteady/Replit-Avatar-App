@@ -43,12 +43,8 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Sidebar now includes a link to the Testing Tools page.
 - [Replit Assistant][Changed] README now directs users to the Testing Tools page instead of the Messages page Tools accordion.
 - [Codex][Changed] Tools menu restored to the main Messages interface for easier access.
-
 - [Codex][Changed] Tools dropdown aligned with trigger using `right-0` so menu stays on screen.
-
 - [Codex][Changed] "Generate For Thread" now uses a dropdown populated with thread names.
-
 - [Codex][Changed] `/api/test/generate-for-user` now uses thread participant details and generates content referencing the participant.
-
-## 2025-06-10
+- [Codex][Fixed] `/api/test/generate-for-user` returns messages with nested sender info so avatars display.
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.

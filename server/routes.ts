@@ -1,7 +1,7 @@
-// See CHANGELOG.md for 2025-06-11 [Added]
+
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-09 [Changed]
-
+// See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
@@ -308,7 +308,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const content = `Hi ${thread.participantName}, this is a test message.`;
 
-      const msg = await storage.addMessageToThread(threadId, {
+
+      const rawMsg = await storage.addMessageToThread(threadId, {
         source: thread.source || 'instagram',
         content,
         externalId: `faker-${Date.now()}`,
@@ -322,7 +323,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metadata: {},
       });
 
-      res.json(msg);
+      const mapped = {
+        id: rawMsg.id,
+        source: rawMsg.source as 'instagram' | 'youtube',
+        content: rawMsg.content,
+        sender: {
+          id: rawMsg.senderId,
+          name: rawMsg.senderName,
+          avatar: rawMsg.senderAvatar ?? undefined,
+        },
+        timestamp: rawMsg.timestamp.toISOString(),
+        status: rawMsg.status as 'new' | 'replied' | 'auto-replied',
+        isHighIntent: rawMsg.isHighIntent || false,
+        reply: rawMsg.reply ?? undefined,
+        threadId: rawMsg.threadId ?? undefined,
+        parentMessageId:
+          rawMsg.parentMessageId !== undefined && rawMsg.parentMessageId !== null
+            ? Number(rawMsg.parentMessageId)
+            : undefined,
+        isOutbound: rawMsg.isOutbound || false,
+        isAiGenerated: rawMsg.isAiGenerated ?? false,
+      };
+
+      res.json(mapped);
     } catch (err) {
       console.error('Error generating for user:', err);
       res.status(500).json({ success: false, error: String(err) });
