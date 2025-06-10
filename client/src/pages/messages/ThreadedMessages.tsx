@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - dropdown alignment]
+// See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -14,6 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2, SearchX, ChevronDown, ArrowLeft, FileQuestion, RefreshCw, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -285,13 +293,9 @@ const ThreadedMessages: React.FC = () => {
                       >
                         Generate Batch Messages
                       </Button>
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        onClick={() => {
-                          const id = window.prompt('Thread ID');
-                          if (!id) return;
-                          fetch(`/api/test/generate-for-user/${id}`, { method: 'POST' })
+                      <Select
+                        onValueChange={(threadId) => {
+                          fetch(`/api/test/generate-for-user/${threadId}`, { method: 'POST' })
                             .then(res => {
                               if (!res.ok) {
                                 return res.text().then(t => { throw new Error(`Server error: ${t}`); });
@@ -300,7 +304,7 @@ const ThreadedMessages: React.FC = () => {
                             })
                             .then(() => {
                               queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
-                              toast({ title: 'Message generated', description: `Message added to thread ${id}` });
+                              toast({ title: 'Message generated', description: `Message added to thread ${threadId}` });
                             })
                             .catch(err => {
                               console.error('Generate error:', err);
@@ -308,8 +312,18 @@ const ThreadedMessages: React.FC = () => {
                             });
                         }}
                       >
-                        Generate For Thread
-                      </Button>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Generate For Thread" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          {Array.isArray(threads) &&
+                            threads.map((thread: any) => (
+                              <SelectItem key={thread.id} value={String(thread.id)}>
+                                {thread.participantName}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                       {/* Database refresh replicates Testing Tools page */}
                       <Button
                         className="w-full mt-2"

@@ -46,5 +46,7 @@ All notable changes to this project will be documented in this file.
 
 - [Codex][Changed] Tools dropdown aligned with trigger using `right-0` so menu stays on screen.
 
+- [Codex][Changed] "Generate For Thread" now uses a dropdown populated with thread names.
+
 ## 2025-06-10
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
