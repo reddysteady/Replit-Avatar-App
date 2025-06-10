@@ -56,4 +56,5 @@ All notable changes to this project will be documented in this file.
 - [Codex] [Changed] Desktop view now wraps long message text instead of truncating it.
 - [Codex] [Changed] Conversation thread now aligns outbound messages to the right and removes avatars for a WhatsApp-style view.
 - [Codex] [Added] Composer "Generate Reply" button populates the message input.
+- [Codex] [Changed-4] Dropdown menu now shows a grey chevron icon and only a Delete option.
 
