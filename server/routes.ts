@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
+// See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
@@ -298,6 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // See CHANGELOG.md for 2025-06-10 [Added]
   app.post('/api/test/generate-for-user/:threadId', async (req, res) => {
     try {
       const threadId = parseInt(req.params.threadId);
@@ -306,12 +308,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Thread not found' });
       }
 
-      const content = `Hi ${thread.participantName}, this is a test message.`;
+      const bodySchema = z.object({ content: z.string().optional() });
+      const { content } = bodySchema.parse(req.body);
 
+      const messageContent =
+        content ?? `Hi ${thread.participantName}, this is a test message.`;
 
       const rawMsg = await storage.addMessageToThread(threadId, {
         source: thread.source || 'instagram',
-        content,
+        content: messageContent,
         externalId: `faker-${Date.now()}`,
         senderId: thread.externalParticipantId,
         senderName: thread.participantName,
