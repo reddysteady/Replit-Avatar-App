@@ -63,6 +63,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - [Codex] Generate Reply buttons now use a robot icon with a blue background.
+- [Codex] Clarified README changelog instructions and agent guidelines for missing date sections.
 ### Added
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
 
