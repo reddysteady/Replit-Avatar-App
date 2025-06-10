@@ -3,6 +3,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - dropdown alignment]
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
+// See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -281,8 +282,8 @@ const ThreadedMessages: React.FC = () => {
                               return res.json();
                             })
                             .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                              queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
                               toast({ title: 'Batch generated', description: '10 messages created' });
                             })
                             .catch(err => {
@@ -334,8 +335,8 @@ const ThreadedMessages: React.FC = () => {
                             description: 'Refreshing messages from database...'
                           });
                           // Refetch messages directly from storage
-                          queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                          queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
                         }}
                       >
                         <RefreshCw className="h-4 w-4 mr-2" />

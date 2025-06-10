@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
+// See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -151,8 +152,8 @@ const Messages = () => {
                               return res.json();
                             })
                             .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                              queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
                               toast({ title: 'Batch generated', description: '10 messages created' });
                             })
                             .catch(err => {
@@ -204,8 +205,8 @@ const Messages = () => {
                             description: 'Refreshing messages from database...'
                           });
                           // Refetch messages directly from storage
-                          queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
-                          queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
                         }}
                       >
                         <RefreshCw className="h-4 w-4 mr-2" />
