@@ -54,4 +54,5 @@ All notable changes to this project will be documented in this file.
 - [Codex] [dded]"Generate Reply" button in `ConversationThread` for AI-assisted replies.
 - [Codex] [Added] Settings page now includes a Flex processing toggle and backend honors the field in OpenAI requests.
 - [Codex] [Changed] Desktop view now wraps long message text instead of truncating it.
+- [Codex] [Changed] Conversation thread now aligns outbound messages to the right and removes avatars for a WhatsApp-style view.
 
