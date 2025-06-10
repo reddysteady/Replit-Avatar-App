@@ -18,6 +18,7 @@ interface GenerateReplyParams {
   temperature: number;
   maxLength: number;
   contextSnippets?: string[]; // Additional context from content RAG pipeline
+  flexProcessing?: boolean;
 }
 
 interface ClassifyIntentResult {
@@ -68,7 +69,7 @@ export class AIService {
    */
   async generateReply(params: GenerateReplyParams): Promise<string> {
     try {
-      const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets } = params;
+      const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing } = params;
 
       // Check if OPENAI_API_KEY is available
       if (!process.env.OPENAI_API_KEY) {
@@ -125,6 +126,7 @@ export class AIService {
         ],
         temperature: temperature,
         max_tokens: maxLength,
+        service_tier: flexProcessing ? "flex" : undefined,
       });
 
       return response.choices[0].message.content || "Thank you for your message!";

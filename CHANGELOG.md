@@ -52,3 +52,4 @@ All notable changes to this project will be documented in this file.
 ## 2025-06-10
 ### Added
 - [Codex] Added "Generate Reply" button in `ConversationThread` for AI-assisted replies.
+- [Codex] Settings page now includes a Flex processing toggle and backend honors the field in OpenAI requests.
