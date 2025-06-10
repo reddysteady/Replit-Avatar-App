@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-08 [Changed]
 // See CHANGELOG.md for 2025-06-10 [Removed]
+// See CHANGELOG.md for 2025-06-10 [Changed - robot icon]
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -13,9 +14,9 @@ import {
   ReplyIcon, 
   CheckCircle2, 
   AlertCircle,
-  Loader2, 
-  RefreshCw, 
-  ThumbsUp,
+  Loader2,
+  RefreshCw,
+  Bot,
   Instagram,
   Youtube
 } from "lucide-react";
@@ -258,7 +259,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                   size="sm"
                   onClick={handleGenerateReply}
                   disabled={isGenerating || isReplying}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-900 border-gray-300"
+                  className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                 >
                   {isGenerating ? (
                     <>
@@ -267,7 +268,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                     </>
                   ) : (
                     <>
-                      <ThumbsUp className="mr-2 h-4 w-4" />
+                      <Bot className="mr-2 h-4 w-4 text-white" />
                       Generate AI Reply
                     </>
                   )}

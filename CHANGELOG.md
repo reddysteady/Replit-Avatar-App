@@ -60,3 +60,6 @@ All notable changes to this project will be documented in this file.
 - [Codex] [Changed-4] Dropdown menu now shows a grey chevron icon and only a Delete option.
 - [Codex][Removed] Vertical thread lines from conversation and reply UI.
 
+### Changed
+- [Codex] Generate Reply buttons now use a robot icon with a blue background.
+
