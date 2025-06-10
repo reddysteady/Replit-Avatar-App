@@ -1,12 +1,20 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-09 [Changed]
+// See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
 import FilterButtons from "@/components/FilterButtons";
 import StatusInfo from "@/components/StatusInfo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Settings } from "@shared/schema";
 import { Link } from "wouter";
 import { ChevronDown, ChevronUp, RefreshCw, Link2, MessageSquare, FileQuestion, Search } from "lucide-react";
@@ -42,6 +50,11 @@ const Messages = () => {
     refetchInterval: 10000, // Refetch more frequently (every 10 seconds)
     refetchOnMount: true,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: threads = [] } = useQuery({
+    queryKey: ['/api/threads'],
+    staleTime: 10000,
   });
 
   // Query settings to check connection status
@@ -150,13 +163,9 @@ const Messages = () => {
                       >
                         Generate Batch Messages
                       </Button>
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        onClick={() => {
-                          const id = window.prompt('Thread ID');
-                          if (!id) return;
-                          fetch(`/api/test/generate-for-user/${id}`, { method: 'POST' })
+                      <Select
+                        onValueChange={(threadId) => {
+                          fetch(`/api/test/generate-for-user/${threadId}`, { method: 'POST' })
                             .then(res => {
                               if (!res.ok) {
                                 return res.text().then(t => { throw new Error(`Server error: ${t}`); });
@@ -165,7 +174,7 @@ const Messages = () => {
                             })
                             .then(() => {
                               queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
-                              toast({ title: 'Message generated', description: `Message added to thread ${id}` });
+                              toast({ title: 'Message generated', description: `Message added to thread ${threadId}` });
                             })
                             .catch(err => {
                               console.error('Generate error:', err);
@@ -173,8 +182,18 @@ const Messages = () => {
                             });
                         }}
                       >
-                        Generate For Thread
-                      </Button>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Generate For Thread" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-60 overflow-y-auto">
+                          {Array.isArray(threads) &&
+                            threads.map((thread: any) => (
+                              <SelectItem key={thread.id} value={String(thread.id)}>
+                                {thread.participantName}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                       {/* Database refresh replicates Testing Tools page */}
                       <Button
                         className="w-full mt-2"
