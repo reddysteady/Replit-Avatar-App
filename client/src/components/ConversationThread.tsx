@@ -10,6 +10,7 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
 // ===== client/src/components/ConversationThread.tsx =====
+// See CHANGELOG.md for 2025-06-10 [Changed - robot icon]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Added]
 import React, { useRef, useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType, ThreadType } from '@shared/schema';
 // See CHANGELOG.md for 2025-06-10 [Changed-4]
-import { Loader2, Send, ChevronDown, ThumbsUp } from 'lucide-react';
+import { Loader2, Send, ChevronDown, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -578,7 +579,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
           <Button
             type="button"
             aria-label="Generate AI reply"
-            className="ml-2 self-end"
+            className="ml-2 self-end bg-blue-600 hover:bg-blue-700"
             onClick={() => generateThreadReply()}
             disabled={isGeneratingThreadReply}
             data-testid="composer-generate"
@@ -586,7 +587,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             {isGeneratingThreadReply ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <ThumbsUp className="h-4 w-4" />
+              <Bot className="h-4 w-4 text-white" />
             )}
           </Button>
           <Button

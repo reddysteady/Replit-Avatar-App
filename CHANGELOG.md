@@ -61,3 +61,6 @@ All notable changes to this project will be documented in this file.
 - [Codex][Removed] Vertical thread lines from conversation and reply UI.
 - [Codex][Fixed] Query invalidation keys now match `useMessages` so batch message generation refreshes all pages.
 
+### Changed
+- [Codex] Generate Reply buttons now use a robot icon with a blue background.
+
