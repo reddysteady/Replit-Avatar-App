@@ -39,6 +39,13 @@ describe('AIService', () => {
     expect(reply).toContain('Bob')
   })
 
+  it('passes flex service tier when enabled', async () => {
+    process.env.OPENAI_API_KEY = 'test-key'
+    mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
+    await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, flexProcessing: true })
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ service_tier: 'flex' }))
+  })
+
   it('classifyIntent parses response', async () => {
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify({ isHighIntent: true, confidence: 0.9, category: 'service_inquiry' }) } }] })
     const res = await service.classifyIntent('text')

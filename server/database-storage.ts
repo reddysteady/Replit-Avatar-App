@@ -419,7 +419,8 @@ export class DatabaseStorage implements IStorage {
         maxResponseLength: 500,
         model: "gpt-4o",
         autoReplyInstagram: false,
-        autoReplyYoutube: false
+        autoReplyYoutube: false,
+        flexProcessing: false
       },
       notificationSettings: {
         email: "",

@@ -33,6 +33,7 @@ interface SettingsData {
     model: string;
     autoReplyInstagram: boolean;
     autoReplyYoutube: boolean;
+    flexProcessing: boolean;
   };
   notificationSettings: {
     email: string;
@@ -65,6 +66,7 @@ const Settings = () => {
       model: "gpt-4o",
       autoReplyInstagram: false,
       autoReplyYoutube: false,
+      flexProcessing: false,
     },
     notificationSettings: {
       email: "",
@@ -428,6 +430,17 @@ const Settings = () => {
                         <span>Brief</span>
                         <span>Detailed</span>
                       </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="flex-processing">Use Flex Processing</Label>
+                      <Switch
+                        id="flex-processing"
+                        checked={settings.aiSettings.flexProcessing}
+                        onCheckedChange={(checked) => setSettings({
+                          ...settings,
+                          aiSettings: { ...settings.aiSettings, flexProcessing: checked }
+                        })}
+                      />
                     </div>
                   </div>
                 </CardContent>
