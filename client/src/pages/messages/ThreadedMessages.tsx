@@ -1,7 +1,8 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
+// See CHANGELOG.md for 2025-06-09 [Changed]
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
 import ConversationThread from '@/components/ConversationThread';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,7 +13,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Loader2, SearchX, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Loader2, SearchX, ChevronDown, ArrowLeft, FileQuestion, RefreshCw, Link2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 const ThreadedMessages: React.FC = () => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
@@ -20,6 +28,8 @@ const ThreadedMessages: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'all' | 'instagram' | 'youtube' | 'high-intent'>('all');
   const [isMobile, setIsMobile] = useState(false);
   const [showThreadList, setShowThreadList] = useState(true);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Check for mobile view on mount and on resize
   useEffect(() => {
@@ -239,7 +249,145 @@ const ThreadedMessages: React.FC = () => {
   return (
     <div className="h-full flex flex-col bg-gray-50">
       <div className="p-4 border-b border-gray-200 bg-white">
-        <h1 className="text-2xl font-bold">Messages</h1>
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Messages</h1>
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Accordion type="single" collapsible>
+                <AccordionItem value="tools">
+                  <AccordionTrigger className="bg-gray-900 text-white px-4 py-2 rounded flex items-center h-9 border-gray-900 hover:bg-gray-800">
+                    <FileQuestion className="h-4 w-4 mr-2" />
+                    Tools
+                  </AccordionTrigger>
+                  <AccordionContent className="absolute z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
+                    <div className="px-4 py-3">
+                      <Button
+                        className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
+                        onClick={() => {
+                          fetch('/api/test/generate-batch', { method: 'POST' })
+                            .then(res => {
+                              if (!res.ok) {
+                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+                              }
+                              return res.json();
+                            })
+                            .then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                              toast({ title: 'Batch generated', description: '10 messages created' });
+                            })
+                            .catch(err => {
+                              console.error('Batch error:', err);
+                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
+                            });
+                        }}
+                      >
+                        Generate Batch Messages
+                      </Button>
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        onClick={() => {
+                          const id = window.prompt('Thread ID');
+                          if (!id) return;
+                          fetch(`/api/test/generate-for-user/${id}`, { method: 'POST' })
+                            .then(res => {
+                              if (!res.ok) {
+                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+                              }
+                              return res.json();
+                            })
+                            .then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+                              toast({ title: 'Message generated', description: `Message added to thread ${id}` });
+                            })
+                            .catch(err => {
+                              console.error('Generate error:', err);
+                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
+                            });
+                        }}
+                      >
+                        Generate For Thread
+                      </Button>
+                      {/* Database refresh replicates Testing Tools page */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: 'Database Refresh',
+                            description: 'Refreshing messages from database...'
+                          });
+                          // Refetch messages directly from storage
+                          queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reload - database
+                      </Button>
+                      {/* Clear frontend cache for fresh data */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: 'Cache Refresh',
+                            description: 'Clearing frontend cache and refreshing data...'
+                          });
+                          // Invalidate all cached queries
+                          queryClient.invalidateQueries();
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reload - frontend cache
+                      </Button>
+                      {/* Setup Instagram webhook for real-time updates */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          const setupWebhook = async () => {
+                            try {
+                              const response = await fetch('/api/instagram/setup-webhook', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                              });
+                              const data = await response.json();
+
+                              if (response.ok) {
+                                toast({
+                                  title: 'Webhook Setup',
+                                  description: 'Instagram webhook successfully configured'
+                                });
+                              } else {
+                                toast({
+                                  title: 'Webhook Setup Failed',
+                                  description: data.message || 'Failed to set up Instagram webhook',
+                                  variant: 'destructive'
+                                });
+                              }
+                            } catch (error) {
+                              toast({
+                                title: 'Webhook Setup Error',
+                                description: 'An error occurred during webhook setup',
+                                variant: 'destructive'
+                              });
+                            }
+                          };
+                          setupWebhook();
+                        }}
+                      >
+                        <Link2 className="h-4 w-4 mr-2" />
+                        Setup Webhook
+                      </Button>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </div>
+        </div>
         {/* Desktop tabs */}
         <div className="hidden md:block">
           <Tabs 
