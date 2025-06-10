@@ -3,6 +3,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
+// See CHANGELOG.md for 2025-06-10 [Added]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -37,6 +38,9 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const [customThreadId, setCustomThreadId] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
 
   // Query messages data
   const { data: instagramMessages = [], isLoading: loadingInstagram } = useQuery<MessageType[]>({
@@ -165,23 +169,8 @@ const Messages = () => {
                         Generate Batch Messages
                       </Button>
                       <Select
-                        onValueChange={(threadId) => {
-                          fetch(`/api/test/generate-for-user/${threadId}`, { method: 'POST' })
-                            .then(res => {
-                              if (!res.ok) {
-                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
-                              }
-                              return res.json();
-                            })
-                            .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
-                              toast({ title: 'Message generated', description: `Message added to thread ${threadId}` });
-                            })
-                            .catch(err => {
-                              console.error('Generate error:', err);
-                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
-                            });
-                        }}
+                        onValueChange={(id) => setCustomThreadId(id)}
+                        value={customThreadId}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Generate For Thread" />
@@ -195,6 +184,40 @@ const Messages = () => {
                             ))}
                         </SelectContent>
                       </Select>
+                      <Input
+                        className="mt-2"
+                        placeholder="Custom message"
+                        value={customMessage}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                      />
+                      <Button
+                        className="w-full mt-2"
+                        onClick={() => {
+                          if (!customThreadId) return;
+                          fetch(`/api/test/generate-for-user/${customThreadId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content: customMessage })
+                          })
+                            .then(res => {
+                              if (!res.ok) {
+                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+                              }
+                              return res.json();
+                            })
+                            .then(() => {
+                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+                              toast({ title: 'Message generated', description: `Message added to thread ${customThreadId}` });
+                              setCustomMessage('');
+                            })
+                            .catch(err => {
+                              console.error('Generate error:', err);
+                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
+                            });
+                        }}
+                      >
+                        Send Custom Message
+                      </Button>
                       {/* Database refresh replicates Testing Tools page */}
                       <Button
                         className="w-full mt-2"

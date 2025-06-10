@@ -51,14 +51,19 @@ describe('test routes', () => {
       source: 'instagram',
       metadata: {}
     })
-    const res = await fetch(`${baseUrl}/api/test/generate-for-user/${thread.id}`, { method: 'POST' })
+    const res = await fetch(`${baseUrl}/api/test/generate-for-user/${thread.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: 'Custom test message' })
+    })
     expect(res.status).toBe(200)
     const msg = await res.json()
     expect(msg.threadId).toBe(thread.id)
     expect(msg.sender.name).toBe(thread.participantName)
     expect(msg.sender.avatar).toBeDefined()
-    expect(msg.content.length).toBeGreaterThan(0)
+    expect(msg.content).toBe('Custom test message')
     const msgs = await mem.getThreadMessages(thread.id)
-    expect(msgs.some(m => m.id === msg.id)).toBe(true)
+    const stored = msgs.find(m => m.id === msg.id)
+    expect(stored?.content).toBe('Custom test message')
   })
 })
