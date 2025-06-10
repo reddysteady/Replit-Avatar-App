@@ -63,11 +63,9 @@ Example entry format:
 - [Codex] [Changed-4] Dropdown menu now shows a grey chevron icon and only a Delete option.
 - [Codex][Removed] Vertical thread lines from conversation and reply UI.
 - [Codex][Fixed] Query invalidation keys now match `useMessages` so batch message generation refreshes all pages.
-
-### Changed
 - [Codex] Generate Reply buttons now use a robot icon with a blue background.
 - [Codex][Changed] "Updated bullet format examples in README.md, AGENTS.md, and CHANGELOG.md."
 - [Codex][Changed] "Fixed spacing after agent name in README and CHANGELOG examples."
-### Added
+- [Codex] Clarified README changelog instructions and agent guidelines for missing date sections.
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
 
