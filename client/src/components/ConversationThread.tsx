@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Added-2]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
@@ -10,7 +11,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType, ThreadType } from '@shared/schema';
-import { Loader2, Send, MoreVertical } from 'lucide-react';
+import { Loader2, Send, MoreVertical, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -98,7 +99,7 @@ interface ConversationThreadProps {
 }
 
 // Recursive renderer for threaded messages
-function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: ThreadedMessageType; threadId: number; setShowMobileActions: React.Dispatch<React.SetStateAction<{ id: number; onReply: () => void; onDelete: () => void } | null>> }) {
+function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: ThreadedMessageType; threadId: number; setShowMobileActions: React.Dispatch<React.SetStateAction<{ id: number; onReply: () => void; onDelete: () => void; onGenerate: () => void } | null>> }) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [showFullContent, setShowFullContent] = useState(false);
@@ -123,6 +124,36 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
     mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${msg.threadId}/reply`, payload).then(res => res.json()),
   });
+
+  const { mutate: generateAiReply, isPending: isGenerating } = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', `/api/messages/${msg.id}/generate-reply`);
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      if (data && typeof data === 'object' && 'generatedReply' in data) {
+        setReplyText(data.generatedReply as string);
+        setIsReplying(true);
+        toast({
+          title: 'Reply generated',
+          description: 'AI has generated a reply. You can edit it before sending.',
+        });
+      } else {
+        toast({
+          title: 'Error generating reply',
+          description: 'Unexpected response from server.',
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: 'Error generating reply',
+        description: 'There was a problem generating the AI reply.',
+        variant: 'destructive',
+      });
+    }
+  });
   
   // Display default avatar if none provided
   const avatarUrl = msg.sender?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.sender?.name || 'User');
@@ -144,7 +175,12 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const startHold = () => {
     if (!isMobile) return;
     holdTimer.current = setTimeout(() => {
-      setShowMobileActions({ id: msg.id, onReply: () => setIsReplying(true), onDelete: handleDelete });
+      setShowMobileActions({
+        id: msg.id,
+        onReply: () => setIsReplying(true),
+        onDelete: handleDelete,
+        onGenerate: () => generateAiReply(),
+      });
     }, 500);
   };
 
@@ -186,6 +222,19 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
+                    <DropdownMenuItem onSelect={() => generateAiReply()}>
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <ThumbsUp className="h-3 w-3 mr-1" />
+                          Generate Reply
+                        </>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setIsReplying(true)}>Reply</DropdownMenuItem>
                     <DropdownMenuItem onSelect={handleDelete}>Delete</DropdownMenuItem>
                   </DropdownMenuContent>
@@ -248,7 +297,12 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const [showMobileActions, setShowMobileActions] = useState<{ id: number; onReply: () => void; onDelete: () => void } | null>(null);
+  const [showMobileActions, setShowMobileActions] = useState<{
+    id: number;
+    onReply: () => void;
+    onDelete: () => void;
+    onGenerate: () => void;
+  } | null>(null);
   const { mutate: postMessage } = useMutation({
     mutationFn: (payload: { content: string; parentMessageId: number | null }) =>
       apiRequest('POST', `/api/threads/${threadId}/reply`, payload).then(res => res.json()),
@@ -458,6 +512,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
 
       {isMobile && showMobileActions && (
         <div className="fixed top-0 left-0 right-0 bg-white border-b z-20 flex justify-end space-x-2 p-2">
+          <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onGenerate(); setShowMobileActions(null); }}>
+            <ThumbsUp className="h-3 w-3 mr-1" />
+            Generate Reply
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onReply(); setShowMobileActions(null); }}>
             Reply
           </Button>
