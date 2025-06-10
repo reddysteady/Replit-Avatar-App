@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
+// See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
 // ===== client/src/components/ConversationThread.tsx =====
@@ -28,8 +29,9 @@ function MessageContent({ content, showFullContent, setShowFullContent, isMobile
   isMobile: boolean;
 }) {
   const maxLength = 100;
-  const shouldTruncate = content && content.length > maxLength;
-  const displayContent = shouldTruncate && !showFullContent 
+  // Only truncate on mobile; desktop text wraps naturally
+  const shouldTruncate = isMobile && content && content.length > maxLength;
+  const displayContent = shouldTruncate && !showFullContent
     ? content.substring(0, maxLength) + '...'
     : content;
     
@@ -76,14 +78,9 @@ function MessageContent({ content, showFullContent, setShowFullContent, isMobile
         {displayContent}
       </span>
       {shouldTruncate && !showFullContent && (
-        <>
-          <span className="text-blue-500 ml-1 text-xs hidden md:inline">
-            (hover to expand)
-          </span>
-          <span className="text-blue-500 ml-1 text-xs md:hidden">
-            (tap/hold to expand)
-          </span>
-        </>
+        <span className="text-blue-500 ml-1 text-xs">
+          (tap/hold to expand)
+        </span>
       )}
     </div>
   );
