@@ -88,6 +88,7 @@
 * The changelog date must be the current date in Pacific Time, in the format YYYY-MM-DD. **Lookup the current system time and convert to Pacific Time** then use that as the timestamp.
 * Agents must not reuse or increment existing dates from prior entries.
 * **If the date already exists, append new entries under that same section.**
+* If the appropriate date section is missing, create it using the current Pacific Time date.
   ```
   ## [2025-06-05]
   ### Added
