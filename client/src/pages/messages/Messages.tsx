@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-09 [Changed]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -124,7 +125,7 @@ const Messages = () => {
                     <FileQuestion className="h-4 w-4 mr-2" />
                     Tools
                   </AccordionTrigger>
-                  <AccordionContent className="absolute z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
+                  <AccordionContent className="absolute right-0 z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
                     <div className="px-4 py-3">
                       <Button
                         className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"

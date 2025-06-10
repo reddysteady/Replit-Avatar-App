@@ -1,6 +1,7 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Changed]
+// See CHANGELOG.md for 2025-06-09 [Changed - dropdown alignment]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -259,7 +260,7 @@ const ThreadedMessages: React.FC = () => {
                     <FileQuestion className="h-4 w-4 mr-2" />
                     Tools
                   </AccordionTrigger>
-                  <AccordionContent className="absolute z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
+                  <AccordionContent className="absolute right-0 z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
                     <div className="px-4 py-3">
                       <Button
                         className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
