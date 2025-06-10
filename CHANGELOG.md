@@ -41,3 +41,7 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed] Thread list now refreshes immediately after sending a reply so the left pane chip updates.
 - [Codex][Fixed-3] Added `min-w-0` to `ThreadRow` container so conversation chips truncate correctly.
 - [Codex][Added] Sidebar now includes a link to the Testing Tools page.
+- [Replit Assistant][Changed] README now directs users to the Testing Tools page instead of the Messages page Tools accordion.
+
+## 2025-06-10
+- [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.

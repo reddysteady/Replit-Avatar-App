@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
+// See CHANGELOG.md for 2025-06-10 [Added]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -7,7 +8,7 @@ import StatusInfo from "@/components/StatusInfo";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Settings } from "@shared/schema";
 import { Link } from "wouter";
-import { ChevronDown, ChevronUp, RefreshCw, MessageSquare, FileQuestion, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, RefreshCw, Link2, MessageSquare, FileQuestion, Search } from "lucide-react";
 import AutoRepliesToggle from "../../components/AutoRepliesToggle";
 import { useToast } from "@/hooks/use-toast";
 import { MessageType } from "@shared/schema";
@@ -172,6 +173,78 @@ const Messages = () => {
                         }}
                       >
                         Generate For Thread
+                      </Button>
+                      {/* Database refresh replicates Testing Tools page */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: 'Database Refresh',
+                            description: 'Refreshing messages from database...'
+                          });
+                          // Refetch messages directly from storage
+                          queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
+                          queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reload - database
+                      </Button>
+                      {/* Clear frontend cache for fresh data */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          toast({
+                            title: 'Cache Refresh',
+                            description: 'Clearing frontend cache and refreshing data...'
+                          });
+                          // Invalidate all cached queries
+                          queryClient.invalidateQueries();
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Reload - frontend cache
+                      </Button>
+                      {/* Setup Instagram webhook for real-time updates */}
+                      <Button
+                        className="w-full mt-2"
+                        variant="outline"
+                        onClick={() => {
+                          const setupWebhook = async () => {
+                            try {
+                              const response = await fetch('/api/instagram/setup-webhook', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                              });
+                              const data = await response.json();
+
+                              if (response.ok) {
+                                toast({
+                                  title: 'Webhook Setup',
+                                  description: 'Instagram webhook successfully configured'
+                                });
+                              } else {
+                                toast({
+                                  title: 'Webhook Setup Failed',
+                                  description: data.message || 'Failed to set up Instagram webhook',
+                                  variant: 'destructive'
+                                });
+                              }
+                            } catch (error) {
+                              toast({
+                                title: 'Webhook Setup Error',
+                                description: 'An error occurred during webhook setup',
+                                variant: 'destructive'
+                              });
+                            }
+                          };
+                          setupWebhook();
+                        }}
+                      >
+                        <Link2 className="h-4 w-4 mr-2" />
+                        Setup Webhook
                       </Button>
                     </div>
                   </AccordionContent>
