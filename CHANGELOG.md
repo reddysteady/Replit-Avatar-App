@@ -40,3 +40,4 @@ All notable changes to this project will be documented in this file.
 - [Codex][Fixed] Restored conversation chip rendering in `ThreadRow` and added unit test.
 - [Codex][Fixed] Thread list now refreshes immediately after sending a reply so the left pane chip updates.
 - [Codex][Fixed-3] Added `min-w-0` to `ThreadRow` container so conversation chips truncate correctly.
+- [Codex][Added] Sidebar now includes a link to the Testing Tools page.

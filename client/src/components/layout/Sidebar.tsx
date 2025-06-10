@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-09 [Added]
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
@@ -88,6 +89,14 @@ const Sidebar = ({ className }: SidebarProps) => {
                 active={location === "/automation"}
               >
                 Automation Rules
+              </NavItem>
+              {/* Testing tools page for generating sample data and debugging */}
+              <NavItem
+                href="/testing"
+                icon={<Code />}
+                active={location === "/testing"}
+              >
+                Testing Tools
               </NavItem>
 
 
