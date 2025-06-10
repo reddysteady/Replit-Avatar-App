@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Removed]
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Fixed - delete animation]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
 // See CHANGELOG.md for 2025-06-10 [Added-3]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
@@ -104,6 +105,7 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [showFullContent, setShowFullContent] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -111,10 +113,12 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const { mutate: deleteMessage } = useMutation({
     mutationFn: (id: number) => apiRequest('DELETE', `/api/messages/${id}`, {}),
     onSuccess: (_, id) => {
-      queryClient.setQueryData<MessageType[]>(
-        ['thread-messages', threadId],
-        (old) => old?.filter((m) => m.id !== id) || []
-      );
+      setTimeout(() => {
+        queryClient.setQueryData<MessageType[]>(
+          ['thread-messages', threadId],
+          (old) => old?.filter((m) => m.id !== id) || []
+        );
+      }, 300);
       toast({ title: 'Message deleted' });
     },
     onError: () => {
@@ -169,7 +173,10 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
     setIsReplying(false);
   };
 
-  const handleDelete = () => deleteMessage(msg.id);
+  const handleDelete = () => {
+    setIsDeleting(true);
+    deleteMessage(msg.id);
+  };
 
   const startHold = () => {
     if (!isMobile) return;
@@ -191,7 +198,19 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   };
   
   return (
-    <div style={{ paddingLeft: msg.depth * 20 }} className="mb-4">
+    <div
+      style={{ paddingLeft: msg.depth * 20 }}
+      className={`mb-4 relative transition-opacity duration-300 ${
+        isDeleting ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
+      {/* Vertical line connecting replies */}
+      {msg.depth > 0 && (
+        <div 
+          className="absolute left-0 top-0 bottom-0 border-l-2 border-gray-200" 
+          style={{ left: (msg.depth * 20) - 10 + 'px' }}
+        />
+      )}
       
       <div className={`flex ${msg.isOutbound ? 'justify-end' : ''}`}> 
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 max-w-[75%]">
@@ -374,6 +393,8 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   const finalMessages = propMessages
     ? useMessageThreading(propMessages).threadedMessages
     : useMessageThreading(fetchedMessages).threadedMessages;
+
+  const prevCount = useRef(finalMessages ? finalMessages.length : 0);
   
 
   // Stringify metadata for logging to match logger signature
@@ -398,9 +419,13 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    if (finalMessages && finalMessages.length > 0) {
+    if (
+      finalMessages &&
+      finalMessages.length > prevCount.current
+    ) {
       endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
+    prevCount.current = finalMessages ? finalMessages.length : 0;
   }, [finalMessages]);
   
   // Handle sending a new message

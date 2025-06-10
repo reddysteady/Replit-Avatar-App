@@ -50,13 +50,13 @@ All notable changes to this project will be documented in this file.
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
 
 ## 2025-06-10
-
+- [Codex] Added "Generate Reply" button in `ConversationThread` for AI-assisted replies.
+- [Codex] Fixed Message deletion now fades out and doesn't scroll to the bottom.
 - [Codex] [dded]"Generate Reply" button in `ConversationThread` for AI-assisted replies.
 - [Codex] [Added] Settings page now includes a Flex processing toggle and backend honors the field in OpenAI requests.
 - [Codex] [Changed] Desktop view now wraps long message text instead of truncating it.
 - [Codex] [Changed] Conversation thread now aligns outbound messages to the right and removes avatars for a WhatsApp-style view.
 - [Codex] [Added] Composer "Generate Reply" button populates the message input.
 - [Codex] [Changed-4] Dropdown menu now shows a grey chevron icon and only a Delete option.
-
 - [Codex][Removed] Vertical thread lines from conversation and reply UI.
 
