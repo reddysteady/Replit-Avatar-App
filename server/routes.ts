@@ -650,7 +650,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorToneDescription: settings.creatorToneDescription || "Friendly and professional",
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
-        contextSnippets
+        contextSnippets,
+        flexProcessing: settings.aiSettings?.flexProcessing || false
       });
       
       // Return only the generated reply
@@ -734,6 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     creatorToneDescription: aiSettings.creatorToneDescription || "",
                     temperature: (aiSettings.temperature || 70) / 100,
                     maxLength: aiSettings.maxResponseLength || 500,
+                    flexProcessing: aiSettings.flexProcessing || false
                   });
                   
                   // Send reply to Instagram
@@ -847,7 +849,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           creatorToneDescription: settings.creatorToneDescription || "",
           temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
           maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
-          contextSnippets: useContext ? contextSnippets : undefined
+          contextSnippets: useContext ? contextSnippets : undefined,
+          flexProcessing: settings.aiSettings?.flexProcessing || false
         });
       } catch (aiError: any) {
         console.error("Error generating AI reply:", aiError.message);
@@ -938,6 +941,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorToneDescription: settings.creatorToneDescription || "",
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 500,
+        flexProcessing: settings.aiSettings?.flexProcessing || false,
       });
       
       // Send reply to YouTube
@@ -1003,7 +1007,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorToneDescription: settings.creatorToneDescription || "",
         temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
         maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
-        contextSnippets: contextSnippets.length > 0 ? contextSnippets : undefined
+        contextSnippets: contextSnippets.length > 0 ? contextSnippets : undefined,
+        flexProcessing: settings.aiSettings?.flexProcessing || false
       });
       
       res.json({ reply: reply });
@@ -1226,7 +1231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           maxResponseLength: settings.maxResponseLength || 500,
           model: settings.aiModel || "gpt-4o",
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
-          autoReplyYoutube: settings.aiAutoRepliesYoutube || false
+          autoReplyYoutube: settings.aiAutoRepliesYoutube || false,
+          flexProcessing: false
         };
       }
       
@@ -1267,6 +1273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           model: z.string().optional(),
           autoReplyInstagram: z.boolean().optional(),
           autoReplyYoutube: z.boolean().optional(),
+          flexProcessing: z.boolean().optional(),
         }).optional(),
         notificationSettings: z.object({
           email: z.string().email().optional(),

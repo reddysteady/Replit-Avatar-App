@@ -1,8 +1,12 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-10 [Removed]
+// See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed - delete animation]
 // See CHANGELOG.md for 2025-06-10 [Added-2]
+// See CHANGELOG.md for 2025-06-10 [Added-3]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
+// See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
 // ===== client/src/components/ConversationThread.tsx =====
@@ -12,7 +16,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType, ThreadType } from '@shared/schema';
-import { Loader2, Send, MoreVertical, ThumbsUp } from 'lucide-react';
+// See CHANGELOG.md for 2025-06-10 [Changed-4]
+import { Loader2, Send, ChevronDown, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -29,8 +34,9 @@ function MessageContent({ content, showFullContent, setShowFullContent, isMobile
   isMobile: boolean;
 }) {
   const maxLength = 100;
-  const shouldTruncate = content && content.length > maxLength;
-  const displayContent = shouldTruncate && !showFullContent 
+  // Only truncate on mobile; desktop text wraps naturally
+  const shouldTruncate = isMobile && content && content.length > maxLength;
+  const displayContent = shouldTruncate && !showFullContent
     ? content.substring(0, maxLength) + '...'
     : content;
     
@@ -77,14 +83,9 @@ function MessageContent({ content, showFullContent, setShowFullContent, isMobile
         {displayContent}
       </span>
       {shouldTruncate && !showFullContent && (
-        <>
-          <span className="text-blue-500 ml-1 text-xs hidden md:inline">
-            (hover to expand)
-          </span>
-          <span className="text-blue-500 ml-1 text-xs md:hidden">
-            (tap/hold to expand)
-          </span>
-        </>
+        <span className="text-blue-500 ml-1 text-xs">
+          (tap/hold to expand)
+        </span>
       )}
     </div>
   );
@@ -159,8 +160,6 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
     }
   });
   
-  // Display default avatar if none provided
-  const avatarUrl = msg.sender?.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(msg.sender?.name || 'User');
   
   // Handle reply submission
   const handleReplySubmit = async (e: React.FormEvent) => {
@@ -213,41 +212,23 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         />
       )}
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3">
-        <div className="flex items-start">
-          <img
-            src={avatarUrl}
-            alt={msg.sender?.name || 'User'}
-            className="w-8 h-8 rounded-full mr-2"
-          />
-          <div className="flex-1">
-            <div className="text-sm font-semibold">{msg.sender?.name || 'User'}</div>
-            {/* Message content with truncation and hover/long-press support */}
-            <MessageContent content={msg.content} showFullContent={showFullContent} setShowFullContent={setShowFullContent} isMobile={isMobile} />
-            <div className="flex justify-between items-center mt-1" onTouchStart={startHold} onTouchEnd={cancelHold}>
-              <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</div>
-              {!isMobile && (
+      <div className={`flex ${msg.isOutbound ? 'justify-end' : ''}`}> 
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 max-w-[75%]">
+          <div className={`flex items-start ${msg.isOutbound ? 'flex-row-reverse text-right' : ''}`}>
+            <div className="flex-1">
+              <div className="text-sm font-semibold">{msg.sender?.name || 'User'}</div>
+              {/* Message content with truncation and hover/long-press support */}
+              <MessageContent content={msg.content} showFullContent={showFullContent} setShowFullContent={setShowFullContent} isMobile={isMobile} />
+              <div className="flex justify-between items-center mt-1" onTouchStart={startHold} onTouchEnd={cancelHold}>
+                <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</div>
+                {!isMobile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <MoreVertical className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => generateAiReply()}>
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <ThumbsUp className="h-3 w-3 mr-1" />
-                          Generate Reply
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setIsReplying(true)}>Reply</DropdownMenuItem>
                     <DropdownMenuItem onSelect={handleDelete}>Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -283,7 +264,8 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
           </div>
         </div>
       </div>
-      
+    </div>
+
       {/* Render child messages */}
       {msg.childMessages.length > 0 && (
         <div className="mt-2">
@@ -355,6 +337,36 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
     },
     onError: () => {
       toast({ title: 'Failed to delete thread', variant: 'destructive' });
+    }
+  });
+
+  const { mutate: generateThreadReply, isPending: isGeneratingThreadReply } = useMutation({
+    mutationFn: async () => {
+      if (!threadId) return { generatedReply: '' };
+      const response = await apiRequest('POST', `/api/threads/${threadId}/generate-reply`);
+      return response.json();
+    },
+    onSuccess: (data: any) => {
+      if (data && typeof data === 'object' && 'generatedReply' in data) {
+        setReplyText(data.generatedReply as string);
+        toast({
+          title: 'Reply generated',
+          description: 'AI has generated a reply. You can edit it before sending.',
+        });
+      } else {
+        toast({
+          title: 'Error generating reply',
+          description: 'Unexpected response from server.',
+          variant: 'destructive',
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: 'Error generating reply',
+        description: 'There was a problem generating the AI reply.',
+        variant: 'destructive',
+      });
     }
   });
   
@@ -517,7 +529,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -530,13 +542,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
 
       {isMobile && showMobileActions && (
         <div className="fixed top-0 left-0 right-0 bg-white border-b z-20 flex justify-end space-x-2 p-2">
-          <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onGenerate(); setShowMobileActions(null); }}>
-            <ThumbsUp className="h-3 w-3 mr-1" />
-            Generate Reply
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onReply(); setShowMobileActions(null); }}>
-            Reply
-          </Button>
           <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onDelete(); setShowMobileActions(null); }}>
             Delete
           </Button>
@@ -570,6 +575,20 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             onKeyDown={handleComposerKeyDown}
             className="flex-1 min-h-[60px] resize-none"
           />
+          <Button
+            type="button"
+            aria-label="Generate AI reply"
+            className="ml-2 self-end"
+            onClick={() => generateThreadReply()}
+            disabled={isGeneratingThreadReply}
+            data-testid="composer-generate"
+          >
+            {isGeneratingThreadReply ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ThumbsUp className="h-4 w-4" />
+            )}
+          </Button>
           <Button
             type="submit"
             className="ml-2 self-end"

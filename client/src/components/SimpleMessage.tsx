@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-10 [Removed]
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -88,8 +89,7 @@ const SimpleMessage: React.FC<SimpleMessageProps> = ({
           </div>
           
           <div className={`
-            text-sm whitespace-pre-wrap break-words text-slate-800 font-medium 
-            ${isReply ? 'border-l-2 border-l-blue-200 pl-2' : ''} 
+            text-sm whitespace-pre-wrap break-words text-slate-800 font-medium
             ${message.isOutbound ? 'bg-blue-50 rounded-lg px-3 py-2' : 'bg-white border border-gray-100 shadow-sm rounded-lg px-3 py-2'}
           `}>
             {message.content || "(No message content)"}
