@@ -65,4 +65,5 @@ All notable changes to this project will be documented in this file.
 - [Codex] Generate Reply buttons now use a robot icon with a blue background.
 ### Added
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
+- [Codex][Fixed] `/api/test/generate-for-user` now correctly uses the `content` body when provided.
 
