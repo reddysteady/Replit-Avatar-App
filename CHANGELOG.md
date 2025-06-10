@@ -48,5 +48,8 @@ All notable changes to this project will be documented in this file.
 
 - [Codex][Changed] "Generate For Thread" now uses a dropdown populated with thread names.
 
+- [Codex][Changed] `/api/test/generate-for-user` now uses thread participant details and generates content referencing the participant.
+- [Codex][Fixed] `/api/test/generate-for-user` returns messages with nested sender info so avatars display.
+
 ## 2025-06-10
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
