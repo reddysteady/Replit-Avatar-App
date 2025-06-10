@@ -59,4 +59,5 @@ All notable changes to this project will be documented in this file.
 - [Codex] [Added] Composer "Generate Reply" button populates the message input.
 - [Codex] [Changed-4] Dropdown menu now shows a grey chevron icon and only a Delete option.
 - [Codex][Removed] Vertical thread lines from conversation and reply UI.
+- [Codex][Fixed] Query invalidation keys now match `useMessages` so batch message generation refreshes all pages.
 
