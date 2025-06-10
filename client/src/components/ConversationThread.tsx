@@ -15,7 +15,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMessageThreading, ThreadedMessageType } from '@/hooks/useMessageThreading';
 import { MessageType, ThreadType } from '@shared/schema';
-import { Loader2, Send, MoreVertical, ThumbsUp } from 'lucide-react';
+// See CHANGELOG.md for 2025-06-10 [Changed-4]
+import { Loader2, Send, ChevronDown, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -205,24 +206,10 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <MoreVertical className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => generateAiReply()}>
-                      {isGenerating ? (
-                        <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <ThumbsUp className="h-3 w-3 mr-1" />
-                          Generate Reply
-                        </>
-                      )}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setIsReplying(true)}>Reply</DropdownMenuItem>
                     <DropdownMenuItem onSelect={handleDelete}>Delete</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -517,7 +504,7 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -530,13 +517,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
 
       {isMobile && showMobileActions && (
         <div className="fixed top-0 left-0 right-0 bg-white border-b z-20 flex justify-end space-x-2 p-2">
-          <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onGenerate(); setShowMobileActions(null); }}>
-            <ThumbsUp className="h-3 w-3 mr-1" />
-            Generate Reply
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onReply(); setShowMobileActions(null); }}>
-            Reply
-          </Button>
           <Button size="sm" variant="ghost" onClick={() => { showMobileActions.onDelete(); setShowMobileActions(null); }}>
             Delete
           </Button>
