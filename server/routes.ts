@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-09 [Added]
+// See CHANGELOG.md for 2025-06-09 [Changed]
 
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 import type { Express } from "express";
@@ -305,13 +306,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Thread not found' });
       }
 
+      const content = `Hi ${thread.participantName}, this is a test message.`;
+
       const msg = await storage.addMessageToThread(threadId, {
         source: thread.source || 'instagram',
-        content: faker.lorem.sentence(),
+        content,
         externalId: `faker-${Date.now()}`,
-        senderId: faker.internet.userName().toLowerCase(),
-        senderName: faker.person.fullName(),
-        senderAvatar: faker.image.avatar(),
+        senderId: thread.externalParticipantId,
+        senderName: thread.participantName,
+        senderAvatar: thread.participantAvatar || faker.image.avatar(),
         timestamp: new Date(),
         status: 'new',
         isHighIntent: false,
