@@ -66,4 +66,37 @@ describe('test routes', () => {
     const stored = msgs.find(m => m.id === msg.id)
     expect(stored?.content).toBe('Custom test message')
   })
+
+  it('generate-reply returns AI generated text', async () => {
+    const thread = await mem.createThread({
+      userId: 1,
+      externalParticipantId: 'u1',
+      participantName: 'Tester',
+      source: 'instagram',
+      metadata: {}
+    })
+
+    await mem.addMessageToThread(thread.id, {
+      source: 'instagram',
+      externalId: 'msg1',
+      senderId: 'u1',
+      senderName: 'Tester',
+      senderAvatar: undefined,
+      content: 'Hello there',
+      timestamp: new Date(),
+      status: 'new',
+      isHighIntent: false,
+      userId: 1
+    })
+
+    const { aiService } = await import('./services/openai')
+    const spy = vi.spyOn(aiService, 'generateReply').mockResolvedValueOnce('AI generated!')
+
+    const res = await fetch(`${baseUrl}/api/threads/${thread.id}/generate-reply`, { method: 'POST' })
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(spy).toHaveBeenCalled()
+    expect(data.generatedReply).toBe('AI generated!')
+    spy.mockRestore()
+  })
 })
