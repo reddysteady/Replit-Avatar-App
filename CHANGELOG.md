@@ -74,3 +74,5 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] AI Model setting now determines which OpenAI model is used for replies.
 - [Codex][Added] Unit test confirms custom model is passed to the OpenAI API.
 - [Codex][Fixed] Generate Reply now returns OpenAI content.
+- [Codex][Fixed-2] Load env early in AI service so replies use OpenAI.
+

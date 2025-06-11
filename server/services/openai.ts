@@ -3,8 +3,24 @@
  * Handles interactions with OpenAI for message generation, intent classification,
  * and content moderation
  */
+// See CHANGELOG.md for 2025-06-11 [Fixed-2]
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+
+import fs from 'fs';
+
+if (!process.env.OPENAI_API_KEY) {
+  try {
+    const envContent = fs.readFileSync('.env', 'utf8');
+    for (const line of envContent.split('\n')) {
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match && !process.env[match[1]]) {
+        process.env[match[1]] = match[2];
+      }
+    }
+  } catch {}
+}
+
 
 import OpenAI from "openai";
 import { storage } from "../storage";
