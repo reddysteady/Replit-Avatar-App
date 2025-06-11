@@ -5,6 +5,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
+// See CHANGELOG.md for 2025-06-11 [Changed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
@@ -546,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get settings for AI parameters
       const settings = await storage.getSettings(1);
-      
+
       // Generate AI reply using the OpenAI service
       const generatedReply = await aiService.generateReply({
         content: messages[messages.length - 1]?.content ?? "",

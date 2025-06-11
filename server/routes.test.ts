@@ -3,6 +3,10 @@ import express from 'express'
 import type { Server } from 'http'
 import { MemStorage } from './storage'
 
+const generateReply = vi.fn()
+
+vi.mock('./services/openai', () => ({ aiService: { generateReply } }))
+
 let server: Server
 let baseUrl: string
 let mem: MemStorage
@@ -67,36 +71,34 @@ describe('test routes', () => {
     expect(stored?.content).toBe('Custom test message')
   })
 
-  it('generate-reply returns AI generated text', async () => {
+
+  it('thread generate-reply returns AI response', async () => {
     const thread = await mem.createThread({
       userId: 1,
-      externalParticipantId: 'u1',
-      participantName: 'Tester',
+      externalParticipantId: 'z',
+      participantName: 'tester',
+
       source: 'instagram',
       metadata: {}
     })
 
     await mem.addMessageToThread(thread.id, {
       source: 'instagram',
-      externalId: 'msg1',
-      senderId: 'u1',
-      senderName: 'Tester',
-      senderAvatar: undefined,
-      content: 'Hello there',
+      content: 'Hello',
+      externalId: 'ext-1',
+      senderId: 'z',
+      senderName: 'tester',
       timestamp: new Date(),
       status: 'new',
-      isHighIntent: false,
-      userId: 1
+      userId: 1,
+      metadata: {}
     })
 
-    const { aiService } = await import('./services/openai')
-    const spy = vi.spyOn(aiService, 'generateReply').mockResolvedValueOnce('AI generated!')
-
+    generateReply.mockResolvedValueOnce('dynamic reply')
     const res = await fetch(`${baseUrl}/api/threads/${thread.id}/generate-reply`, { method: 'POST' })
     expect(res.status).toBe(200)
     const data = await res.json()
-    expect(spy).toHaveBeenCalled()
-    expect(data.generatedReply).toBe('AI generated!')
-    spy.mockRestore()
+    expect(data.generatedReply).toBe('dynamic reply')
+
   })
 })
