@@ -3,6 +3,10 @@ import express from 'express'
 import type { Server } from 'http'
 import { MemStorage } from './storage'
 
+const generateReply = vi.fn()
+
+vi.mock('./services/openai', () => ({ aiService: { generateReply } }))
+
 let server: Server
 let baseUrl: string
 let mem: MemStorage
@@ -65,5 +69,33 @@ describe('test routes', () => {
     const msgs = await mem.getThreadMessages(thread.id)
     const stored = msgs.find(m => m.id === msg.id)
     expect(stored?.content).toBe('Custom test message')
+  })
+
+  it('thread generate-reply returns AI response', async () => {
+    const thread = await mem.createThread({
+      userId: 1,
+      externalParticipantId: 'z',
+      participantName: 'tester',
+      source: 'instagram',
+      metadata: {}
+    })
+
+    await mem.addMessageToThread(thread.id, {
+      source: 'instagram',
+      content: 'Hello',
+      externalId: 'ext-1',
+      senderId: 'z',
+      senderName: 'tester',
+      timestamp: new Date(),
+      status: 'new',
+      userId: 1,
+      metadata: {}
+    })
+
+    generateReply.mockResolvedValueOnce('dynamic reply')
+    const res = await fetch(`${baseUrl}/api/threads/${thread.id}/generate-reply`, { method: 'POST' })
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.generatedReply).toBe('dynamic reply')
   })
 })

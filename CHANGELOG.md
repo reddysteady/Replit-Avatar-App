@@ -74,5 +74,6 @@ Example entry format:
 - [Codex][Fixed] Mobile conversation view no longer shows filter dropdown.
 - [Codex][Added] `ChatHeader` component mimics WhatsApp chat header with back button and avatar.
 - [Codex][Added] Sidebar link and new route for Privacy Policy page.
+- [Codex][Changed] `/api/threads/:id/generate-reply` now returns AI-generated responses using stored settings.
 
 
