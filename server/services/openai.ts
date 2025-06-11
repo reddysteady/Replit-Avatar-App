@@ -36,13 +36,17 @@ interface DetectSensitiveResult {
 }
 
 export class AIService {
-  private openai: OpenAI;
+  constructor() {}
 
-  constructor() {
-    // Initialize OpenAI client
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  private async getClient(): Promise<OpenAI | null> {
+    const key = process.env.OPENAI_API_KEY || (await storage.getSettings(1)).openaiToken;
+    if (process.env.DEBUG_AI) {
+      console.debug(
+        "[DEBUG-AI] getClient using",
+        process.env.OPENAI_API_KEY ? "env" : key ? "settings" : "none"
+      );
+    }
+    return key ? new OpenAI({ apiKey: key }) : null;
   }
   
   /**
@@ -50,17 +54,19 @@ export class AIService {
    * Used for the RAG pipeline to enable semantic search
    */
   async generateEmbedding(text: string): Promise<number[]> {
+    const client = await this.getClient();
+    if (!client) {
+      if (process.env.DEBUG_AI) console.debug('[DEBUG-AI] generateEmbedding fallback');
+      return Array(1536).fill(0);
+    }
     try {
-      const response = await this.openai.embeddings.create({
+      const response = await client.embeddings.create({
         model: "text-embedding-ada-002",
         input: text,
       });
-      
       return response.data[0].embedding;
     } catch (error) {
       console.error("Error generating embedding:", error);
-      // Return a dummy embedding in case of failure
-      // In production, you might want to handle this differently
       return Array(1536).fill(0);
     }
   }
@@ -73,8 +79,8 @@ export class AIService {
     try {
       const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
 
-      // Check if OPENAI_API_KEY is available
-      if (!process.env.OPENAI_API_KEY) {
+      const client = await this.getClient();
+      if (!client) {
         log("OpenAI API key not found. Using fallback reply.");
         return this.generateFallbackReply(content, senderName);
       }
@@ -120,7 +126,7 @@ export class AIService {
         ${contextSnippets && contextSnippets.length > 0 ? "Use the contextual information when it's relevant to the question." : ""}
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: model || DEFAULT_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
@@ -178,8 +184,13 @@ export class AIService {
    */
   async classifyIntent(text: string): Promise<ClassifyIntentResult> {
     try {
+      const client = await this.getClient();
+      if (!client) {
+        if (process.env.DEBUG_AI) console.debug('[DEBUG-AI] classifyIntent fallback');
+        return { isHighIntent: false, confidence: 0, category: 'general_inquiry' };
+      }
       const prompt = `
-        Analyze the following message and determine if it represents a high-intent lead. 
+        Analyze the following message and determine if it represents a high-intent lead.
         A high-intent lead is someone who is likely to convert into a customer, client, or collaborator.
         High-intent indicators include: seeking services, mentioning budget, asking about pricing, 
         discussing collaboration, mentioning business needs, or requesting detailed information about products/services.
@@ -194,7 +205,7 @@ export class AIService {
         }
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
@@ -224,8 +235,13 @@ export class AIService {
    */
   async detectSensitiveContent(text: string): Promise<DetectSensitiveResult> {
     try {
+      const client = await this.getClient();
+      if (!client) {
+        if (process.env.DEBUG_AI) console.debug('[DEBUG-AI] detectSensitive fallback');
+        return { isSensitive: false, confidence: 0, category: 'not_sensitive' };
+      }
       const prompt = `
-        Analyze the following message and determine if it contains sensitive content 
+        Analyze the following message and determine if it contains sensitive content
         that should be reviewed by a human rather than receiving an automated response.
         Sensitive content includes: legal issues, complaints, refund requests, account issues, 
         sensitive personal information, potentially harmful topics, or any content that might 
@@ -241,7 +257,7 @@ export class AIService {
         }
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },

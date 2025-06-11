@@ -73,3 +73,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] `/api/threads/:id/generate-reply` now generates dynamic replies using user settings.
 - [Codex][Changed] AI Model setting now determines which OpenAI model is used for replies.
 - [Codex][Added] Unit test confirms custom model is passed to the OpenAI API.
+
+## 2025-06-12
+- [Codex][Fixed] Generate Reply now returns OpenAI content.

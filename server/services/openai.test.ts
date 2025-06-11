@@ -1,22 +1,29 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { AIService } from './openai'
 
+let mem: any
 var openaiMock = {
   embeddings: { create: vi.fn() },
   chat: { completions: { create: vi.fn() } }
 }
 
 vi.mock('openai', () => ({ default: vi.fn().mockImplementation(() => openaiMock) }))
+vi.mock('../storage', async () => {
+  const actual = await vi.importActual<typeof import('../storage')>('../storage')
+  mem = new actual.MemStorage()
+  return { ...actual, storage: mem }
+})
 
 const mockEmbeddings = openaiMock.embeddings
 const mockCreate = openaiMock.chat.completions.create
 
 describe('AIService', () => {
-  let service: AIService
+  let service: any
 
-  beforeEach(() => {
-    service = new AIService()
+  beforeEach(async () => {
+    const mod = await import('./openai')
+    service = new mod.AIService()
+    process.env.OPENAI_API_KEY = 'test-key'
     mockCreate.mockReset()
     mockEmbeddings.create.mockReset()
   })
@@ -38,6 +45,15 @@ describe('AIService', () => {
     process.env.OPENAI_API_KEY = ''
     const reply = await service.generateReply({ content: 'hi', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-4' })
     expect(reply).toContain('Bob')
+  })
+
+  it('uses token from settings when env key missing', async () => {
+    process.env.OPENAI_API_KEY = ''
+    await mem.updateSettings(1, { openaiToken: 'set-key' })
+    mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
+    const reply = await service.generateReply({ content: 'hey', senderName: 'Ann', creatorToneDescription: '', temperature: 0.5, maxLength: 10 })
+    expect(reply).toBe('ok')
+    expect(mockCreate).toHaveBeenCalled()
   })
 
   it('passes flex service tier when enabled', async () => {
