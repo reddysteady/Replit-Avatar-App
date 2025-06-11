@@ -79,3 +79,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed-3] AI service now falls back to stored OpenAI tokens when env key is missing.
 
 
+
+## 2025-06-12
+- [Codex][Changed] Removed manual dotenv parser from AI service.

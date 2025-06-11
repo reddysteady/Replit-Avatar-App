@@ -7,20 +7,10 @@
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Fixed-3]
+// See CHANGELOG.md for 2025-06-12 [Changed]
 
-import fs from 'fs';
-
-if (!process.env.OPENAI_API_KEY) {
-  try {
-    const envContent = fs.readFileSync('.env', 'utf8');
-    for (const line of envContent.split('\n')) {
-      const match = line.match(/^([^=]+)=(.*)$/);
-      if (match && !process.env[match[1]]) {
-        process.env[match[1]] = match[2];
-      }
-    }
-  } catch {}
-}
+// dotenv/config is imported in server/index.ts before this service is
+// instantiated, so manual .env parsing is unnecessary.
 
 
 import OpenAI from "openai";
