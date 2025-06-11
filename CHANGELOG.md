@@ -1,9 +1,5 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-Example entry format:
-`- [AGENT_NAME][Fixed/Changed/Added] "Description of change"`
+<!-- CHANGELOG.md -->
+Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this CHANGLOG.md file.
 
 ## 2025-06-07
 - [Added] Created `CHANGELOG.md` and added contribution instructions to `README.md`.

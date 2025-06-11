@@ -22,12 +22,11 @@ Running `npm test` will automatically install dependencies if they are missing.
 
 Before making any changes, please:
 
-1. Check the latest `CHANGELOG.md` to ensure you’re not duplicating efforts.
-2. Create or update `CHANGELOG.md` with a dated entry using the format:
-   `- [AGENT_NAME][Fixed/Changed/Added] "Description of change"`.
-3. Add a top-of-file comment in any source file you modify, pointing to the new changelog entry.
-4. Provide concise inline comments describing what was changed and why.
-5. Submit small, atomic commits.
+1. All code changes—whether authored by humans or AI agents—**must** be recorded in `CHANGELOG.md`. Follow the exact conventions outlined in
+[CHANGELOG_GUIDE.md](./CHANGELOG_GUIDE.md)
+2. Add a top-of-file comment in any source file you modify, pointing to the new changelog entry.
+3. Provide concise inline comments describing what was changed and why.
+4. Submit small, atomic commits.
 
 Following these steps keeps the README and the project history clear for everyone.
 

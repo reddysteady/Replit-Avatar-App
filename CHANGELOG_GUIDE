@@ -1,0 +1,147 @@
+<!-- CHANGELOG_GUIDE.md -->
+
+Zero-ambiguity protocol for updating CHANGELOG.md
+
+0 · TL;DR for Agents
+
+Locate today’s date header (YYYY-MM-DD).
+
+If it already exists → append new lines under it. If not → add the header at the bottom of the file.
+
+Write one entry per line using the pattern [Agent?][Type] Description. (The [Agent] tag is optional for humans.)
+
+Stage & commit the updated file with the code change. No changelog update → ❌ PR rejected.
+
+1 · Entry Format (must be exact)
+
+2025-06-11          ← Date header (YYYY-MM-DD) on its own line
+[Codex][Fixed] Foo bar.   ← Lines start with brackets, no bullets
+
+### Bracket tokens
+
+| Token | When / Why to use |
+|-------|-------------------|
+| **Agent** | _Optional_ automated-tool prefix, e.g. `[Codex]`, `[ReplitAssistant]` (PascalCase, no spaces) |
+| **Type** | **Added · Changed · Fixed · Removed · Security · Deprecated · Docs** |
+| **Suffix** | Optional numeric counter, e.g. `[Fixed-3]`, when logging several tightly‑related fixes |
+
+### Description rules
+* **Imperative**: `Fix crash` ✔ (`Fixed crash` ✘)
+* End with a period.
+* ≤ 120 characters.
+* Mention file, API, or behaviour briefly: `[Fixed] Conversation thread now aligns outbound messages.`
+
+2 · Day‑to‑Day Algorithm (log steps with [CL])
+
+[CL] Scan diff
+
+files=$(git diff --name-only HEAD~1)
+if [ -z "$files" ]; then
+  echo "[CL] No code change – abort"; exit 0;
+fi
+
+[CL] Classify change
+
+Heuristic
+
+Type
+
+New file
+
+Added
+
+Bug fix / red test → green
+
+Fixed
+
+Behaviour tweak / refactor
+
+Changed
+
+File or feature removed
+
+Removed
+
+[CL] Locate or create date header
+
+today=$(TZ="America/Edmonton" date +"%Y-%m-%d")
+grep -q "^$today$" CHANGELOG.md || printf "\n%s\n" "$today" >> CHANGELOG.md
+
+[CL] Append entry lines directly after the header you just ensured.
+
+[CL] Lint
+
+Each line matches ^\[[A-Za-z]+(\][A-Za-z]+)?\] .
+
+No duplicate descriptions within the same date block.
+
+No line exceeds 120 chars.
+
+Single blank line between date blocks.
+
+[CL] Stage & commit
+
+git add CHANGELOG.md
+git commit -m "docs(changelog): update for <feature|fix>"
+
+3 · Examples
+
+Single human entry
+
+2025-06-12 [Changed] Switch image optimization from Imgix to Vite‑Imagemin.
+
+Multiple agent entries, same day
+
+2025-06-13 [Codex][Added] Unit tests for /api/messages DELETE route.
+[Codex][Fixed] Null senderId caused blank avatar in ThreadRow.
+
+Mixed agent + human
+
+2025-06-14 [Codex][Removed] Legacy ConversationThread.css.
+[Fixed] Message composer now respects Enter‑to‑send on mobile.
+
+4 · Autofix Heuristics (silent corrections)
+
+Violation
+
+Auto‑fix directive
+
+Wrong date header format
+
+Convert to YYYY‑MM‑DD.
+
+Non‑imperative verb
+
+Rewrite to imperative base form.
+
+Trailing whitespace
+
+Strip.
+
+Missing period
+
+Append .
+
+Duplicate blank lines
+
+Collapse to a single blank line between blocks.
+
+5 · Escalate / Require Human Review
+
+Condition
+
+Action
+
+Git diff touches > 50 files
+
+Skip changelog, ping humans (@reviewers).
+
+Ambiguous classification (can’t infer type)
+
+Open GitHub issue titled “Needs manual changelog”.
+
+Legal / security policy changes
+
+Escalate to human reviewer.
+
+End of guide – follow it verbatim or the CI bot will fail your build.

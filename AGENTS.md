@@ -1,110 +1,139 @@
 # AGENTS.md
 
-## AI Agents Used
-
-### 1. OpenAI Codex
-
-* **Role:** Automated code generation, completion, and refactoring in the Crypto Mini-Game PvP PoC project.
-* **Scope:**
-
-  * Generates backend (Node.js/Express) and frontend (HTML/JS) code.
-  * Writes and updates smart contract code (Rust/Anchor).
-  * Provides code suggestions and automated test scripts.
-* **Integration:** Used via OpenAI API in Replit or other supported IDE integrations.
-
-### 2. Replit AI Assistant
-
-* **Role:** Conversational, context-aware coding assistant embedded within Replit's IDE.
-* **Scope:**
-
-  * Provides in-IDE code explanations, refactoring suggestions, and answers technical questions.
-  * Can generate code, explain errors, and automate basic project scaffolding.
-  * Assists with dependency management and debugging guidance.
-* **Integration:** Available directly inside the Replit workspace as an AI-powered assistant panel or chat.
-
-### 3. Human Developers
-
-* **Role:**
-
-  * Design architecture.
-  * Review, test, and approve all AI-generated code.
-  * Own deployment and production merges.
+This document is the **single source of truth** for how automated agents (e.g. OpenAI Codex, Replit AI Assistant) and human contributors collaborate on any coding task in this repository. Keep it **generic**—language‑, framework‑ and feature‑agnostic. If a feature needs domain‑specific rules (e.g. OpenAI integration), link out to a dedicated doc instead of bloating this file.
 
 ---
 
-## Agent Protocols & Guidelines
+## 1 · Agents & Roles
 
-* **All AI-generated code must be:**
-
-  * Documented in the `CHANGELOG.md` before being committed or merged.
-  * Marked with a top-of-file comment referencing the changelog and change reason.
-  * Reviewed by a human before deployment.
-
-* **AI agents (like Codex and Replit Assistant):**
-
-  * Are not permitted to deploy code or merge to production branches autonomously.
-  * May generate boilerplate, code fixes, refactoring, and unit tests.
-  * Should include inline comments describing what was changed and why.
-  * After generating code or tests, agents must run `npm run check` to validate correctness.
-  * If errors are returned, the agent should attempt to fix them or create a new task to fix the error before the code is committed.
-  * Before creating or committing changes, agents must:
-  - Pull the latest code from the target branch (`git pull origin main`)
-  - Check for potential file conflicts in modified or related files
-  - Run `git diff` or `git status` to detect uncommitted or overlapping changes
-  - If conflicts are detected, agents must regenerate or adjust code to merge cleanly before creating a PR
-
----
-## 🧪 Unit Testing Expectations for AI-Generated Code
-
-* All AI-generated functions must include unit tests using Vitetest.
-* Tests must cover:
-  - Standard (happy path) behavior
-  - Common edge cases, including:
-    - Missing or malformed input
-    - External API or system failures
-    - Invalid user behavior
-    - Duplicate or out-of-order requests
-    - Configuration or environment errors
-* External dependencies (e.g., API calls) must be mocked.
-* Tests should fail if logic is broken and clearly describe the scenario being validated.
-* Agents must use the prompt suffix:  
-  > “Also generate a Vitetest unit test that covers expected behavior and edge cases such as input validation errors, API failures, and misconfiguration.”
-
-
-## Best Practices & Limitations
-
-* **Human-in-the-Loop:** All major architecture, security, or payment-related code must be human-reviewed.
-* **Change Review:** AI-generated changes should be compared to the existing codebase and changelog to prevent redundant fixes.
-* **Agent Limitations:**
-
-  * Codex and Replit Assistant may not fully understand context or business logic—always verify output.
-  * Do not use Codex or Replit Assistant for sensitive data management, wallet key handling, or production deploys.
+| Agent            | Primary Role                                                       | Notes                                 |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| **OpenAI Codex** | Generate, refactor, and fix code; scaffold tests; draft docs.      | Triggered via CLI or IDE extension.   |
+| **Replit AI**    | Conversational, in‑IDE assistant for quick snippets & explanations | Lives inside the Replit workspace UI. |
+| **Humans**       | Design architecture; review & merge PRs; own production deploys    | Always have the final sign‑off.       |
 
 ---
 
-## Agent Change Documentation
+## 2 · Agent Protocols & Guidelines
 
-* All agent actions and generated code must be referenced in the changelog, with a note indicating AI-generated (e.g., [Codex], [Replit Assistant]).
-* The changelog date must be the current date in Pacific Time, in the format YYYY-MM-DD. **Lookup the current system time and convert to Pacific Time** then use that as the timestamp.
-* Agents must not reuse or increment existing dates from prior entries.
-* **If the date already exists, append new entries under that same section.**
-* If the appropriate date section is missing, create it using the current Pacific Time date.
-  ```
-  ## [2025-06-05]
-  - [Codex][Added] "Generated new function for match result signing in backend/server.js."
-  - [Replit Assistant][Changed] "Refactored wallet connection logic in frontend/game.js for better error handling."
-  ```
----
+* **All generated code must be:**
 
-## Issue Reporting & Feedback
-
-* **All issues—including those related to AI-generated code—should be recorded in the GitHub Issues tracker.**
-
-  * Prefix the issue title with `[Agent]` and note the specific agent (e.g., `[Codex]` or `[Replit Assistant]`) if relevant.
-  * Assign appropriate labels or categories for better filtering and tracking.
-  * Provide a clear description of the issue, the agent involved, and any relevant context or reproduction steps.
-* Discussion, resolution notes, and closing status should be updated directly within the GitHub Issue.
+  * Recorded in `CHANGELOG.md` following **CHANGELOG\_GUIDE.md**.
+  * Annotated at the top of each new/edited file with the reason for change.
+  * Validated by `pnpm check` (type‑check + lint + tests) **before** commit.
+* **Agents may not** merge to protected branches or deploy; humans must review.
+* **Conflict detection:** Agents must pull latest, run `git diff`, and regenerate if merge conflicts appear.
+* **Sensitive data:** Agents must never hard‑code secrets or write plaintext keys.
 
 ---
 
-**(End of file)**
+## 3 · Pre‑Flight Checklist ✅
+
+Log each step with `[AGENT‑PRECHECK]`. Abort if any item fails.
+
+1. Working tree is clean **or** a feature/fix branch is checked out.
+2. All *required* environment variables exist (see `README.md → Environment Variables`).
+3. `pnpm type-check` **and** `pnpm lint -r` pass.
+4. `pnpm vitest run -r` passes across all workspaces.
+5. If the task touches an **external service** (API, DB, queue, etc.) run its health‑check script under `scripts/health/` and ensure success.
+
+---
+
+## 4 · Standard Debug Flow 🔍
+
+Tag runtime diagnostics with `[DEBUG‑AI]`.
+
+1. Reproduce the bug; capture UI/network trace if applicable.
+2. Add **temporary** `console.debug('[DEBUG‑AI]', …)` at entry & exit of each call‑stack hop.
+3. Capture full error/stack before any fallback logic executes.
+4. Remove or guard (`DEBUG_AI`) all temporary logs before commit.
+
+---
+
+## 5 · Mandatory Tests 🧪 (Vitest)
+
+| Scope      | Recommended stack & helpers                                    |
+| ---------- | -------------------------------------------------------------- |
+| **Server** | Vitest + `supertest` (or `undici` test client)                 |
+| **Client** | Vitest + React Testing Library + `@testing-library/user-event` |
+
+* Run suites with `pnpm vitest run -r`.
+* CI fails if coverage for touched files drops (`vitest run --coverage`).
+* Use `--silent=false` locally to surface `[DEBUG‑AI]` logs.
+
+> **Example skeleton server test** (remove when writing real specs):
+>
+> ```ts
+> import { describe, it, expect } from 'vitest';
+> import request from 'supertest';
+> import app from '../../src/app';
+>
+> describe('GET /health', () => {
+>   it('returns OK', async () => {
+>     const res = await request(app).get('/health');
+>     expect(res.status).toBe(200);
+>     expect(res.body.ok).toBe(true);
+>   });
+> });
+> ```
+
+---
+
+## 6 · Patch & Commit Convention 📝
+
+```text
+<type>(scope): <summary>
+
+Problem: <why change was needed>
+Solution:
+* bullet
+* bullet
+```
+
+* **Types:** feat / fix / chore / docs / test / refactor / perf / ci.
+* Keep commit bodies concise; reference issue numbers where relevant.
+
+---
+
+## 7 · Code Style References 🧩
+
+* Project is formatted by Prettier; linted by ESLint—**do not** override configs.
+* React components in PascalCase; custom hooks start with `use…`.
+* Remove stray `console.log`; keep `[DEBUG‑AI]` or `[AGENT‑PRECHECK]` only when gated behind env flags.
+
+---
+
+## 8 · Quick‑Start Commands 🏃
+
+```bash
+pnpm i             # install all workspaces
+pnpm dev           # run client & server concurrently
+pnpm type-check    # TypeScript project refs
+pnpm lint -r       # lint all packages
+pnpm vitest run -r # run tests
+```
+
+Verbose debug:
+
+```bash
+DEBUG_AI=true pnpm dev   # backend logs
+# browser console:
+window.DEBUG_AI = true   # frontend logs
+```
+
+---
+
+## 9 · Changelog Reference
+
+All contributors—human **and** AI—must follow **CHANGELOG\_GUIDE.md** when adding entries to `CHANGELOG.md`.
+
+---
+
+## 10 · Issue Reporting & Feedback
+
+* File issues in GitHub with clear reproduction steps. If an agent was involved, prefix the title with `[Agent:<name>]`.
+* Keep discussion and resolutions in the issue thread; link related PRs.
+
+---
+
+**End of file**
