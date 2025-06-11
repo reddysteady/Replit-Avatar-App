@@ -23,7 +23,8 @@ Running `npm test` will automatically install dependencies if they are missing.
 Before making any changes, please:
 
 1. Check the latest `CHANGELOG.md` to ensure you’re not duplicating efforts.
-2. Create or update `CHANGELOG.md` with a dated entry in the correct format (`[Added]`, `[Changed]`, `[Fixed]`, `[Removed]`). Add your entry under the current date header, creating a new `## [YYYY-MM-DD]` section if it doesn't exist.
+2. Create or update `CHANGELOG.md` with a dated entry using the format:
+   `- [AGENT_NAME][Fixed/Changed/Added] "Description of change"`.
 3. Add a top-of-file comment in any source file you modify, pointing to the new changelog entry.
 4. Provide concise inline comments describing what was changed and why.
 5. Submit small, atomic commits.
