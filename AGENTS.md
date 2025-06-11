@@ -20,7 +20,7 @@ This document is the **single source of truth** for how automated agents (e.g. O
 
   * Recorded in `CHANGELOG.md` following **CHANGELOG\_GUIDE.md**.
   * Annotated at the top of each new/edited file with the reason for change.
-  * Validated by `pnpm check` (type‑check + lint + tests) **before** commit.
+  * Validated by npm run type-check, npm run lint, and npm test before commit.
 * **Agents may not** merge to protected branches or deploy; humans must review.
 * **Conflict detection:** Agents must pull latest, run `git diff`, and regenerate if merge conflicts appear.
 * **Sensitive data:** Agents must never hard‑code secrets or write plaintext keys.
@@ -33,8 +33,8 @@ Log each step with `[AGENT‑PRECHECK]`. Abort if any item fails.
 
 1. Working tree is clean **or** a feature/fix branch is checked out.
 2. All *required* environment variables exist (see `README.md → Environment Variables`).
-3. `pnpm type-check` **and** `pnpm lint -r` pass.
-4. `pnpm vitest run -r` passes across all workspaces.
+3. .npm run type-check and npm run lint pass.
+4. .npm test passes (Vitest suite).
 5. If the task touches an **external service** (API, DB, queue, etc.) run its health‑check script under `scripts/health/` and ensure success.
 
 ---
@@ -57,8 +57,8 @@ Tag runtime diagnostics with `[DEBUG‑AI]`.
 | **Server** | Vitest + `supertest` (or `undici` test client)                 |
 | **Client** | Vitest + React Testing Library + `@testing-library/user-event` |
 
-* Run suites with `pnpm vitest run -r`.
-* CI fails if coverage for touched files drops (`vitest run --coverage`).
+* Run suites with npm test.
+* CI fails if coverage for touched files drops (npm test -- --coverage).
 * Use `--silent=false` locally to surface `[DEBUG‑AI]` logs.
 
 > **Example skeleton server test** (remove when writing real specs):
@@ -106,11 +106,13 @@ Solution:
 ## 8 · Quick‑Start Commands 🏃
 
 ```bash
-pnpm i             # install all workspaces
-pnpm dev           # run client & server concurrently
-pnpm type-check    # TypeScript project refs
-pnpm lint -r       # lint all packages
-pnpm vitest run -r # run tests
+Line	Change
+npm install # install dependencies
+npm run dev # run client & server concurrently
+npm run type-check # TypeScript project refs
+npm run lint # lint all packages
+npm test # run Vitest suite
+DEBUG_AI=true npm run dev # backend logs
 ```
 
 Verbose debug:
