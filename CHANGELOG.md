@@ -75,3 +75,5 @@ Example entry format:
 - [Codex][Added] `ChatHeader` component mimics WhatsApp chat header with back button and avatar.
 - [Codex][Added] Sidebar link and new route for Privacy Policy page.
 - [Codex][Changed] `/api/threads/:id/generate-reply` now generates dynamic replies using user settings.
+- [Codex][Changed] AI Model setting now determines which OpenAI model is used for replies.
+- [Codex][Added] Unit test confirms custom model is passed to the OpenAI API.

@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Added]
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AIService } from './openai'
 
@@ -35,7 +36,7 @@ describe('AIService', () => {
 
   it('generateReply returns fallback when no api key', async () => {
     process.env.OPENAI_API_KEY = ''
-    const reply = await service.generateReply({ content: 'hi', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10 })
+    const reply = await service.generateReply({ content: 'hi', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-4' })
     expect(reply).toContain('Bob')
   })
 
@@ -44,6 +45,13 @@ describe('AIService', () => {
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
     await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, flexProcessing: true })
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ service_tier: 'flex' }))
+  })
+
+  it('uses provided model when making OpenAI request', async () => {
+    process.env.OPENAI_API_KEY = 'test-key'
+    mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
+    await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-3.5-turbo' })
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-3.5-turbo' }))
   })
 
   it('classifyIntent parses response', async () => {
