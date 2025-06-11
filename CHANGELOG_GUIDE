@@ -14,7 +14,7 @@ Stage & commit the updated file with the code change. No changelog update → �
 
 1 · Entry Format (must be exact)
 
-2025-06-11          ← Date header (YYYY-MM-DD) on its own line
+2025-06-11          ← Date header (YYYY-MM-DD) on its own line. Date must be in Pacific Time.
 [Codex][Fixed] Foo bar.   ← Lines start with brackets, no bullets
 
 ### Bracket tokens
