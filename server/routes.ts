@@ -547,8 +547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Get settings for AI parameters
       const settings = await storage.getSettings(1);
-
-      // Generate AI reply using the OpenAI service
+      
+      // Generate AI reply using the OpenAI service and creator settings
       const generatedReply = await aiService.generateReply({
         content: messages[messages.length - 1]?.content ?? "",
         senderName: thread.participantName,
