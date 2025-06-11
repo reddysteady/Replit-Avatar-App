@@ -67,6 +67,8 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed] `/api/test/generate-for-user` now correctly uses the `content` body when provided.
 
 ## 2025-06-11
+- [Codex][Added] TypeScript and ESLint build scripts.
+- [Codex][Changed] Fixed lint/type-check errors across src.
 - [Codex][Fixed] Mobile conversation view no longer shows filter dropdown.
 - [Codex][Added] `ChatHeader` component mimics WhatsApp chat header with back button and avatar.
 - [Codex][Added] Sidebar link and new route for Privacy Policy page.
