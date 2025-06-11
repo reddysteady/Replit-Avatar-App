@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
+// See CHANGELOG.md for 2025-06-10 [Added]
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
@@ -8,6 +9,7 @@ import {
   BarChart2, 
   Calendar,
   Code,
+  Lock,
 } from "lucide-react";
 
 type SidebarProps = {
@@ -97,6 +99,13 @@ const Sidebar = ({ className }: SidebarProps) => {
                 active={location === "/testing"}
               >
                 Testing Tools
+              </NavItem>
+              <NavItem
+                href="/privacy"
+                icon={<Lock />}
+                active={location === "/privacy"}
+              >
+                Privacy Policy
               </NavItem>
 
 
