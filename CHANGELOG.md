@@ -69,4 +69,5 @@ Example entry format:
 - [Codex] Clarified README changelog instructions and agent guidelines for missing date sections.
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
 - [Codex][Fixed] `/api/test/generate-for-user` now correctly uses the `content` body when provided.
+- [Codex][Added] `ChatHeader` component mimics WhatsApp chat header with back button and avatar.
 
