@@ -31,7 +31,7 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-  server && server.close()
+  server?.close()
 })
 
 describe('test routes', () => {
