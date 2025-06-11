@@ -71,11 +71,13 @@ describe('test routes', () => {
     expect(stored?.content).toBe('Custom test message')
   })
 
+
   it('thread generate-reply returns AI response', async () => {
     const thread = await mem.createThread({
       userId: 1,
       externalParticipantId: 'z',
       participantName: 'tester',
+
       source: 'instagram',
       metadata: {}
     })
@@ -97,5 +99,6 @@ describe('test routes', () => {
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.generatedReply).toBe('dynamic reply')
+
   })
 })
