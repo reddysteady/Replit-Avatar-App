@@ -7,6 +7,7 @@
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-11 [Fixed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
@@ -638,6 +639,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate AI reply for any message type
   app.post('/api/messages/:id/generate-reply', async (req, res) => {
     try {
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] POST /api/messages/:id/generate-reply', {
+          id: req.params.id
+        });
+      }
       const messageId = parseInt(req.params.id);
       if (isNaN(messageId)) {
         return res.status(400).json({ message: 'Invalid message ID' });
@@ -670,6 +676,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         model: settings.aiSettings?.model || "gpt-4o",
         flexProcessing: settings.aiSettings?.flexProcessing || false
       });
+
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] generated reply', aiReply);
+      }
       
       // Return only the generated reply
       return res.json({ 
