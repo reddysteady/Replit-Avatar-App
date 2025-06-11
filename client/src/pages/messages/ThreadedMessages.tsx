@@ -5,6 +5,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-10 [Fixed - hide mobile filter dropdown in conversation view]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -444,12 +445,13 @@ const ThreadedMessages: React.FC = () => {
         </div>
         
         {/* Mobile filter dropdown */}
-        <div className="md:hidden mt-4">
+        {showThreadList && (
+          <div className="md:hidden mt-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full justify-between bg-gray-200 hover:bg-gray-300 text-black border border-gray-300">
                 <span>
-                  {activeTab === 'all' ? 'All Messages' : 
+                  {activeTab === 'all' ? 'All Messages' :
                    activeTab === 'instagram' ? 'Instagram' : 'YouTube'}
                 </span>
                 <ChevronDown className="h-4 w-4 ml-2" />
@@ -482,7 +484,8 @@ const ThreadedMessages: React.FC = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+          </div>
+        )}
       </div>
       
       <div className="flex-1 overflow-hidden">
