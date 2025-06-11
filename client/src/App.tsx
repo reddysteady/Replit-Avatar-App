@@ -13,6 +13,7 @@ import Settings from "@/pages/settings/Settings";
 import Analytics from "@/pages/analytics/Analytics";
 import Automation from "@/pages/automation/Automation";
 import Testing from "@/pages/testing/Testing";
+import Privacy from "@/pages/privacy/Privacy";
 
 import Sidebar from "@/components/layout/Sidebar";
 import MobileHeader from "@/components/layout/MobileHeader";
@@ -34,6 +35,7 @@ function Router() {
           <Route path="/analytics" component={Analytics} />
           <Route path="/automation" component={Automation} />
           <Route path="/testing" component={Testing} />
+          <Route path="/privacy" component={Privacy} />
           <Route component={NotFound} />
         </Switch>
       </div>
