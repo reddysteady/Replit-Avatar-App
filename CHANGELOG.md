@@ -83,4 +83,5 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 
 
 ## 2025-06-12
+- [Codex][Fixed] Generate Batch Messages now triggers cache invalidation so UI refreshes automatically.
 - [Codex][Changed] Removed manual dotenv parser from AI service.
