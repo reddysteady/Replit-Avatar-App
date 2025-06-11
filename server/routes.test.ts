@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Fixed]
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import express from 'express'
 import type { Server } from 'http'
@@ -95,6 +96,25 @@ describe('test routes', () => {
     const data = await res.json()
     expect(mockAiService.generateReply).toHaveBeenCalled()
     expect(data.generatedReply).toBe('dynamic reply')
+
+  })
+
+  it('message generate-reply uses AI service', async () => {
+    const msg = await mem.createMessage({
+      userId: 1,
+      source: 'instagram',
+      senderId: 'u1',
+      senderName: 'User',
+      content: 'Hi',
+      externalId: 'm1',
+      metadata: {}
+    })
+    mockAiService.generateReply.mockResolvedValueOnce('dynamic reply')
+    const res = await fetch(`${baseUrl}/api/messages/${msg.id}/generate-reply`, { method: 'POST' })
+    const data = await res.json()
+    expect(res.status).toBe(200)
+    expect(data.generatedReply).toBe('dynamic reply')
+    expect(mockAiService.generateReply).toHaveBeenCalled()
 
   })
 })

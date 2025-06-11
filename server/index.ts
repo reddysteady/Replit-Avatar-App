@@ -1,3 +1,5 @@
+// See CHANGELOG.md for 2025-06-11 [Fixed]
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";

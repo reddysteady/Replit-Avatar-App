@@ -4,6 +4,7 @@
  * and content moderation
  */
 // See CHANGELOG.md for 2025-06-11 [Changed]
+// See CHANGELOG.md for 2025-06-11 [Fixed]
 
 import OpenAI from "openai";
 import { storage } from "../storage";
@@ -73,8 +74,15 @@ export class AIService {
     try {
       const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
 
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] generateReply called', { senderName, model });
+      }
+
       // Check if OPENAI_API_KEY is available
       if (!process.env.OPENAI_API_KEY) {
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');
+        }
         log("OpenAI API key not found. Using fallback reply.");
         return this.generateFallbackReply(content, senderName);
       }
@@ -130,6 +138,10 @@ export class AIService {
         max_tokens: maxLength,
         service_tier: flexProcessing ? "flex" : undefined,
       });
+
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] OpenAI response', response);
+      }
 
       return response.choices[0].message.content || "Thank you for your message!";
     } catch (error: any) {
