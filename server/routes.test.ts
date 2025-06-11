@@ -3,10 +3,10 @@ import express from 'express'
 import type { Server } from 'http'
 import { MemStorage } from './storage'
 
+
 const mockAiService = { generateReply: vi.fn() }
 
 vi.mock('./services/openai', () => ({ aiService: mockAiService }))
-
 let server: Server
 let baseUrl: string
 let mem: MemStorage
@@ -71,6 +71,7 @@ describe('test routes', () => {
     expect(stored?.content).toBe('Custom test message')
   })
 
+
   it('generate-reply returns AI response', async () => {
     const thread = await mem.createThread({
       userId: 1,
@@ -94,5 +95,6 @@ describe('test routes', () => {
     const data = await res.json()
     expect(mockAiService.generateReply).toHaveBeenCalled()
     expect(data.generatedReply).toBe('dynamic reply')
+
   })
 })
