@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed-2]
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+
 import fs from 'fs';
 
 if (!process.env.OPENAI_API_KEY) {
@@ -19,6 +20,7 @@ if (!process.env.OPENAI_API_KEY) {
     }
   } catch {}
 }
+
 
 import OpenAI from "openai";
 import { storage } from "../storage";
