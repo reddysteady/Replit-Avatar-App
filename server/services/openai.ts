@@ -3,6 +3,7 @@
  * Handles interactions with OpenAI for message generation, intent classification,
  * and content moderation
  */
+// See CHANGELOG.md for 2025-06-11 [Changed]
 
 import OpenAI from "openai";
 import { storage } from "../storage";
@@ -17,6 +18,7 @@ interface GenerateReplyParams {
   creatorToneDescription: string;
   temperature: number;
   maxLength: number;
+  model?: string;
   contextSnippets?: string[]; // Additional context from content RAG pipeline
   flexProcessing?: boolean;
 }
@@ -69,7 +71,7 @@ export class AIService {
    */
   async generateReply(params: GenerateReplyParams): Promise<string> {
     try {
-      const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing } = params;
+      const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
 
       // Check if OPENAI_API_KEY is available
       if (!process.env.OPENAI_API_KEY) {
@@ -119,7 +121,7 @@ export class AIService {
       `;
 
       const response = await this.openai.chat.completions.create({
-        model: DEFAULT_MODEL,
+        model: model || DEFAULT_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt }

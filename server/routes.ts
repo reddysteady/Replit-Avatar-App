@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed]
+// See CHANGELOG.md for 2025-06-11 [Added]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
@@ -555,6 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorToneDescription: settings.creatorToneDescription || "",
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
+        model: settings.aiSettings?.model || "gpt-4o",
         flexProcessing: settings.aiSettings?.flexProcessing || false
       });
       
@@ -665,6 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
+        model: settings.aiSettings?.model || "gpt-4o",
         flexProcessing: settings.aiSettings?.flexProcessing || false
       });
       
@@ -749,6 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     creatorToneDescription: aiSettings.creatorToneDescription || "",
                     temperature: (aiSettings.temperature || 70) / 100,
                     maxLength: aiSettings.maxResponseLength || 500,
+                    model: aiSettings.model || "gpt-4o",
                     flexProcessing: aiSettings.flexProcessing || false
                   });
                   
@@ -864,6 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
           maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
           contextSnippets: useContext ? contextSnippets : undefined,
+          model: settings.aiSettings?.model || "gpt-4o",
           flexProcessing: settings.aiSettings?.flexProcessing || false
         });
       } catch (aiError: any) {
@@ -955,6 +960,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         creatorToneDescription: settings.creatorToneDescription || "",
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 500,
+        model: settings.aiSettings?.model || "gpt-4o",
         flexProcessing: settings.aiSettings?.flexProcessing || false,
       });
       
@@ -1022,6 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
         maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
         contextSnippets: contextSnippets.length > 0 ? contextSnippets : undefined,
+        model: settings.aiSettings?.model || "gpt-4o",
         flexProcessing: settings.aiSettings?.flexProcessing || false
       });
       
