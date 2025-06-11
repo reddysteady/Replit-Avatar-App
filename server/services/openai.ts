@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed-2]
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+// See CHANGELOG.md for 2025-06-11 [Fixed-3]
 
 import fs from 'fs';
 
@@ -53,13 +54,27 @@ interface DetectSensitiveResult {
 }
 
 export class AIService {
-  private openai: OpenAI;
+  constructor() {}
 
-  constructor() {
-    // Initialize OpenAI client
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  /**
+   * Retrieve an OpenAI client using either the environment variable or the
+   * stored token. Logs the source when DEBUG_AI is enabled.
+   */
+  private async getClient(): Promise<{ client: OpenAI; hasKey: boolean }> {
+    let apiKey = process.env.OPENAI_API_KEY;
+    let source = "env";
+    if (!apiKey) {
+      const settings = await storage.getSettings(1); // For MVP, assume user ID 1
+      apiKey = settings.openaiToken || undefined;
+      source = "storage";
+    }
+
+    if (process.env.DEBUG_AI) {
+      console.debug(`[DEBUG-AI] Using ${source}`);
+    }
+
+    const key = apiKey || undefined;
+    return { client: new OpenAI({ apiKey: key }), hasKey: Boolean(apiKey) };
   }
   
   /**
@@ -68,7 +83,8 @@ export class AIService {
    */
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const response = await this.openai.embeddings.create({
+      const { client } = await this.getClient();
+      const response = await client.embeddings.create({
         model: "text-embedding-ada-002",
         input: text,
       });
@@ -94,8 +110,9 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
-      // Check if OPENAI_API_KEY is available
-      if (!process.env.OPENAI_API_KEY) {
+      const { client, hasKey } = await this.getClient();
+
+      if (!hasKey) {
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');
         }
@@ -144,7 +161,7 @@ export class AIService {
         ${contextSnippets && contextSnippets.length > 0 ? "Use the contextual information when it's relevant to the question." : ""}
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const response = await client.chat.completions.create({
         model: model || DEFAULT_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
@@ -222,7 +239,8 @@ export class AIService {
         }
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const { client } = await this.getClient();
+      const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
@@ -269,7 +287,8 @@ export class AIService {
         }
       `;
 
-      const response = await this.openai.chat.completions.create({
+      const { client } = await this.getClient();
+      const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
