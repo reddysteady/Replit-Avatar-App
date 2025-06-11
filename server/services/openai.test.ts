@@ -1,13 +1,25 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-11 [Fixed-3]
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AIService } from './openai'
+import { storage } from '../storage'
 
-var openaiMock = {
+const openaiMock = {
   embeddings: { create: vi.fn() },
   chat: { completions: { create: vi.fn() } }
 }
+var openaiCtor: any
 
-vi.mock('openai', () => ({ default: vi.fn().mockImplementation(() => openaiMock) }))
+vi.mock('../storage', () => ({
+  storage: {
+    getSettings: vi.fn().mockResolvedValue({ openaiToken: 'stored-key' })
+  }
+}))
+
+vi.mock('openai', () => {
+  openaiCtor = vi.fn().mockImplementation(() => openaiMock)
+  return { default: openaiCtor }
+})
 
 const mockEmbeddings = openaiMock.embeddings
 const mockCreate = openaiMock.chat.completions.create
@@ -19,6 +31,7 @@ describe('AIService', () => {
     service = new AIService()
     mockCreate.mockReset()
     mockEmbeddings.create.mockReset()
+    openaiCtor.mockClear()
   })
 
   it('generateEmbedding returns embedding array', async () => {
@@ -36,6 +49,7 @@ describe('AIService', () => {
 
   it('generateReply returns fallback when no api key', async () => {
     process.env.OPENAI_API_KEY = ''
+    ;(storage.getSettings as any).mockResolvedValueOnce({ openaiToken: '' })
     const reply = await service.generateReply({ content: 'hi', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-4' })
     expect(reply).toContain('Bob')
   })
@@ -64,6 +78,14 @@ describe('AIService', () => {
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify({ isSensitive: true, confidence: 0.8, category: 'legal' }) } }] })
     const res = await service.detectSensitiveContent('text')
     expect(res).toEqual({ isSensitive: true, confidence: 0.8, category: 'legal' })
+  })
+
+  it('uses stored token when env key missing', async () => {
+    process.env.OPENAI_API_KEY = ''
+    mockEmbeddings.create.mockResolvedValueOnce({ data: [{ embedding: [4] }] })
+    const res = await service.generateEmbedding('hi')
+    expect(res).toEqual([4])
+    expect(openaiCtor).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'stored-key' }))
   })
 
   it('matchAutomationRules returns matching rules', async () => {
