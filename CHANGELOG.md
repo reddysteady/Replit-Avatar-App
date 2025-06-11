@@ -72,6 +72,7 @@ Example entry format:
 
 ## 2025-06-11
 - [Codex][Fixed] Mobile conversation view no longer shows filter dropdown.
+- [Codex][Added] `ChatHeader` component mimics WhatsApp chat header with back button and avatar.
 - [Codex][Added] Sidebar link and new route for Privacy Policy page.
 
 
