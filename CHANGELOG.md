@@ -1,7 +1,9 @@
 <!-- CHANGELOG.md -->
+
 Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this CHANGLOG.md file.
 
 ## 2025-06-07
+
 - [Added] Created `CHANGELOG.md` and added contribution instructions to `README.md`.
 - [Fixed] Missing `parentMessageId` from in-memory storage caused replies to show as top-level messages.
 - [Fixed] Implemented thread support in `MemStorage` so replies nest correctly when using in-memory mode.
@@ -14,6 +16,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Fixed] `ConversationThread` mutation now accepts `parentMessageId: number | null`.
 
 ## 2025-06-08
+
 - [Added] `npm test` now runs a pretest script that installs dependencies if `vitest` is missing.
 - [Added] README notes that `npm install` must be run so the `vitest` runner is available.
 - [Codex][Added] Orange avatar ring for high intent conversations in `ThreadRow` and `ConversationThread`.
@@ -27,6 +30,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 
 ## 2025-06-09
+
 - [Codex][Added] Faker-based message generation endpoints with tests and UI accordion tools.
 - [Codex][Added] Message and thread deletion with WhatsApp-style actions.
 - [Codex][Fixed] Deletion actions now immediately update the UI cache.
@@ -49,6 +53,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] Tools accordion on Messages page now includes refresh and webhook options.
 
 ## 2025-06-10
+
 - [Codex] Added "Generate Reply" button in `ConversationThread` for AI-assisted replies.
 - [Codex] Fixed Message deletion now fades out and doesn't scroll to the bottom.
 - [Codex] [dded]"Generate Reply" button in `ConversationThread` for AI-assisted replies.
@@ -67,6 +72,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed] `/api/test/generate-for-user` now correctly uses the `content` body when provided.
 
 ## 2025-06-11
+
 - [Codex][Added] TypeScript and ESLint build scripts.
 - [Codex][Changed] Fixed lint/type-check errors across src.
 - [Codex][Fixed] Mobile conversation view no longer shows filter dropdown.
@@ -80,10 +86,11 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] OPENAI_API_KEY example variable.
 - [Codex][Fixed-3] AI service now falls back to stored OpenAI tokens when env key is missing.
 - [Codex][Changed-4] Warn when OpenAI API key missing and log updates to /api/settings.
-[Codex][Fixed-4] generateAiReply now checks response.ok and logs server errors.
-[Codex][Changed] AI service prefers stored OpenAI token over environment variable.
+  [Codex][Fixed-4] generateAiReply now checks response.ok and logs server errors.
+  [Codex][Changed] AI service prefers stored OpenAI token over environment variable.
 
 ## 2025-06-12
+
 - [Codex][Changed] Removed manual dotenv parser from AI service.
 - [Codex][Fixed] AI reply generation errors now show detailed messages.
 - [Codex][Fixed] generateReply correctly accesses keySource across error handling.
@@ -91,8 +98,10 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 [Codex][Changed] Mobile chat header now includes menu icon and sits at page top.
 [Codex][Changed] ChatHeader only appears in conversation view; thread list restored MobileHeader.
 [Codex][Changed] Burger menu items now use minimal text styles.
+[Codex][Changed] Burger menu padding trimmed and icons added for thread actions.
 
 ## 2025-06-13
+
 - [Codex][Changed] Mobile conversation view now uses `ChatHeader` for WhatsApp-style back navigation.
 - [Codex][Removed] Removed page header so `ChatHeader` sits at top.
 - [Codex][Changed] Burger menu opens as overlay panel with grouped tools.
