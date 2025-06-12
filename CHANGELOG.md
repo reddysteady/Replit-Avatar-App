@@ -94,15 +94,13 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] Removed manual dotenv parser from AI service.
 - [Codex][Fixed] AI reply generation errors now show detailed messages.
 - [Codex][Fixed] generateReply correctly accesses keySource across error handling.
-
+- [Codex][Removed] Mobile long press to expand messages.
 [Codex][Changed] Mobile chat header now includes menu icon and sits at page top.
 [Codex][Changed] ChatHeader only appears in conversation view; thread list restored MobileHeader.
 [Codex][Changed] Burger menu items now use minimal text styles.
 [Codex][Changed] Burger menu padding trimmed and icons added for thread actions.
-
-## 2025-06-13
-
 - [Codex][Changed] Mobile conversation view now uses `ChatHeader` for WhatsApp-style back navigation.
 - [Codex][Removed] Removed page header so `ChatHeader` sits at top.
 - [Codex][Changed] Burger menu opens as overlay panel with grouped tools.
 - [Codex][Fixed] Restored desktop header with page title, tools, and filter menu.
+

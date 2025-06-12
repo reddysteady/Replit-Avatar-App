@@ -26,67 +26,11 @@ import { log } from '@/lib/logger';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Message content component with truncation
-function MessageContent({ content, showFullContent, setShowFullContent, isMobile }: {
-  content: string;
-  showFullContent: boolean;
-  setShowFullContent: (show: boolean) => void;
-  isMobile: boolean;
-}) {
-  const maxLength = 100;
-  // Only truncate on mobile; desktop text wraps naturally
-  const shouldTruncate = isMobile && content && content.length > maxLength;
-  const displayContent = shouldTruncate && !showFullContent
-    ? content.substring(0, maxLength) + '...'
-    : content;
-    
-  const handleContentInteraction = () => {
-    if (shouldTruncate) {
-      setShowFullContent(!showFullContent);
-    }
-  };
-
-  const handleMouseEnter = () => {
-    if (!isMobile && shouldTruncate) {
-      setShowFullContent(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isMobile && shouldTruncate) {
-      setShowFullContent(false);
-    }
-  };
-
-  const handleLongPress = () => {
-    if (isMobile && shouldTruncate) {
-      setShowFullContent(true);
-    }
-  };
-
+// Message content component
+function MessageContent({ content }: { content: string }) {
   return (
-    <div 
-      className={`text-sm text-gray-800 ${shouldTruncate ? 'cursor-pointer' : ''} select-text`}
-      title={shouldTruncate && !isMobile ? content : undefined}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleContentInteraction}
-      onTouchStart={() => {
-        const timer = setTimeout(handleLongPress, 500);
-        const handleTouchEnd = () => {
-          clearTimeout(timer);
-        };
-        document.addEventListener('touchend', handleTouchEnd, { once: true });
-      }}
-    >
-      <span className="whitespace-pre-wrap break-words">
-        {displayContent}
-      </span>
-      {shouldTruncate && !showFullContent && (
-        <span className="text-blue-500 ml-1 text-xs">
-          (tap/hold to expand)
-        </span>
-      )}
+    <div className="text-sm text-gray-800 select-text">
+      <span className="whitespace-pre-wrap break-words">{content}</span>
     </div>
   );
 }
@@ -104,7 +48,6 @@ interface ConversationThreadProps {
 function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: ThreadedMessageType; threadId: number; setShowMobileActions: React.Dispatch<React.SetStateAction<{ id: number; onReply: () => void; onDelete: () => void; onGenerate: () => void } | null>> }) {
   const [isReplying, setIsReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
-  const [showFullContent, setShowFullContent] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -223,8 +166,8 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
           <div className={`flex items-start ${msg.isOutbound ? 'flex-row-reverse text-right' : ''}`}>
             <div className="flex-1">
               <div className="text-sm font-semibold">{msg.sender?.name || 'User'}</div>
-              {/* Message content with truncation and hover/long-press support */}
-              <MessageContent content={msg.content} showFullContent={showFullContent} setShowFullContent={setShowFullContent} isMobile={isMobile} />
+              {/* Message content */}
+              <MessageContent content={msg.content} />
               <div className="flex justify-between items-center mt-1" onTouchStart={startHold} onTouchEnd={cancelHold}>
                 <div className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleString()}</div>
                 {!isMobile && (
