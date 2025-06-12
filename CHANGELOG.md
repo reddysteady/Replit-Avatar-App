@@ -80,9 +80,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] OPENAI_API_KEY example variable.
 - [Codex][Fixed-3] AI service now falls back to stored OpenAI tokens when env key is missing.
 - [Codex][Changed-4] Warn when OpenAI API key missing and log updates to /api/settings.
-- [Codex][Added] Test verifies error toast when AI reply generation fails.
-
-
-
-## 2025-06-12
+- [Codex][Added] Test verifies error toast when AI reply generation fails
+- [Codex][Fixed-4] generateAiReply now checks response.ok and logs server errors.
 - [Codex][Changed] Removed manual dotenv parser from AI service.
+- [Codex][Fixed] AI reply generation errors now show detailed messages.

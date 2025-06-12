@@ -1,4 +1,4 @@
-// See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-11 [Fixed - detailed AI error messages]
 // See CHANGELOG.md for 2025-06-10 [Removed]
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
@@ -9,7 +9,6 @@
 // See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
-// ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-10 [Changed - robot icon]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Added]
@@ -134,6 +133,11 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const { mutate: generateAiReply, isPending: isGenerating } = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', `/api/messages/${msg.id}/generate-reply`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(text);
+        throw new Error('Failed to generate AI reply');
+      }
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -152,10 +156,11 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         });
       }
     },
-    onError: () => {
+
+    onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
@@ -362,10 +367,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
