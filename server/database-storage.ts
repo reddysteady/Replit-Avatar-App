@@ -374,7 +374,8 @@ export class DatabaseStorage implements IStorage {
         threadId: msg.threadId ?? undefined,
       parentMessageId: parentId,
       isOutbound: msg.isOutbound || false,
-      isAiGenerated: msg.isAiGenerated || false
+      isAiGenerated: msg.isAiGenerated || false,
+      isAutoReply: msg.status === 'auto-replied'
     };
   }
 

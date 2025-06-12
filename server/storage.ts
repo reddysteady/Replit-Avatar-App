@@ -437,7 +437,8 @@ export class MemStorage {
       threadId: msg.threadId ?? undefined,
       parentMessageId: parentId,
       isOutbound: msg.isOutbound || false,
-      isAiGenerated: msg.isAiGenerated ?? false
+      isAiGenerated: msg.isAiGenerated ?? false,
+      isAutoReply: msg.status === 'auto-replied'
     };
   }
 
@@ -795,7 +796,6 @@ export class MemStorage {
     });
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, limit).map(s => s.item.content);
-
     const cosine = (a: number[], b: number[]) => {
       let dot = 0;
       let magA = 0;
