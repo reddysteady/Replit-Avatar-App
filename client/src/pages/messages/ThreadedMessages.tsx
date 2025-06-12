@@ -34,6 +34,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
+import ChatHeader from '@/components/layout/ChatHeader';
+import { ThreadType } from '@shared/schema';
 
 const ThreadedMessages: React.FC = () => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
@@ -71,7 +73,7 @@ const ThreadedMessages: React.FC = () => {
   }, [activeThreadId]);
   
   // Get active thread info
-  const [activeThreadData, setActiveThreadData] = useState(null);
+  const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(null);
 
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
@@ -165,18 +167,11 @@ const ThreadedMessages: React.FC = () => {
           ) : (
             // Conversation view for mobile with back button
             <div className="h-full flex flex-col">
-              <div className="px-4 py-2 border-b flex items-center sticky top-0 bg-white z-10">
-                <Button 
-                  variant="default"
-                  size="sm" 
-                  className="bg-gray-800 hover:bg-gray-900 text-white mr-3"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-1" />
-                  Back to Threads
-                </Button>
-                <h2 className="font-semibold">Conversation</h2>
-              </div>
+              <ChatHeader
+                name={activeThreadData?.participantName || 'Conversation'}
+                avatarUrl={activeThreadData?.participantAvatar || ''}
+                onBack={handleBackClick}
+              />
               <div className="flex-1 overflow-auto">
                 {activeThreadId && (
                   <ConversationThread

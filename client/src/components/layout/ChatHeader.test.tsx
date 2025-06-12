@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ChatHeader from './ChatHeader';
 
-const sampleProps = { name: 'Liz Cell', avatarUrl: '/liz.jpg' };
+const sampleProps = { name: 'Liz Cell', avatarUrl: '/liz.jpg', onBack: () => {} };
 
 describe('ChatHeader', () => {
   it('renders the user name and avatar', () => {

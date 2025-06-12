@@ -6,14 +6,16 @@ import { ArrowLeft } from "lucide-react";
 type ChatHeaderProps = {
   name: string;
   avatarUrl: string;
+  onBack?: () => void;
 };
 
-const ChatHeader = ({ name, avatarUrl }: ChatHeaderProps) => {
+const ChatHeader = ({ name, avatarUrl, onBack }: ChatHeaderProps) => {
   return (
     <header className="flex items-center p-3 bg-[#111B21] text-white w-full">
       <button
         aria-label="Back"
         className="mr-3 flex items-center justify-center text-white"
+        onClick={onBack}
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
