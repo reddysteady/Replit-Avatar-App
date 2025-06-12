@@ -215,6 +215,8 @@ export interface MessageType {
   reply?: string;
   isAiGenerated?: boolean;
   isOutbound?: boolean;
+  // True if the message was automatically sent by the AI system
+  isAutoReply?: boolean;
   parentMessageId?: number;
 }
 
