@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Added]
 import { defineConfig } from "drizzle-kit";
 
 if (!process.env.DATABASE_URL) {
