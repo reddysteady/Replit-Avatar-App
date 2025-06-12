@@ -8,9 +8,15 @@ This project powers an avatar messenger application built with Node.js and React
 
 Create a `.env` file with the following variables:
 
+- `DATABASE_URL` – PostgreSQL connection string for the server database
+- `OPENAI_API_KEY` – API key used when generating AI replies
 - `INSTAGRAM_APP_ID` – Facebook App ID for Instagram OAuth
 - `INSTAGRAM_APP_SECRET` – Facebook App Secret for Instagram OAuth
+- `INSTAGRAM_VERIFY_TOKEN` – Token used to validate incoming Instagram webhooks
 - `VITE_INSTAGRAM_APP_ID` – Front-end copy of `INSTAGRAM_APP_ID`
+- `WEBHOOK_BASE_URL` – Base URL for constructing webhook callbacks
+
+The test suite expects these environment variables (or suitable mocks) to be present when running `npm test`.
 
 ## Setup
 
