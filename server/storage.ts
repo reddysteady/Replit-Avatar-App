@@ -1,6 +1,7 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // [Fixed] 2025-06-09 - add in-memory thread support for conversation threads
 // [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
+// See CHANGELOG.md for 2025-06-13 [Added]
 import {
   messages, 
   users, 
@@ -26,8 +27,9 @@ import {
   type MessageThread,
   type InsertMessageThread,
   type ThreadType,
-  type ContentItem
-} from "@shared/schema";
+  type ContentItem,
+  type InsertContentItem
+  } from "@shared/schema";
 
 // Extend storage interface with necessary methods
 export interface IStorage {
@@ -769,19 +771,41 @@ export class MemStorage {
   }
 
   // Content methods
-  async createContentItem(contentItem: ContentItem): Promise<ContentItem> {
+  async createContentItem(contentItem: InsertContentItem): Promise<ContentItem> {
     const id = this.contentItems.size + 1;
-    const item = { ...contentItem, id };
+    const item: ContentItem = { ...contentItem, id } as ContentItem;
     this.contentItems.set(id, item);
     return item;
   }
 
   async findSimilarContent(
-    _userId: number,
-    _embedding: number[],
-    _limit: number,
+    userId: number,
+    embedding: number[],
+    limit: number,
   ): Promise<string[]> {
-    return [];
+    const cosine = (a: number[], b: number[]) => {
+      let dot = 0;
+      let magA = 0;
+      let magB = 0;
+      for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        magA += a[i] * a[i];
+        magB += b[i] * b[i];
+      }
+      return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+    };
+
+    const items = Array.from(this.contentItems.values()).filter(
+      item => item.userId === userId,
+    );
+
+    items.sort(
+      (a, b) =>
+        cosine(b.embedding as number[], embedding) -
+        cosine(a.embedding as number[], embedding),
+    );
+
+    return items.slice(0, limit).map(i => i.content);
   }
 }
 
