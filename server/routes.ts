@@ -1586,6 +1586,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
+
+  // See CHANGELOG.md for 2025-06-14 [Added]
+  app.get("/api/content/search", async (req, res) => {
+    try {
+      const q = req.query.q as string | undefined;
+      const userId = req.query.userId ? Number(req.query.userId) : 1;
+
+      if (!q) {
+        return res.status(400).json({ message: "q is required" });
+      }
+
+      const embedding = await aiService.generateEmbedding(q);
+      const vector = `[${embedding.join(",")}]`;
+
+      const results = await db.execute(sql`
+        SELECT id, title, content, url
+        FROM content_items
+        WHERE user_id = ${userId}
+        ORDER BY embedding <-> ${sql.raw(vector)}
+        LIMIT 5
+      `);
+
+      res.json(results.rows);
+    } catch (error: any) {
+      console.error("Error searching content:", error);
+      res.status(500).json({ message: "Failed to search content" });
+    }
+  });
   
   // Analytics endpoint
   app.get("/api/analytics", async (req, res) => {
