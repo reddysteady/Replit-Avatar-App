@@ -25,6 +25,7 @@ export const messageThreads = pgTable("message_threads", {
   lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
   lastMessageContent: text("last_message_content"),
   status: text("status").default("active"), // 'active', 'archived', 'snoozed'
+  autoReply: boolean("auto_reply").default(false),
   unreadCount: integer("unread_count").default(0),
   autoReply: boolean("auto_reply").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
