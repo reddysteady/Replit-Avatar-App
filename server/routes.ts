@@ -8,6 +8,7 @@
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+// See CHANGELOG.md for 2025-06-11 [Changed-4]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
@@ -1337,6 +1338,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         if (data.apiKeys.openai !== undefined) {
           updates.openaiToken = data.apiKeys.openai;
+          log(
+            data.apiKeys.openai
+              ? 'OpenAI API key saved via settings.'
+              : 'OpenAI API key cleared via settings.'
+          );
         }
         if (data.apiKeys.airtable !== undefined) {
           updates.airtableToken = data.apiKeys.airtable;
