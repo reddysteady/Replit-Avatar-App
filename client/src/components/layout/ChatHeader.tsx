@@ -1,4 +1,4 @@
-// See CHANGELOG.md for 2025-06-12 [Changed]
+// See CHANGELOG.md for 2025-06-13 [Changed]
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { ArrowLeft, Menu, FileQuestion, RefreshCw, Link2 } from "lucide-react";
@@ -137,7 +137,7 @@ const ChatHeader = ({
             <span className="font-medium text-sm flex items-center">
               {name}
               {platform && (
-                <span className="ml-2 bg-neutral-700 text-xs px-1.5 py-0.5 rounded capitalize">
+                <span className="ml-2 px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 capitalize">
                   {platform}
                 </span>
               )}
@@ -154,75 +154,67 @@ const ChatHeader = ({
       </header>
 
       {menuOpen && (
-        <div className="absolute right-0 mt-2 w-2/5 max-w-sm bg-white text-black shadow-md rounded-md p-4 space-y-2 z-20">
-          {onDeleteThread && (
-            <>
-              <div className="font-medium text-sm">Thread Actions</div>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  onDeleteThread();
-                  setMenuOpen(false);
-                }}
-              >
-                Delete Thread
-              </Button>
-              <hr className="border-t border-gray-200 my-2" />
-            </>
-          )}
-          <div className="font-medium text-sm">Tools</div>
-          <Button className="w-full mb-2" onClick={handleGenerateBatch}>
-            <FileQuestion className="h-4 w-4 mr-2" /> Generate Batch Messages
-          </Button>
-          <Select onValueChange={id => setCustomThreadId(id)} value={customThreadId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Generate For Thread" />
-            </SelectTrigger>
-            <SelectContent className="max-h-60 overflow-y-auto">
-              {Array.isArray(threads) &&
-                (threads as any[]).map((thread: any) => (
-                  <SelectItem key={thread.id} value={String(thread.id)}>
-                    {thread.participantName}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          <input
-            className="mt-2 w-full border border-gray-300 rounded px-2 py-1 text-sm"
-            placeholder="Custom message"
-            value={customMessage}
-            onChange={e => setCustomMessage(e.target.value)}
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenuOpen(false)}
           />
-          <Button className="w-full mt-2" onClick={handleSendCustom}>
-            Send Custom Message
-          </Button>
-          <Button className="w-full mt-2" variant="outline" onClick={handleReloadDatabase}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Reload - database
-          </Button>
-          <Button className="w-full mt-2" variant="outline" onClick={handleReloadCache}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Reload - frontend cache
-          </Button>
-          <Button className="w-full mt-2" variant="outline" onClick={handleSetupWebhook}>
-            <Link2 className="h-4 w-4 mr-2" /> Setup Webhook
-          </Button>
-          <hr className="border-t border-gray-200 my-2" />
-          <Link href="/instagram" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded">
-            Instagram DMs
-          </Link>
-          <Link href="/youtube" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded">
-            YouTube Comments
-          </Link>
-          <Link href="/settings" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded">
-            Settings
-          </Link>
-          <Link href="/analytics" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded">
-            Analytics
-          </Link>
-          <Link href="/automation" className="block px-4 py-2 text-sm hover:bg-gray-100 rounded">
-            Automation Rules
-          </Link>
-        </div>
+          <div className="fixed top-0 right-0 z-50 w-2/5 max-w-sm min-w-[240px] h-full bg-white shadow-2xl rounded-l-lg py-4 px-6 flex flex-col space-y-2">
+            {onDeleteThread && (
+              <div>
+                <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Thread Actions</div>
+                <Button
+                  variant="ghost"
+                  className="w-full text-left py-2 hover:bg-gray-100 rounded"
+                  onClick={() => {
+                    onDeleteThread();
+                    setMenuOpen(false);
+                  }}
+                >
+                  Delete Thread
+                </Button>
+              </div>
+            )}
+            {onDeleteThread && <div className="border-t border-gray-200 my-2" />}
+            <div>
+              <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Tools</div>
+              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" onClick={handleGenerateBatch}>
+                <FileQuestion className="h-4 w-4 mr-2" /> Generate Batch Messages
+              </Button>
+              <Select onValueChange={id => setCustomThreadId(id)} value={customThreadId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Generate For Thread" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {Array.isArray(threads) &&
+                    (threads as any[]).map((thread: any) => (
+                      <SelectItem key={thread.id} value={String(thread.id)}>
+                        {thread.participantName}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <input
+                className="w-full border border-gray-300 rounded px-2 py-1 mt-2 mb-2"
+                placeholder="Custom message"
+                value={customMessage}
+                onChange={e => setCustomMessage(e.target.value)}
+              />
+              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" onClick={handleSendCustom}>
+                Send Custom Message
+              </Button>
+              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleReloadDatabase}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Reload - database
+              </Button>
+              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleReloadCache}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Reload - frontend cache
+              </Button>
+              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleSetupWebhook}>
+                <Link2 className="h-4 w-4 mr-2" /> Setup Webhook
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
