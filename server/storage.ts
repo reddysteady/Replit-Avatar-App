@@ -2,6 +2,7 @@
 // [Fixed] 2025-06-09 - add in-memory thread support for conversation threads
 // [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
 // See CHANGELOG.md for 2025-06-13 [Added]
+// See CHANGELOG.md for 2025-06-12 [Fixed]
 import {
   messages, 
   users, 

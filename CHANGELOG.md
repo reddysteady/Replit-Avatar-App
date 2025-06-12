@@ -116,5 +116,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 [Codex][Fixed] Removed duplicate variable in findSimilarContent.
 - [Codex][Added] Auto-reply label for AI responses.
 [Codex][Added] Per-thread AI reply toggle and PATCH endpoint.
+[Codex][Fixed] Auto-reply schema cleanup and patch route response shape.
 
 

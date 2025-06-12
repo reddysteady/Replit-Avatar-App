@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Added]
 import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index, vector } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -27,7 +28,6 @@ export const messageThreads = pgTable("message_threads", {
   status: text("status").default("active"), // 'active', 'archived', 'snoozed'
   autoReply: boolean("auto_reply").default(false),
   unreadCount: integer("unread_count").default(0),
-  autoReply: boolean("auto_reply").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   metadata: jsonb("metadata"),
 });

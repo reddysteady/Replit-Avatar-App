@@ -3,6 +3,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed]
@@ -612,12 +613,11 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
   try {
     const threadId = Number(req.params.id);
 
-    // Validate and coerce body with Zod (rejects extra props)
-    const Body = z.object({ enabled: z.boolean() }).strict();
-    const { enabled } = Body.parse(req.body);
+    const Body = z.object({ autoReply: z.boolean() }).strict();
+    const { autoReply } = Body.parse(req.body);
 
     const updatedThread = await storage.updateThread(threadId, {
-      autoReply: enabled,
+      autoReply,
     });
 
     if (!updatedThread) {
@@ -632,13 +632,6 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
       .json({ message: 'Failed to update auto-reply setting' });
   }
 });
-
-      res.json(updatedThread);
-    } catch (error) {
-      console.error('Error updating thread auto-reply:', error);
-      res.status(500).json({ message: 'Failed to update thread auto-reply' });
-    }
-  });
 
   app.delete('/api/threads/:id', async (req, res) => {
     try {

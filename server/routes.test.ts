@@ -144,9 +144,9 @@ describe('test routes', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ autoReply: true })
     })
-    const data = await res.json()
+    const { thread: updated } = await res.json()
     expect(res.status).toBe(200)
-    expect(data.autoReply).toBe(true)
+    expect(updated.autoReply).toBe(true)
     const stored = await mem.getThread(thread.id)
     expect((stored as any).autoReply).toBe(true)
   })
