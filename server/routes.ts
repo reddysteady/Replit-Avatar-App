@@ -607,6 +607,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // See CHANGELOG.md for 2025-06-15 [Added]
+  app.patch('/api/threads/:id/auto-reply', async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.id);
+      const { enabled } = req.body;
+
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ message: 'enabled must be boolean' });
+      }
+
+      const updatedThread = await storage.updateThread(threadId, {
+        autoReply: enabled
+      });
+      res.json(updatedThread);
+    } catch (error) {
+      console.error('Error updating thread auto-reply:', error);
+      res.status(500).json({ message: 'Failed to update thread auto-reply' });
+    }
+  });
+
   app.delete('/api/threads/:id', async (req, res) => {
     try {
       const threadId = parseInt(req.params.id);
