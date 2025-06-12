@@ -104,6 +104,10 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] Burger menu opens as overlay panel with grouped tools.
 - [Codex][Fixed] Restored desktop header with page title, tools, and filter menu.
 [Codex][Changed] ChatHeader displayed on mobile conversation view only.
+
+## 2025-06-15
+
+[Codex][Fixed] Automatically sets active thread data on initial load so ChatHeader appears on mobile.
 - [Codex][Added] DEBUG_AI logs around batch message generation for troubleshooting.
 
 

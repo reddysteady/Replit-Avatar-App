@@ -176,6 +176,7 @@ const ThreadedMessages: React.FC = () => {
     ) {
       setTimeout(() => {
         setActiveThreadId(threads[0]?.id);
+        setActiveThreadData(threads[0]);
         setHasSelectedThread(true);
       }, 0);
     }
