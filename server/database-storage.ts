@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-14 [Added]
+// See CHANGELOG.md for 2025-06-12 [Fixed]
 import { 
   messages, 
   users, 

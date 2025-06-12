@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-15 [Changed]
+// See CHANGELOG.md for 2025-06-12 [Added]
 import { ThreadType } from '@shared/schema';
 
 export const sampleConversations: ThreadType[] = [
