@@ -18,6 +18,12 @@ coverage
 /build
 build/Release
 
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+
 # Misc
 .DS_Store
 .env

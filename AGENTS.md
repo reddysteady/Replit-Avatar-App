@@ -107,7 +107,7 @@ Solution:
 
 ```bash
 Line	Change
-npm install # install dependencies
+npm install # install dependencies (no lockfile is used)
 npm run dev # run client & server concurrently
 npm run type-check # TypeScript project refs
 npm run lint # lint all packages
@@ -122,6 +122,18 @@ DEBUG_AI=true pnpm dev   # backend logs
 # browser console:
 window.DEBUG_AI = true   # frontend logs
 ```
+
+---
+
+## 9 · Dependency Management & Lockfile Policy 🔓
+
+**This repo intentionally does NOT use a lockfile (`package-lock.json`, `yarn.lock`, or `pnpm-lock.yaml`).**
+
+* Do **not** commit lockfiles—add them to `.gitignore`.
+* Always use `npm install` (not `npm ci`).
+* If you need deterministic dependencies, specify exact versions in `package.json`.
+* If a dependency breaks due to an upstream update, pin to a specific version and document in `CHANGELOG.md`.
+
 
 ---
 
