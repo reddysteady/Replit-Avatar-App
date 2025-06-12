@@ -1,6 +1,6 @@
 // See CHANGELOG.md for 2025-06-08 [Changed]
 // See CHANGELOG.md for 2025-06-10 [Removed]
-// See CHANGELOG.md for 2025-06-10 [Changed - robot icon]
+// See CHANGELOG.md for 2025-06-12 [Fixed - detailed AI error messages]
 import React, { useState } from 'react';
 import { 
   Card, 
@@ -56,7 +56,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
     onError: (error) => {
       toast({
         title: "Error sending reply",
-        description: "There was a problem sending your reply. Please try again.",
+        description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });
     }
@@ -92,7 +92,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
       setIsGenerating(false);
       toast({
         title: "Error generating reply",
-        description: "There was a problem generating the AI reply. Please try again.",
+        description: error instanceof Error ? error.message : String(error),
         variant: "destructive",
       });
     }
