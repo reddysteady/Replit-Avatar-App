@@ -777,11 +777,18 @@ export class MemStorage {
   }
 
   async findSimilarContent(
-    _userId: number,
-    _embedding: number[],
-    _limit: number,
+    userId: number,
+    embedding: number[],
+    limit: number,
   ): Promise<string[]> {
-    return [];
+    const items = Array.from(this.contentItems.values()).filter(i => i.userId === userId);
+    const scored = items.map(item => {
+      const emb = item.embedding || [];
+      const score = emb.reduce((acc, val, idx) => acc + val * (embedding[idx] || 0), 0);
+      return { item, score };
+    });
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, limit).map(s => s.item.content);
   }
 }
 

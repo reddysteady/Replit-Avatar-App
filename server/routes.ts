@@ -1586,7 +1586,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: error.message });
     }
   });
-  
+
+  // Content search endpoint
+  app.get('/api/content/search', async (req, res) => {
+    try {
+      const q = req.query.q;
+      if (typeof q !== 'string' || q.trim() === '') {
+        return res.status(400).json({ message: 'q is required' });
+      }
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 5;
+      const results = await contentService.retrieveRelevantContent(q, 1, limit);
+      res.json({ results });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Analytics endpoint
   app.get("/api/analytics", async (req, res) => {
     try {
