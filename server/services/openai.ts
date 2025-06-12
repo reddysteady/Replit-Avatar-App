@@ -113,9 +113,9 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
+
       const { client, hasKey, keySource: src } = await this.getClient();
       keySource = src;
-
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');

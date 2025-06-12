@@ -64,6 +64,7 @@ describe('AIService', () => {
   })
 
   it('uses provided model when making OpenAI request', async () => {
+
     process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
     ;(storage.getSettings as any).mockResolvedValueOnce({ openaiToken: '' })
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
