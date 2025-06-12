@@ -106,6 +106,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 [Codex][Changed] ChatHeader displayed on mobile conversation view only.
 - [Codex][Added] DEBUG_AI logs around batch message generation for troubleshooting.
 - [Codex][Added] Migration adds PGVector extension and `content_items` table.
+- [Codex][Fixed] ChatHeader now shows on mobile when selecting a thread.
 
 ## 2025-06-13
 - [Codex][Added] Content item storage and vector search.
