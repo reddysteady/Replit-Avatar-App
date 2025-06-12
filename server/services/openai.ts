@@ -51,7 +51,7 @@ export class AIService {
    * Retrieve an OpenAI client using either the environment variable or the
    * stored token. Logs the source when DEBUG_AI is enabled.
    */
-  private async getClient(): Promise<{ client: OpenAI; hasKey: boolean }> {
+  private async getClient(): Promise<{ client: OpenAI; hasKey: boolean; keySource: string }> {
     let apiKey = process.env.OPENAI_API_KEY;
     let source = "env";
     if (!apiKey) {
@@ -63,11 +63,19 @@ export class AIService {
     if (!apiKey) {
       log("OpenAI API key not found in env or storage.");
     } else if (process.env.DEBUG_AI) {
-      console.debug(`[DEBUG-AI] Using ${source}`);
+      console.debug(`[DEBUG-AI] Using ${source} API key`);
     }
 
     const key = apiKey || undefined;
-    return { client: new OpenAI({ apiKey: key }), hasKey: Boolean(apiKey) };
+    return { client: new OpenAI({ apiKey: key }), hasKey: Boolean(apiKey), keySource: source };
+  }
+
+  /**
+   * Validates if an API key is properly formatted (basic check)
+   */
+  private isValidKeyFormat(apiKey: string): boolean {
+    // OpenAI keys start with 'sk-' and are typically 51 characters
+    return apiKey.startsWith('sk-') && apiKey.length >= 20;
   }
   
   /**
@@ -103,13 +111,24 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
-      const { client, hasKey } = await this.getClient();
+      const { client, hasKey, keySource } = await this.getClient();
 
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');
         }
         log("OpenAI API key not found. Using fallback reply.");
+        return this.generateFallbackReply(content, senderName);
+      }
+
+      // Basic key format validation
+      const settings = await storage.getSettings(1);
+      const currentKey = keySource === "env" ? process.env.OPENAI_API_KEY : settings.openaiToken;
+      if (currentKey && !this.isValidKeyFormat(currentKey)) {
+        if (process.env.DEBUG_AI) {
+          console.debug(`[DEBUG-AI] Invalid API key format from ${keySource}`);
+        }
+        log(`Invalid OpenAI API key format from ${keySource}. Using fallback reply.`);
         return this.generateFallbackReply(content, senderName);
       }
 
@@ -173,9 +192,19 @@ export class AIService {
     } catch (error: any) {
       console.error("Error generating AI reply:", error.message);
       
-      // If there's an API quota error, use fallback reply
-      if (error.message.includes("429") || error.message.includes("quota exceeded")) {
+      // Handle different types of API errors
+      if (error.status === 401 || error.message.includes("401") || error.message.includes("Unauthorized")) {
+        log(`Invalid OpenAI API key from ${keySource}. Using fallback reply.`);
+        return this.generateFallbackReply(params.content, params.senderName);
+      }
+      
+      if (error.status === 429 || error.message.includes("429") || error.message.includes("quota exceeded")) {
         log("OpenAI quota exceeded. Using fallback reply.");
+        return this.generateFallbackReply(params.content, params.senderName);
+      }
+
+      if (error.status === 403 || error.message.includes("403") || error.message.includes("insufficient_quota")) {
+        log("OpenAI insufficient quota/permissions. Using fallback reply.");
         return this.generateFallbackReply(params.content, params.senderName);
       }
       
