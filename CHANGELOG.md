@@ -87,3 +87,4 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] Removed manual dotenv parser from AI service.
 - [Codex][Fixed] AI reply generation errors now show detailed messages.
 - [Codex][Fixed] generateReply correctly accesses keySource across error handling.
+- [Codex][Removed] Mobile long press to expand messages.
