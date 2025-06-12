@@ -4,7 +4,7 @@ Zero-ambiguity protocol for updating CHANGELOG.md
 
 0 · TL;DR for Agents
 
-Locate today’s date header (YYYY-MM-DD).
+Locate today’s date header (in Pacific Time) (YYYY-MM-DD).
 
 If it already exists → append new lines under it. If not → add the header at the bottom of the file.
 
