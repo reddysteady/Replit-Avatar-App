@@ -1,9 +1,8 @@
-// See CHANGELOG.md for 2025-06-13 [Changed]
+// See CHANGELOG.md for 2025-06-12 [Changed]
 import React, { useState } from "react";
 import { Link } from "wouter";
 import { ArrowLeft, Menu, FileQuestion, RefreshCw, Link2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -163,26 +162,28 @@ const ChatHeader = ({
             {onDeleteThread && (
               <div>
                 <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Thread Actions</div>
-                <Button
-                  variant="ghost"
-                  className="w-full text-left py-2 hover:bg-gray-100 rounded"
+                <button
+                  className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
                   onClick={() => {
                     onDeleteThread();
                     setMenuOpen(false);
                   }}
                 >
                   Delete Thread
-                </Button>
+                </button>
               </div>
             )}
             {onDeleteThread && <div className="border-t border-gray-200 my-2" />}
             <div>
               <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Tools</div>
-              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" onClick={handleGenerateBatch}>
+              <button
+                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                onClick={handleGenerateBatch}
+              >
                 <FileQuestion className="h-4 w-4 mr-2" /> Generate Batch Messages
-              </Button>
+              </button>
               <Select onValueChange={id => setCustomThreadId(id)} value={customThreadId}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 outline-none px-2 py-1">
                   <SelectValue placeholder="Generate For Thread" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overflow-y-auto">
@@ -195,23 +196,35 @@ const ChatHeader = ({
                 </SelectContent>
               </Select>
               <input
-                className="w-full border border-gray-300 rounded px-2 py-1 mt-2 mb-2"
+                className="w-full border-b border-gray-300 focus:border-blue-500 outline-none py-1 px-2 my-2"
                 placeholder="Custom message"
                 value={customMessage}
                 onChange={e => setCustomMessage(e.target.value)}
               />
-              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" onClick={handleSendCustom}>
+              <button
+                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                onClick={handleSendCustom}
+              >
                 Send Custom Message
-              </Button>
-              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleReloadDatabase}>
+              </button>
+              <button
+                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                onClick={handleReloadDatabase}
+              >
                 <RefreshCw className="h-4 w-4 mr-2" /> Reload - database
-              </Button>
-              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleReloadCache}>
+              </button>
+              <button
+                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                onClick={handleReloadCache}
+              >
                 <RefreshCw className="h-4 w-4 mr-2" /> Reload - frontend cache
-              </Button>
-              <Button className="w-full text-left py-2 hover:bg-gray-100 rounded" variant="outline" onClick={handleSetupWebhook}>
+              </button>
+              <button
+                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                onClick={handleSetupWebhook}
+              >
                 <Link2 className="h-4 w-4 mr-2" /> Setup Webhook
-              </Button>
+              </button>
             </div>
           </div>
         </>
