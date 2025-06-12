@@ -105,9 +105,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed] Restored desktop header with page title, tools, and filter menu.
 [Codex][Changed] ChatHeader displayed on mobile conversation view only.
 - [Codex][Added] DEBUG_AI logs around batch message generation for troubleshooting.
-
-## 2025-06-14
-
 - [Codex][Added] `/api/content/search` endpoint for embedding-based content lookup.
-
-
+- [Codex][Added] Migration adds PGVector extension and `content_items` table.
+- [Codex][Added] /api/content/search endpoint and ranking tests.
+- [Codex][Added] Content item storage and vector search.

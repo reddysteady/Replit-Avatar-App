@@ -1588,26 +1588,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // See CHANGELOG.md for 2025-06-14 [Added]
-  // Content search endpoint (resolved)
-  app.get('/api/content/search', async (req, res) => {
-    try {
-      const q = req.query.q;
-      if (typeof q !== 'string' || q.trim() === '') {
-        return res.status(400).json({ message: 'q is required' });
-      }
-
-      const userId = req.query.userId ? Number(req.query.userId) : 1;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
-
-      const results = await contentService.retrieveRelevantContent(q, userId, limit);
-      res.json({ results });
-    } catch (error: any) {
-      console.error('Error searching content:', error);
-      res.status(500).json({ message: 'Failed to search content' });
+// See CHANGELOG.md for 2025-06-14 [Added] – Content search endpoint
+app.get('/api/content/search', async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (typeof q !== 'string' || q.trim() === '') {
+      return res.status(400).json({ message: 'q is required' });
     }
-  });
-  
+
+    const userId = req.query.userId ? Number(req.query.userId) : 1;
+    const limit  = req.query.limit  ? parseInt(req.query.limit as string, 10) : 5;
+
+    const results = await contentService.retrieveRelevantContent(q, userId, limit);
+    res.json({ results });
+  } catch (error: any) {
+    console.error('Error searching content:', error);
+    res.status(500).json({ message: 'Failed to search content' });
+  }
+});
+
   // Analytics endpoint
   app.get("/api/analytics", async (req, res) => {
     try {
