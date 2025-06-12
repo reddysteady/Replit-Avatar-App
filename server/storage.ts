@@ -437,7 +437,8 @@ export class MemStorage {
       threadId: msg.threadId ?? undefined,
       parentMessageId: parentId,
       isOutbound: msg.isOutbound || false,
-      isAiGenerated: msg.isAiGenerated ?? false
+      isAiGenerated: msg.isAiGenerated ?? false,
+      isAutoReply: msg.status === 'auto-replied'
     };
   }
 
@@ -495,6 +496,7 @@ export class MemStorage {
         lastMessageContent: t.lastMessageContent || undefined,
         status: t.status as 'active' | 'archived' | 'snoozed',
         unreadCount: t.unreadCount || 0,
+        autoReply: t.autoReply ?? false,
         isHighIntent: highIntent
       };
     });
@@ -515,7 +517,8 @@ export class MemStorage {
       id,
       createdAt: now,
       lastMessageAt: now,
-      unreadCount: 0
+      unreadCount: 0,
+      autoReply: false
     } as MessageThread;
     this.threads.set(id, newThread);
     return newThread;

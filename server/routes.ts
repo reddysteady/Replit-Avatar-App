@@ -607,16 +607,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/threads/:id/auto-reply', async (req, res) => {
-    try {
-      const threadId = parseInt(req.params.id);
-      const schema = z.object({ autoReply: z.boolean() });
-      const { autoReply } = schema.parse(req.body);
+// See CHANGELOG.md for 2025-06-15 [Added] – toggle auto-reply on a thread
+app.patch('/api/threads/:id/auto-reply', async (req, res) => {
+  try {
+    const threadId = Number(req.params.id);
 
-      const updatedThread = await storage.updateThread(threadId, { autoReply } as any);
-      if (!updatedThread) {
-        return res.status(404).json({ message: 'Thread not found' });
-      }
+    // Validate and coerce body with Zod (rejects extra props)
+    const Body = z.object({ enabled: z.boolean() }).strict();
+    const { enabled } = Body.parse(req.body);
+
+    const updatedThread = await storage.updateThread(threadId, {
+      autoReply: enabled,
+    });
+
+    if (!updatedThread) {
+      return res.status(404).json({ message: 'Thread not found' });
+    }
+
+    return res.json({ message: 'Auto-reply updated', thread: updatedThread });
+  } catch (err: any) {
+    console.error('Error updating auto-reply:', err);
+    return res
+      .status(500)
+      .json({ message: 'Failed to update auto-reply setting' });
+  }
+});
+
       res.json(updatedThread);
     } catch (error) {
       console.error('Error updating thread auto-reply:', error);

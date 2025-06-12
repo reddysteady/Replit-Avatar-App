@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-15 [Changed]
 import { ThreadType } from '@shared/schema';
 
 export const sampleConversations: ThreadType[] = [
@@ -13,6 +14,7 @@ export const sampleConversations: ThreadType[] = [
     status: 'active',
     unreadCount: 0,
     isHighIntent: false,
+    autoReply: false,
   },
   {
     id: 2,
@@ -25,6 +27,7 @@ export const sampleConversations: ThreadType[] = [
     status: 'active',
     unreadCount: 0,
     isHighIntent: true,
+    autoReply: false,
   },
   {
     id: 3,
@@ -37,5 +40,6 @@ export const sampleConversations: ThreadType[] = [
     status: 'active',
     unreadCount: 0,
     isHighIntent: false,
+    autoReply: false,
   },
 ];

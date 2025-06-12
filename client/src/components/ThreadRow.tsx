@@ -5,21 +5,31 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed-2]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-3]
+// See CHANGELOG.md for 2025-06-15 [Changed]
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { ThreadType, MessageType } from '@shared/schema';
+import { Switch } from '@/components/ui/switch';
+import { BotIcon } from '@/components/ui/bot-icon';
 
 interface ThreadRowProps {
   thread: ThreadType;
   onClick?: () => void;
   creatorId?: string;
   selected?: boolean;
+  handleAutoReplyToggle?: (threadId: number, val: boolean) => void;
 }
 
 const fallbackUrl = 'https://via.placeholder.com/40';
 
-const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'creator-id', selected = false }) => {
+const ThreadRow: React.FC<ThreadRowProps> = ({
+  thread,
+  onClick,
+  creatorId = 'creator-id',
+  selected = false,
+  handleAutoReplyToggle,
+}) => {
   const isSelected = Boolean(selected);
   const lastMsg: MessageType | undefined = thread.messages?.at(-1);
   const lastMessageAt = lastMsg?.timestamp ?? thread.lastMessageAt;
@@ -66,6 +76,15 @@ const ThreadRow: React.FC<ThreadRowProps> = ({ thread, onClick, creatorId = 'cre
         <div className="text-gray-700 text-sm truncate">
           {lastMsg && <span className="font-medium">{senderPrefix}</span>}{' '}
           {snippet}
+        </div>
+        <div className="flex items-center gap-2 ml-10 mt-1 text-xs text-muted-foreground">
+          <BotIcon className="w-4 h-4" />
+          <span>AI Replies</span>
+          <Switch
+            checked={thread.autoReply ?? false}
+            onCheckedChange={(val) => handleAutoReplyToggle?.(thread.id, val)}
+            className="ml-auto"
+          />
         </div>
       </div>
     </div>

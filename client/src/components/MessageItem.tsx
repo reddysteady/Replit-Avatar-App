@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2,
   RefreshCw,
-  Bot,
+  Bot as BotIcon,
   Instagram,
   Youtube
 } from "lucide-react";
@@ -169,7 +169,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   };
 
   return (
-    <div className={`w-full border-b border-gray-200 p-4 ${message.isHighIntent ? "border-l-4 border-l-amber-500" : ""}`}>
+    <div
+      className={`relative w-full border-b border-gray-200 p-4 ${message.isHighIntent ? "border-l-4 border-l-amber-500" : ""}`}
+    >
+      {message.isAutoReply && (
+        <div className="absolute top-1 right-2 flex items-center gap-1 text-xs text-muted-foreground">
+          <BotIcon className="w-3 h-3" />
+          <span>AI Reply</span>
+        </div>
+      )}
       <div className="flex items-start">
         <Avatar className="h-10 w-10 mr-3 flex-shrink-0">
           <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
@@ -268,7 +276,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
                     </>
                   ) : (
                     <>
-                      <Bot className="mr-2 h-4 w-4 text-white" />
+                      <BotIcon className="mr-2 h-4 w-4 text-white" />
                       Generate AI Reply
                     </>
                   )}

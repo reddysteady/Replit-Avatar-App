@@ -27,6 +27,7 @@ export const messageThreads = pgTable("message_threads", {
   status: text("status").default("active"), // 'active', 'archived', 'snoozed'
   autoReply: boolean("auto_reply").default(false),
   unreadCount: integer("unread_count").default(0),
+  autoReply: boolean("auto_reply").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   metadata: jsonb("metadata"),
 });
@@ -216,6 +217,8 @@ export interface MessageType {
   reply?: string;
   isAiGenerated?: boolean;
   isOutbound?: boolean;
+  // True if the message was automatically sent by the AI system
+  isAutoReply?: boolean;
   parentMessageId?: number;
 }
 
@@ -229,6 +232,7 @@ export interface ThreadType {
   lastMessageContent?: string;
   status: 'active' | 'archived' | 'snoozed';
   unreadCount: number;
+  autoReply?: boolean;
   isHighIntent?: boolean;
   messages?: MessageType[];
 }

@@ -1,14 +1,16 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed]
+// See CHANGELOG.md for 2025-06-15 [Changed]
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import ThreadRow from './ThreadRow';
 import { Search } from 'lucide-react';
 import { ThreadType } from '@shared/schema';
 import { sampleConversations } from '@/sampleConversations';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ThreadListProps {
   activeThreadId?: number | null;
@@ -16,12 +18,24 @@ interface ThreadListProps {
   source?: 'all' | 'instagram' | 'youtube' | 'high-intent';
 }
 
-const ThreadList: React.FC<ThreadListProps> = ({ 
-  activeThreadId, 
+const ThreadList: React.FC<ThreadListProps> = ({
+  activeThreadId,
   onSelectThread,
   source = 'all'
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
+
+  const handleAutoReplyToggle = async (threadId: number, val: boolean) => {
+    queryClient.setQueryData<ThreadType[] | undefined>(['/api/threads'], old =>
+      old?.map(t => (t.id === threadId ? { ...t, autoReply: val } : t))
+    );
+    try {
+      await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, { enabled: val });
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+    }
+  };
   
   // Fetch threads from API
   const { data: threads, isLoading } = useQuery({
@@ -96,6 +110,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
               thread={thread}
               onClick={() => onSelectThread(thread.id, thread)}
               selected={thread.id === activeThreadId}
+              handleAutoReplyToggle={handleAutoReplyToggle}
             />
           ))
         )}
