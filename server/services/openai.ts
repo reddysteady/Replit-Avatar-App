@@ -8,6 +8,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Fixed-3]
 // See CHANGELOG.md for 2025-06-12 [Changed]
+// See CHANGELOG.md for 2025-06-11 [Changed-4]
 
 // dotenv/config is imported in server/index.ts before this service is
 // instantiated, so manual .env parsing is unnecessary.
@@ -59,7 +60,9 @@ export class AIService {
       source = "storage";
     }
 
-    if (process.env.DEBUG_AI) {
+    if (!apiKey) {
+      log("OpenAI API key not found in env or storage.");
+    } else if (process.env.DEBUG_AI) {
       console.debug(`[DEBUG-AI] Using ${source}`);
     }
 
