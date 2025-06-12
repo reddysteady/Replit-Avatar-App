@@ -1,12 +1,13 @@
 
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
-import {
-  messages,
-  users,
-  settings,
-  automationRules,
-  leads,
+// See CHANGELOG.md for 2025-06-14 [Added]
+import { 
+  messages, 
+  users, 
+  settings, 
+  automationRules, 
+  leads, 
   analytics,
   messageThreads,
   contentItems,
@@ -279,11 +280,20 @@ export class DatabaseStorage implements IStorage {
   }
 
   async findSimilarContent(userId: number, embedding: number[], limit: number): Promise<string[]> {
-    const vector = `[${embedding.join(',')}]`;
-    const result = await db.execute(
-      sql`SELECT ${contentItems.content} FROM ${contentItems} WHERE ${contentItems.userId} = ${userId} ORDER BY ${contentItems.embedding} <-> ${vector} LIMIT ${limit}`
-    );
-    return result.rows.map((r: any) => r.content as string);
+    try {
+      const vector = `[${embedding.join(',')}]`;
+      const results = await db.execute(sql`
+        SELECT content
+        FROM content_items
+        WHERE user_id = ${userId}
+        ORDER BY embedding <-> ${sql.raw(vector)}
+        LIMIT ${limit}
+      `);
+      return results.rows.map(r => r.content as string);
+    } catch (error) {
+      console.error('Error finding similar content:', error);
+      return [];
+    }
   }
   
   // User methods
