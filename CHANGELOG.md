@@ -84,3 +84,4 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 
 ## 2025-06-12
 - [Codex][Changed] Removed manual dotenv parser from AI service.
+- [Codex][Fixed] AI reply generation errors now show detailed messages.

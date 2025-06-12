@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Fixed - detailed AI error messages]
 // See CHANGELOG.md for 2025-06-11 [Fixed-4]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-10 [Removed]
@@ -10,7 +11,6 @@
 // See CHANGELOG.md for 2025-06-10 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-2]
-// ===== client/src/components/ConversationThread.tsx =====
 // See CHANGELOG.md for 2025-06-10 [Changed - robot icon]
 // See CHANGELOG.md for 2025-06-08 [Fixed]
 // See CHANGELOG.md for 2025-06-08 [Added]
@@ -158,10 +158,11 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         });
       }
     },
-    onError: (error: Error) => {
+
+  onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
@@ -368,10 +369,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
