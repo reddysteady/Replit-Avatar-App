@@ -37,7 +37,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
     }
   };
-  
+
   // Fetch threads from API
   const { data: threads, isLoading } = useQuery({
     queryKey: ['/api/threads'],
@@ -49,7 +49,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
     threads && Array.isArray(threads) && threads.length > 0
       ? (threads as ThreadType[])
       : sampleConversations;
-  
+
   // Filter threads by source and search term
   const filteredThreads = React.useMemo(() => {
     if (!threadsData) return [];
@@ -62,14 +62,14 @@ const ThreadList: React.FC<ThreadListProps> = ({
         } else if (source !== 'all' && source !== 'high-intent' && thread?.source !== source) {
           return false;
         }
-        
+
         // Filter by search term
         if (searchTerm && thread?.participantName) {
           return thread.participantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                  (thread.lastMessageContent && 
                   thread.lastMessageContent.toLowerCase().includes(searchTerm.toLowerCase()));
         }
-        
+
         return true;
       }) : []
       .sort((a: ThreadType, b: ThreadType) => {
@@ -77,7 +77,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
         return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
       });
   }, [threadsData, source, searchTerm]);
-  
+
 
   return (
     <div className="flex flex-col h-full">
@@ -93,7 +93,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
           />
         </div>
       </div>
-      
+
       {/* Thread list */}
       <div className="overflow-y-auto flex-1">
         {isLoading ? (
