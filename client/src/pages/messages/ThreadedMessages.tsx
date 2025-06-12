@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Changed - ChatHeader mobile only]
 // See CHANGELOG.md for 2025-06-14 [Changed - hide headers on mobile]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
@@ -45,6 +46,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
+import ChatHeader from "@/components/layout/ChatHeader";
 
 // Removed mobile headers so tools remain desktop-only
 
@@ -191,19 +193,29 @@ const ThreadedMessages: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="flex-1 overflow-auto">
-              {activeThreadId && (
-                <ConversationThread
-                  threadId={activeThreadId}
-                  threadData={activeThreadData}
-                  showBackButton={false}
-                  onDeleted={() => {
-                    setActiveThreadId(null);
-                    setActiveThreadData(null);
-                  }}
+            <>
+              {activeThreadData && (
+                <ChatHeader
+                  name={activeThreadData.participantName}
+                  avatarUrl={activeThreadData.participantAvatar}
+                  platform={activeThreadData.source}
+                  onBack={() => setShowThreadList(true)}
                 />
               )}
-            </div>
+              <div className="flex-1 overflow-auto">
+                {activeThreadId && (
+                  <ConversationThread
+                    threadId={activeThreadId}
+                    threadData={activeThreadData}
+                    showBackButton={false}
+                    onDeleted={() => {
+                      setActiveThreadId(null);
+                      setActiveThreadData(null);
+                    }}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
       );
