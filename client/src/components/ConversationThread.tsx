@@ -1,4 +1,4 @@
-// See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-12 [Fixed - detailed AI error messages]
 // See CHANGELOG.md for 2025-06-10 [Removed]
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
 // See CHANGELOG.md for 2025-06-10 [Added]
@@ -152,10 +152,10 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
@@ -362,10 +362,10 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
         });
       }
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
