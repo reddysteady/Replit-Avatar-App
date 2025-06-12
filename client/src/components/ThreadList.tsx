@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-10 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-15 [Changed]
+// See CHANGELOG.md for 2025-06-16 [Fixed]
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
@@ -31,7 +32,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
       old?.map(t => (t.id === threadId ? { ...t, autoReply: val } : t))
     );
     try {
-      await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, { enabled: val });
+      await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, { autoReply: val });
     } finally {
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
     }
