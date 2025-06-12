@@ -106,4 +106,5 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 [Codex][Changed] ChatHeader displayed on mobile conversation view only.
 - [Codex][Added] DEBUG_AI logs around batch message generation for troubleshooting.
 
-
+## 2025-06-13
+- [Codex][Added] Content item storage and vector search.
