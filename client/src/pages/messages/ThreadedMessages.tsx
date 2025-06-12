@@ -11,6 +11,7 @@
 // See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
 // See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 // See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
+// See CHANGELOG.md for 2025-06-12 [Fixed - mobile header visibility]
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ThreadList from "@/components/ThreadList";
@@ -64,35 +65,38 @@ const ThreadedMessages: React.FC = () => {
   const queryClient = useQueryClient();
   const [customThreadId, setCustomThreadId] = useState("");
   const [customMessage, setCustomMessage] = useState("");
+  const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(
+    null,
+  );
+
 
   // Check for mobile view on mount and on resize
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
+    };
 
-      // On mobile, if a thread is active, hide the thread list
-      if (mobile && activeThreadId) {
+    // Initial check
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Show or hide thread list based on active thread when on mobile
+  useEffect(() => {
+    if (isMobile) {
+      if (activeThreadId && activeThreadData) {
         setShowThreadList(false);
       } else {
         setShowThreadList(true);
       }
-    };
+    } else {
+      setShowThreadList(true);
+    }
+  }, [isMobile, activeThreadId, activeThreadData]);
 
-    // Check initially
-    checkMobile();
-
-    // Add resize listener
-    window.addEventListener("resize", checkMobile);
-
-    // Clean up
-    return () => window.removeEventListener("resize", checkMobile);
-  }, [activeThreadId]);
-
-  // Get active thread info
-  const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(
-    null,
-  );
 
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
@@ -141,6 +145,19 @@ const ThreadedMessages: React.FC = () => {
     queryKey: ["/api/threads"],
     staleTime: 10000,
   });
+
+  // Keep active thread data in sync when thread list updates
+  useEffect(() => {
+    if (!activeThreadId || !Array.isArray(threads)) return;
+    const t = (threads as any[]).find((thr: any) => thr.id === activeThreadId);
+    if (t) {
+      setActiveThreadData({
+        ...t,
+        participantName: t.participantName || "User",
+        source: t.source || "instagram",
+      });
+    }
+  }, [activeThreadId, threads]);
 
   const renderContent = () => {
     if (isLoading) {
