@@ -90,6 +90,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 
 [Codex][Changed] Mobile chat header now includes menu icon and sits at page top.
 [Codex][Changed] ChatHeader only appears in conversation view; thread list restored MobileHeader.
+[Codex][Changed] Burger menu items now use minimal text styles.
 
 ## 2025-06-13
 - [Codex][Changed] Mobile conversation view now uses `ChatHeader` for WhatsApp-style back navigation.
