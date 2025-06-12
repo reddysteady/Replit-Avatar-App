@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+// See CHANGELOG.md for 2025-06-14 [Added]
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import express from 'express'
 import type { Server } from 'http'
@@ -6,8 +7,10 @@ import { MemStorage } from './storage'
 
 
 const mockAiService = { generateReply: vi.fn() }
+const mockContentService = { retrieveRelevantContent: vi.fn() }
 
 vi.mock('./services/openai', () => ({ aiService: mockAiService }))
+vi.mock('./services/content', () => ({ contentService: mockContentService }))
 let server: Server
 let baseUrl: string
 let mem: MemStorage
@@ -116,5 +119,14 @@ describe('test routes', () => {
     expect(data.generatedReply).toBe('dynamic reply')
     expect(mockAiService.generateReply).toHaveBeenCalled()
 
+  })
+
+  it('content search returns results', async () => {
+    mockContentService.retrieveRelevantContent.mockResolvedValueOnce(['c'])
+    const res = await fetch(`${baseUrl}/api/content/search?q=test&userId=1`)
+    const data = await res.json()
+    expect(res.status).toBe(200)
+    expect(data.results).toEqual(['c'])
+    expect(mockContentService.retrieveRelevantContent).toHaveBeenCalledWith('test', 1, 5)
   })
 })
