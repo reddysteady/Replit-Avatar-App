@@ -111,3 +111,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] Documented DATABASE_URL, OPENAI_API_KEY, and other server environment variables in README.
 - [Codex][Added] /api/content/search endpoint and ranking tests.
 - [Codex][Added] Content item storage and vector search.
+
+## 2025-06-15
+[Codex][Added] Per-thread AI reply toggle and PATCH endpoint.

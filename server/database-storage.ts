@@ -87,6 +87,7 @@ export class DatabaseStorage implements IStorage {
       lastMessageContent: thread.lastMessageContent || undefined,
       status: thread.status as 'active' | 'archived' | 'snoozed',
       unreadCount: thread.unreadCount || 0,
+      autoReply: thread.autoReply ?? false,
       isHighIntent: intentMap.get(thread.id) ?? false
     }));
   }
