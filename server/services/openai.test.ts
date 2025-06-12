@@ -55,14 +55,14 @@ describe('AIService', () => {
   })
 
   it('passes flex service tier when enabled', async () => {
-    process.env.OPENAI_API_KEY = 'test-key'
+    process.env.OPENAI_API_KEY = 'sk-test-key-1234567890'
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
     await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, flexProcessing: true })
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ service_tier: 'flex' }))
   })
 
   it('uses provided model when making OpenAI request', async () => {
-    process.env.OPENAI_API_KEY = 'test-key'
+    process.env.OPENAI_API_KEY = 'sk-test-key-1234567890'
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
     await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-3.5-turbo' })
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-3.5-turbo' }))

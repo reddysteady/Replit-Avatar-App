@@ -104,6 +104,7 @@ export class AIService {
    * with contextual awareness using RAG pipeline
    */
   async generateReply(params: GenerateReplyParams): Promise<string> {
+    let keySource = "env";
     try {
       const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
 
@@ -111,7 +112,8 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
-      const { client, hasKey, keySource } = await this.getClient();
+      const { client, hasKey, keySource: source } = await this.getClient();
+      keySource = source;
 
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
