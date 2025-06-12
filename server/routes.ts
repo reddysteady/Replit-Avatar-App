@@ -8,6 +8,7 @@
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
+// See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
@@ -267,6 +268,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/test/generate-batch', async (_req, res) => {
     try {
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] starting batch generation');
+      }
+
       const messages = [] as any[];
       const highIntentIndexes = new Set<number>();
       while (highIntentIndexes.size < 3) {
@@ -276,6 +281,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (let i = 0; i < 10; i++) {
         const isHighIntent = highIntentIndexes.has(i);
         const source = Math.random() > 0.5 ? 'instagram' : 'youtube';
+
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] creating message', { index: i, isHighIntent, source });
+        }
 
         const message = await storage.createMessage({
           source,
@@ -294,12 +303,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: 1,
         });
 
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] created message', { id: message.id });
+        }
+
         messages.push(message);
+      }
+
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] batch generation complete', { count: messages.length });
       }
 
       res.json({ success: true, count: messages.length });
     } catch (err) {
       console.error('Error generating batch:', err);
+      if (process.env.DEBUG_AI) {
+        console.error('[DEBUG-AI] batch generation failed', err);
+      }
       res.status(500).json({ success: false, error: String(err) });
     }
   });

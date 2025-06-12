@@ -1,5 +1,6 @@
 
 // See CHANGELOG.md for 2025-06-11 [Added]
+// See CHANGELOG.md for 2025-06-13 [Added]
 import { 
   messages, 
   users, 
@@ -357,7 +358,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMessage(message: InsertMessage): Promise<Message> {
+    if (process.env.DEBUG_AI) {
+      log(`[DEBUG-AI] inserting message ${JSON.stringify(message)}`);
+    }
+
     const [newMessage] = await db.insert(messages).values(message).returning();
+
+    if (process.env.DEBUG_AI) {
+      log(`[DEBUG-AI] inserted message ${newMessage.id}`);
+    }
+
     return newMessage;
   }
 
