@@ -104,3 +104,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] Burger menu opens as overlay panel with grouped tools.
 - [Codex][Fixed] Restored desktop header with page title, tools, and filter menu.
 
+
+## 2025-06-14
+
+[Codex][Changed] Header hidden on mobile and Tools menu desktop-only.
