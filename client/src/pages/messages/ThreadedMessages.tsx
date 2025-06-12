@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-14 [Changed - hide headers on mobile]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Changed]
@@ -32,7 +33,6 @@ import {
   Loader2,
   SearchX,
   ChevronDown,
-  ArrowLeft,
   FileQuestion,
   RefreshCw,
   Link2,
@@ -46,8 +46,8 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 
-import ChatHeader from "@/components/layout/ChatHeader";
-import MobileHeader from "@/components/layout/MobileHeader";
+// Removed mobile headers so tools remain desktop-only
+
 import { ThreadType } from "@shared/schema";
 
 const ThreadedMessages: React.FC = () => {
@@ -128,32 +128,7 @@ const ThreadedMessages: React.FC = () => {
     }
   };
 
-  // Handle back button click
-  const handleBackClick = () => {
-    if (isMobile) {
-      setShowThreadList(true);
-    }
-  };
-
-  const handleDeleteThread = async () => {
-    if (!activeThreadId) return;
-    try {
-      const res = await fetch(`/api/threads/${activeThreadId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Failed");
-      queryClient.setQueryData<ThreadType[]>(
-        ["/api/threads"],
-        (old) => old?.filter((t) => t.id !== activeThreadId) || [],
-      );
-      queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
-      toast({ title: "Thread deleted" });
-      setActiveThreadId(null);
-      setActiveThreadData(null);
-    } catch {
-      toast({ title: "Failed to delete thread", variant: "destructive" });
-    }
-  };
+  // No explicit back/delete actions when headers hidden
 
   // Check for empty threads
   const {
@@ -208,39 +183,27 @@ const ThreadedMessages: React.FC = () => {
       return (
         <div className="h-full flex flex-col">
           {showThreadList ? (
-            <>
-              <MobileHeader />
-              <div className="flex-1 pt-16">
-                <ThreadList
-                  activeThreadId={activeThreadId}
-                  onSelectThread={handleThreadSelect}
-                  source={activeTab}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <ChatHeader
-                name={activeThreadData?.participantName || "Conversation"}
-                avatarUrl={activeThreadData?.participantAvatar || ""}
-                platform={activeThreadData?.source || ""}
-                onBack={handleBackClick}
-                onDeleteThread={handleDeleteThread}
+            <div className="flex-1">
+              <ThreadList
+                activeThreadId={activeThreadId}
+                onSelectThread={handleThreadSelect}
+                source={activeTab}
               />
-              <div className="flex-1 overflow-auto">
-                {activeThreadId && (
-                  <ConversationThread
-                    threadId={activeThreadId}
-                    threadData={activeThreadData}
-                    showBackButton={false}
-                    onDeleted={() => {
-                      setActiveThreadId(null);
-                      setActiveThreadData(null);
-                    }}
-                  />
-                )}
-              </div>
-            </>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-auto">
+              {activeThreadId && (
+                <ConversationThread
+                  threadId={activeThreadId}
+                  threadData={activeThreadData}
+                  showBackButton={false}
+                  onDeleted={() => {
+                    setActiveThreadId(null);
+                    setActiveThreadData(null);
+                  }}
+                />
+              )}
+            </div>
           )}
         </div>
       );
@@ -317,7 +280,7 @@ const ThreadedMessages: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <div className="p-4 border-b border-gray-200 bg-white">
+      <div className="hidden md:block p-4 border-b border-gray-200 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center space-x-2">
