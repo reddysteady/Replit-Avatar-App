@@ -65,6 +65,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex] Clarified README changelog instructions and agent guidelines for missing date sections.
 - [Codex] `/api/test/generate-for-user` accepts a `content` body so admins can send custom messages from the Tools menu.
 - [Codex][Fixed] `/api/test/generate-for-user` now correctly uses the `content` body when provided.
+- [Codex][Fixed] Mobile navigation now closes after selecting a menu item.
 
 ## 2025-06-11
 - [Codex][Added] TypeScript and ESLint build scripts.
