@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu } from "lucide-react";
