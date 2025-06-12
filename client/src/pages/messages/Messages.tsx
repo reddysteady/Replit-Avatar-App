@@ -156,8 +156,8 @@ const Messages = () => {
                               return res.json();
                             })
                             .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
-                              queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/instagram'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/messages/youtube'] });
                               toast({ title: 'Batch generated', description: '10 messages created' });
                             })
                             .catch(err => {
