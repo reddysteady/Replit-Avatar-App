@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-12 [Changed - remove MobileHeader]
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -16,14 +17,12 @@ import Testing from "@/pages/testing/Testing";
 import Privacy from "@/pages/privacy/Privacy";
 
 import Sidebar from "@/components/layout/Sidebar";
-import MobileHeader from "@/components/layout/MobileHeader";
 
 function Router() {
   return (
     <div className="h-screen flex overflow-hidden">
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        <MobileHeader />
         <Switch>
           <Route path="/" component={ThreadedMessages} />
           <Route path="/instagram" component={ThreadedMessages} />
