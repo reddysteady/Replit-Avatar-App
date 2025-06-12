@@ -118,4 +118,8 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 [Codex][Added] Per-thread AI reply toggle and PATCH endpoint.
 [Codex][Fixed] Auto-reply schema cleanup and patch route response shape.
 
+## 2025-06-16
+
+- [Codex][Fixed] ThreadList uses `autoReply` payload when toggling per-thread AI replies.
+
 
