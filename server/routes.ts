@@ -607,6 +607,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/threads/:id/auto-reply', async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.id);
+      const schema = z.object({ autoReply: z.boolean() });
+      const { autoReply } = schema.parse(req.body);
+
+      const updatedThread = await storage.updateThread(threadId, { autoReply } as any);
+      if (!updatedThread) {
+        return res.status(404).json({ message: 'Thread not found' });
+      }
+      res.json(updatedThread);
+    } catch (error) {
+      console.error('Error updating thread auto-reply:', error);
+      res.status(500).json({ message: 'Failed to update thread auto-reply' });
+    }
+  });
+
   app.delete('/api/threads/:id', async (req, res) => {
     try {
       const threadId = parseInt(req.params.id);

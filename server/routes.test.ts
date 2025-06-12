@@ -129,4 +129,25 @@ describe('test routes', () => {
     expect(data.results).toEqual(['c'])
     expect(mockContentService.retrieveRelevantContent).toHaveBeenCalledWith('test', 1, 5)
   })
+
+  it('updates thread auto-reply flag', async () => {
+    const thread = await mem.createThread({
+      userId: 1,
+      externalParticipantId: 'u',
+      participantName: 'User',
+      source: 'instagram',
+      metadata: {}
+    })
+
+    const res = await fetch(`${baseUrl}/api/threads/${thread.id}/auto-reply`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ autoReply: true })
+    })
+    const data = await res.json()
+    expect(res.status).toBe(200)
+    expect(data.autoReply).toBe(true)
+    const stored = await mem.getThread(thread.id)
+    expect((stored as any).autoReply).toBe(true)
+  })
 })
