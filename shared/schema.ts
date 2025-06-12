@@ -26,6 +26,7 @@ export const messageThreads = pgTable("message_threads", {
   lastMessageContent: text("last_message_content"),
   status: text("status").default("active"), // 'active', 'archived', 'snoozed'
   unreadCount: integer("unread_count").default(0),
+  autoReply: boolean("auto_reply").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   metadata: jsonb("metadata"),
 });
@@ -228,6 +229,7 @@ export interface ThreadType {
   lastMessageContent?: string;
   status: 'active' | 'archived' | 'snoozed';
   unreadCount: number;
+  autoReply?: boolean;
   isHighIntent?: boolean;
   messages?: MessageType[];
 }

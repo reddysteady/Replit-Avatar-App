@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-3]
+// See CHANGELOG.md for 2025-06-15 [Added]
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -17,6 +18,7 @@ const sampleThread: ThreadType = {
   status: 'active',
   unreadCount: 0,
   isHighIntent: false,
+  autoReply: false,
   messages: [
     {
       id: 1,
@@ -46,5 +48,16 @@ describe('ThreadRow', () => {
       <ThreadRow thread={sampleThread} selected={false} />
     );
     expect(html).toContain('min-w-0');
+  });
+
+  it('renders AI reply switch reflecting state', () => {
+    const offHtml = renderToStaticMarkup(
+      <ThreadRow thread={{ ...sampleThread, autoReply: false }} />
+    );
+    const onHtml = renderToStaticMarkup(
+      <ThreadRow thread={{ ...sampleThread, autoReply: true }} />
+    );
+    expect(offHtml).toContain('OFF');
+    expect(onHtml).toContain('ON');
   });
 });
