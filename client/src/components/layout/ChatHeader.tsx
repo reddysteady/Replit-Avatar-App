@@ -1,7 +1,15 @@
 // See CHANGELOG.md for 2025-06-12 [Changed]
 import React, { useState } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Menu, FileQuestion, RefreshCw, Link2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Menu,
+  FileQuestion,
+  RefreshCw,
+  Link2,
+  Trash2,
+  Send,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Select,
@@ -37,22 +45,28 @@ const ChatHeader = ({
 
   const handleGenerateBatch = () => {
     fetch("/api/test/generate-batch", { method: "POST" })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) {
-          return res.text().then(t => {
+          return res.text().then((t) => {
             throw new Error(`Server error: ${t}`);
           });
         }
         return res.json();
       })
       .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/instagram/messages"] });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/instagram/messages"],
+        });
         queryClient.invalidateQueries({ queryKey: ["/api/youtube/messages"] });
         toast({ title: "Batch generated", description: "10 messages created" });
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Batch error:", err);
-        toast({ title: "Error", description: String(err), variant: "destructive" });
+        toast({
+          title: "Error",
+          description: String(err),
+          variant: "destructive",
+        });
       });
   };
 
@@ -63,9 +77,9 @@ const ChatHeader = ({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content: customMessage }),
     })
-      .then(res => {
+      .then((res) => {
         if (!res.ok) {
-          return res.text().then(t => {
+          return res.text().then((t) => {
             throw new Error(`Server error: ${t}`);
           });
         }
@@ -79,9 +93,13 @@ const ChatHeader = ({
         });
         setCustomMessage("");
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Generate error:", err);
-        toast({ title: "Error", description: String(err), variant: "destructive" });
+        toast({
+          title: "Error",
+          description: String(err),
+          variant: "destructive",
+        });
       });
   };
 
@@ -104,15 +122,28 @@ const ChatHeader = ({
 
   const handleSetupWebhook = async () => {
     try {
-      const res = await fetch("/api/instagram/setup-webhook", { method: "POST" });
+      const res = await fetch("/api/instagram/setup-webhook", {
+        method: "POST",
+      });
       const data = await res.json();
       if (res.ok) {
-        toast({ title: "Webhook Setup", description: "Instagram webhook successfully configured" });
+        toast({
+          title: "Webhook Setup",
+          description: "Instagram webhook successfully configured",
+        });
       } else {
-        toast({ title: "Webhook Setup Failed", description: data.message || "Failed to set up Instagram webhook", variant: "destructive" });
+        toast({
+          title: "Webhook Setup Failed",
+          description: data.message || "Failed to set up Instagram webhook",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      toast({ title: "Webhook Setup Error", description: "An error occurred during webhook setup", variant: "destructive" });
+      toast({
+        title: "Webhook Setup Error",
+        description: "An error occurred during webhook setup",
+        variant: "destructive",
+      });
     }
   };
 
@@ -130,7 +161,11 @@ const ChatHeader = ({
             </button>
           )}
           {avatarUrl && (
-            <img src={avatarUrl} alt={name} className="h-8 w-8 rounded-full mr-3" />
+            <img
+              src={avatarUrl}
+              alt={name}
+              className="h-8 w-8 rounded-full mr-3"
+            />
           )}
           {name && (
             <span className="font-medium text-sm flex items-center">
@@ -158,32 +193,43 @@ const ChatHeader = ({
             className="fixed inset-0 z-40"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="fixed top-0 right-0 z-50 w-2/5 max-w-sm min-w-[240px] h-full bg-white shadow-2xl rounded-l-lg py-4 px-6 flex flex-col space-y-2">
+          <div className="fixed top-0 right-0 z-50 w-2/5 max-w-sm min-w-[240px] h-full bg-white shadow-2xl rounded-l-lg py-4 px-4 flex flex-col space-y-2">
             {onDeleteThread && (
               <div>
-                <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Thread Actions</div>
+                <div className="text-xs text-gray-500 font-semibold uppercase mb-1 mt-2 px-1">
+                  Thread Actions
+                </div>
                 <button
-                  className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                  className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                   onClick={() => {
                     onDeleteThread();
                     setMenuOpen(false);
                   }}
                 >
-                  Delete Thread
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                  <span>Delete Thread</span>
                 </button>
               </div>
             )}
-            {onDeleteThread && <div className="border-t border-gray-200 my-2" />}
+            {onDeleteThread && (
+              <div className="border-t border-gray-200 my-2" />
+            )}
             <div>
-              <div className="text-xs text-gray-500 font-semibold uppercase mb-1">Tools</div>
+              <div className="text-xs text-gray-500 font-semibold uppercase mb-1 mt-2 px-1">
+                Tools
+              </div>
               <button
-                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                 onClick={handleGenerateBatch}
               >
-                <FileQuestion className="h-4 w-4 mr-2" /> Generate Batch Messages
+                <FileQuestion className="h-4 w-4" />
+                <span>Generate Batch Messages</span>
               </button>
-              <Select onValueChange={id => setCustomThreadId(id)} value={customThreadId}>
-                <SelectTrigger className="w-full bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 outline-none px-2 py-1">
+              <Select
+                onValueChange={(id) => setCustomThreadId(id)}
+                value={customThreadId}
+              >
+                <SelectTrigger className="w-full bg-transparent border-0 border-b border-gray-300 focus:border-blue-500 outline-none px-1 py-1">
                   <SelectValue placeholder="Generate For Thread" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60 overflow-y-auto">
@@ -196,34 +242,38 @@ const ChatHeader = ({
                 </SelectContent>
               </Select>
               <input
-                className="w-full border-b border-gray-300 focus:border-blue-500 outline-none py-1 px-2 my-2"
+                className="bg-gray-100 border border-gray-300 rounded py-2 my-2 w-full placeholder-gray-500 px-2"
                 placeholder="Custom message"
                 value={customMessage}
-                onChange={e => setCustomMessage(e.target.value)}
+                onChange={(e) => setCustomMessage(e.target.value)}
               />
               <button
-                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                 onClick={handleSendCustom}
               >
-                Send Custom Message
+                <Send className="w-4 h-4 text-blue-500" />
+                <span>Send Custom Message</span>
               </button>
               <button
-                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                 onClick={handleReloadDatabase}
               >
-                <RefreshCw className="h-4 w-4 mr-2" /> Reload - database
+                <RefreshCw className="h-4 w-4" />
+                <span>Reload - database</span>
               </button>
               <button
-                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                 onClick={handleReloadCache}
               >
-                <RefreshCw className="h-4 w-4 mr-2" /> Reload - frontend cache
+                <RefreshCw className="h-4 w-4" />
+                <span>Reload - frontend cache</span>
               </button>
               <button
-                className="w-full text-left py-2 px-2 font-medium text-gray-900 hover:bg-gray-100 rounded-md"
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
                 onClick={handleSetupWebhook}
               >
-                <Link2 className="h-4 w-4 mr-2" /> Setup Webhook
+                <Link2 className="h-4 w-4" />
+                <span>Setup Webhook</span>
               </button>
             </div>
           </div>
