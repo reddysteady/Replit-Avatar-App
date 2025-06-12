@@ -1,17 +1,18 @@
 
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
-import { 
-  messages, 
-  users, 
-  settings, 
-  automationRules, 
-  leads, 
+import {
+  messages,
+  users,
+  settings,
+  automationRules,
+  leads,
   analytics,
   messageThreads,
-  type User, 
-  type InsertUser, 
-  type Message, 
+  contentItems,
+  type User,
+  type InsertUser,
+  type Message,
   type InsertMessage,
   type Settings,
   type InsertSettings,
@@ -25,7 +26,9 @@ import {
   type SenderType,
   type MessageThread,
   type InsertMessageThread,
-  type ThreadType
+  type ThreadType,
+  type InsertContentItem,
+  type ContentItem
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
@@ -266,14 +269,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Content methods for RAG pipeline
-  async createContentItem(contentItem: any): Promise<any> {
-    // Implementation will be added later for RAG pipeline
-    return contentItem;
+  async createContentItem(contentItem: InsertContentItem): Promise<ContentItem> {
+    const [item] = await db
+      .insert(contentItems)
+      .values(contentItem)
+      .returning();
+
+    return item;
   }
-  
+
   async findSimilarContent(userId: number, embedding: number[], limit: number): Promise<string[]> {
-    // Implementation will be added later for RAG pipeline
-    return [];
+    const vector = `[${embedding.join(',')}]`;
+    const result = await db.execute(
+      sql`SELECT ${contentItems.content} FROM ${contentItems} WHERE ${contentItems.userId} = ${userId} ORDER BY ${contentItems.embedding} <-> ${vector} LIMIT ${limit}`
+    );
+    return result.rows.map((r: any) => r.content as string);
   }
   
   // User methods

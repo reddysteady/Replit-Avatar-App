@@ -107,4 +107,5 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] DEBUG_AI logs around batch message generation for troubleshooting.
 - [Codex][Added] Migration adds PGVector extension and `content_items` table.
 
-
+## 2025-06-13
+- [Codex][Added] Content item storage and vector search.
