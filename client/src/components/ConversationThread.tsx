@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-11 [Fixed-4]
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-10 [Removed]
 // See CHANGELOG.md for 2025-06-10 [Changed-2]
@@ -134,6 +135,11 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
   const { mutate: generateAiReply, isPending: isGenerating } = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', `/api/messages/${msg.id}/generate-reply`);
+      if (!response.ok) {
+        const text = await response.text();
+        console.error(text);
+        throw new Error('Failed to generate AI reply');
+      }
       return response.json();
     },
     onSuccess: (data: any) => {
@@ -152,10 +158,10 @@ function ThreadedMessage({ msg, threadId, setShowMobileActions }: { msg: Threade
         });
       }
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: 'Error generating reply',
-        description: 'There was a problem generating the AI reply.',
+        description: error.message,
         variant: 'destructive',
       });
     }
