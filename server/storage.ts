@@ -786,6 +786,7 @@ export class MemStorage {
     limit: number,
   ): Promise<string[]> {
 
+
     const items = Array.from(this.contentItems.values()).filter(i => i.userId === userId);
     const scored = items.map(item => {
       const emb = item.embedding || [];
@@ -794,6 +795,30 @@ export class MemStorage {
     });
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, limit).map(s => s.item.content);
+
+    const cosine = (a: number[], b: number[]) => {
+      let dot = 0;
+      let magA = 0;
+      let magB = 0;
+      for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        magA += a[i] * a[i];
+        magB += b[i] * b[i];
+      }
+      return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+    };
+
+    const items = Array.from(this.contentItems.values()).filter(
+      item => item.userId === userId,
+    );
+
+    items.sort(
+      (a, b) =>
+        cosine(b.embedding as number[], embedding) -
+        cosine(a.embedding as number[], embedding),
+    );
+
+    return items.slice(0, limit).map(i => i.content);
   }
 }
 
