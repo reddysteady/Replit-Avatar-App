@@ -493,58 +493,6 @@ const ConversationThread: React.FC<ConversationThreadProps> = ({
   
   return (
     <div className="flex flex-col h-full">
-      {/* Thread header with participant info */}
-      {threadData && (
-        <div className="px-4 py-3 border-b flex items-center bg-white">
-          {showBackButton && onBack && (
-            <Button variant="ghost" size="sm" onClick={onBack} className="mr-2">
-              ←
-            </Button>
-          )}
-          <div className="flex items-center">
-            <div
-              className={`w-10 h-10 rounded-full mr-3 flex-shrink-0 overflow-hidden ring-2 ${
-                threadData.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
-              } bg-gray-200`}
-            >
-              {threadData.participantAvatar ? (
-                <img
-                  src={threadData.participantAvatar}
-                  alt={threadData.participantName}
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500 font-medium">
-                  {threadData.participantName.substring(0, 1).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div>
-              <h3 className="font-medium">{threadData.participantName}</h3>
-              <div className="text-xs text-gray-500 flex items-center">
-                <span className="capitalize">{threadData.source}</span>
-                {threadData.isHighIntent && (
-                  <span className="ml-2 px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-medium">
-                    High Intent
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="ml-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => deleteThread()}>Delete Thread</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      )}
 
       {isMobile && showMobileActions && (
         <div className="fixed top-0 left-0 right-0 bg-white border-b z-20 flex justify-end space-x-2 p-2">

@@ -27,15 +27,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, SearchX, ChevronDown, ArrowLeft, FileQuestion, RefreshCw, Link2 } from 'lucide-react';
+import { Loader2, SearchX, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { Input } from '@/components/ui/input';
+
+
 import ChatHeader from '@/components/layout/ChatHeader';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { ThreadType } from '@shared/schema';
@@ -48,8 +43,6 @@ const ThreadedMessages: React.FC = () => {
   const [showThreadList, setShowThreadList] = useState(true);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [customThreadId, setCustomThreadId] = useState('');
-  const [customMessage, setCustomMessage] = useState('');
   
   // Check for mobile view on mount and on resize
   useEffect(() => {
@@ -118,6 +111,21 @@ const ThreadedMessages: React.FC = () => {
       setShowThreadList(true);
     }
   };
+
+  const handleDeleteThread = async () => {
+    if (!activeThreadId) return;
+    try {
+      const res = await fetch(`/api/threads/${activeThreadId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed');
+      queryClient.setQueryData<ThreadType[]>(['/api/threads'], (old) => old?.filter(t => t.id !== activeThreadId) || []);
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+      toast({ title: 'Thread deleted' });
+      setActiveThreadId(null);
+      setActiveThreadData(null);
+    } catch {
+      toast({ title: 'Failed to delete thread', variant: 'destructive' });
+    }
+  };
   
   // Check for empty threads
   const { data: threads, isLoading, error } = useQuery({
@@ -174,7 +182,9 @@ const ThreadedMessages: React.FC = () => {
               <ChatHeader
                 name={activeThreadData?.participantName || 'Conversation'}
                 avatarUrl={activeThreadData?.participantAvatar || ''}
+                platform={activeThreadData?.source || ''}
                 onBack={handleBackClick}
+                onDeleteThread={handleDeleteThread}
               />
               <div className="flex-1 overflow-auto">
                 {activeThreadId && (
@@ -265,167 +275,7 @@ const ThreadedMessages: React.FC = () => {
       <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Accordion type="single" collapsible>
-                <AccordionItem value="tools">
-                  <AccordionTrigger className="bg-gray-900 text-white px-4 py-2 rounded flex items-center h-9 border-gray-900 hover:bg-gray-800">
-                    <FileQuestion className="h-4 w-4 mr-2" />
-                    Tools
-                  </AccordionTrigger>
-                  <AccordionContent className="absolute right-0 z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
-                    <div className="px-4 py-3">
-                      <Button
-                        className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
-                        onClick={() => {
-                          fetch('/api/test/generate-batch', { method: 'POST' })
-                            .then(res => {
-                              if (!res.ok) {
-                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
-                              }
-                              return res.json();
-                            })
-                            .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
-                              queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
-                              toast({ title: 'Batch generated', description: '10 messages created' });
-                            })
-                            .catch(err => {
-                              console.error('Batch error:', err);
-                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
-                            });
-                        }}
-                      >
-                        Generate Batch Messages
-                      </Button>
-                      <Select
-                        onValueChange={(id) => setCustomThreadId(id)}
-                        value={customThreadId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Generate For Thread" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
-                          {Array.isArray(threads) &&
-                            threads.map((thread: any) => (
-                              <SelectItem key={thread.id} value={String(thread.id)}>
-                                {thread.participantName}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        className="mt-2"
-                        placeholder="Custom message"
-                        value={customMessage}
-                        onChange={(e) => setCustomMessage(e.target.value)}
-                      />
-                      <Button
-                        className="w-full mt-2"
-                        onClick={() => {
-                          if (!customThreadId) return;
-                          fetch(`/api/test/generate-for-user/${customThreadId}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content: customMessage })
-                          })
-                            .then(res => {
-                              if (!res.ok) {
-                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
-                              }
-                              return res.json();
-                            })
-                            .then(() => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
-                              toast({ title: 'Message generated', description: `Message added to thread ${customThreadId}` });
-                              setCustomMessage('');
-                            })
-                            .catch(err => {
-                              console.error('Generate error:', err);
-                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
-                            });
-                        }}
-                      >
-                        Send Custom Message
-                      </Button>
-                      {/* Database refresh replicates Testing Tools page */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: 'Database Refresh',
-                            description: 'Refreshing messages from database...'
-                          });
-                          // Refetch messages directly from storage
-                          queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
-                          queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Reload - database
-                      </Button>
-                      {/* Clear frontend cache for fresh data */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: 'Cache Refresh',
-                            description: 'Clearing frontend cache and refreshing data...'
-                          });
-                          // Invalidate all cached queries
-                          queryClient.invalidateQueries();
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Reload - frontend cache
-                      </Button>
-                      {/* Setup Instagram webhook for real-time updates */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          const setupWebhook = async () => {
-                            try {
-                              const response = await fetch('/api/instagram/setup-webhook', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' }
-                              });
-                              const data = await response.json();
-
-                              if (response.ok) {
-                                toast({
-                                  title: 'Webhook Setup',
-                                  description: 'Instagram webhook successfully configured'
-                                });
-                              } else {
-                                toast({
-                                  title: 'Webhook Setup Failed',
-                                  description: data.message || 'Failed to set up Instagram webhook',
-                                  variant: 'destructive'
-                                });
-                              }
-                            } catch (error) {
-                              toast({
-                                title: 'Webhook Setup Error',
-                                description: 'An error occurred during webhook setup',
-                                variant: 'destructive'
-                              });
-                            }
-                          };
-                          setupWebhook();
-                        }}
-                      >
-                        <Link2 className="h-4 w-4 mr-2" />
-                        Setup Webhook
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </div>
-          </div>
+          <div className="flex items-center space-x-2"></div>
         </div>
         {/* Desktop tabs */}
         <div className="hidden md:block">
