@@ -105,3 +105,4 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Changed] Mobile conversation view now uses `ChatHeader` for WhatsApp-style back navigation.
 - [Codex][Removed] Removed page header so `ChatHeader` sits at top.
 - [Codex][Changed] Burger menu opens as overlay panel with grouped tools.
+- [Codex][Fixed] Restored desktop header with page title, tools, and filter menu.
