@@ -81,6 +81,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed-3] AI service now falls back to stored OpenAI tokens when env key is missing.
 - [Codex][Changed-4] Warn when OpenAI API key missing and log updates to /api/settings.
 [Codex][Fixed-4] generateAiReply now checks response.ok and logs server errors.
+[Codex][Changed] AI service prefers stored OpenAI token over environment variable.
 
 ## 2025-06-12
 - [Codex][Changed] Removed manual dotenv parser from AI service.

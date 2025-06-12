@@ -52,12 +52,13 @@ export class AIService {
    * stored token. Logs the source when DEBUG_AI is enabled.
    */
   private async getClient(): Promise<{ client: OpenAI; hasKey: boolean; keySource: string }> {
-    let apiKey = process.env.OPENAI_API_KEY;
-    let source = "env";
+    const settings = await storage.getSettings(1); // For MVP, assume user ID 1
+    let apiKey = settings.openaiToken || undefined;
+    let source = "storage";
+
     if (!apiKey) {
-      const settings = await storage.getSettings(1); // For MVP, assume user ID 1
-      apiKey = settings.openaiToken || undefined;
-      source = "storage";
+      apiKey = process.env.OPENAI_API_KEY;
+      source = "env";
     }
 
     if (!apiKey) {
@@ -104,6 +105,7 @@ export class AIService {
    * with contextual awareness using RAG pipeline
    */
   async generateReply(params: GenerateReplyParams): Promise<string> {
+    let keySource = "env";
     try {
       const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
 
@@ -111,7 +113,8 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
-      const { client, hasKey, keySource } = await this.getClient();
+      const { client, hasKey, keySource: src } = await this.getClient();
+      keySource = src;
 
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
