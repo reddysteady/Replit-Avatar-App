@@ -8,6 +8,7 @@
 // See CHANGELOG.md for 2025-06-10 [Fixed - hide mobile filter dropdown in conversation view]
 // See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
 // See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
+// See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -272,71 +273,6 @@ const ThreadedMessages: React.FC = () => {
   
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Messages</h1>
-          <div className="flex items-center space-x-2"></div>
-        </div>
-        {/* Desktop tabs */}
-        <div className="hidden md:block">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={(value) => setActiveTab(value as 'all' | 'instagram' | 'youtube' | 'high-intent')}
-            className="mt-4"
-          >
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="instagram">Instagram</TabsTrigger>
-              <TabsTrigger value="youtube">YouTube</TabsTrigger>
-              <TabsTrigger value="high-intent">High Intent</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        
-        {/* Mobile filter dropdown */}
-        {showThreadList && (
-          <div className="md:hidden mt-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-between bg-gray-200 hover:bg-gray-300 text-black border border-gray-300">
-                <span>
-                  {activeTab === 'all' ? 'All Messages' :
-                   activeTab === 'instagram' ? 'Instagram' : 'YouTube'}
-                </span>
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
-              <DropdownMenuItem 
-                onClick={() => setActiveTab('all')}
-                className={activeTab === 'all' ? 'bg-gray-100' : ''}
-              >
-                All Messages
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setActiveTab('instagram')}
-                className={activeTab === 'instagram' ? 'bg-gray-100' : ''}
-              >
-                Instagram
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setActiveTab('youtube')}
-                className={activeTab === 'youtube' ? 'bg-gray-100' : ''}
-              >
-                YouTube
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => setActiveTab('high-intent')}
-                className={activeTab === 'high-intent' ? 'bg-gray-100' : ''}
-              >
-                High Intent
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          </div>
-        )}
-      </div>
-      
       <div className="flex-1 overflow-hidden">
         {renderContent()}
       </div>
