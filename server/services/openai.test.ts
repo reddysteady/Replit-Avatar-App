@@ -55,17 +55,22 @@ describe('AIService', () => {
   })
 
   it('passes flex service tier when enabled', async () => {
-    process.env.OPENAI_API_KEY = 'sk-test-key-1234567890'
+    process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
+    ;(storage.getSettings as any).mockResolvedValueOnce({ openaiToken: '' })
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
     await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, flexProcessing: true })
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ service_tier: 'flex' }))
+    expect(openaiCtor).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'sk-valid-env-key-123456' }))
   })
 
   it('uses provided model when making OpenAI request', async () => {
-    process.env.OPENAI_API_KEY = 'sk-test-key-1234567890'
+
+    process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
+    ;(storage.getSettings as any).mockResolvedValueOnce({ openaiToken: '' })
     mockCreate.mockResolvedValueOnce({ choices: [{ message: { content: 'ok' } }] })
     await service.generateReply({ content: 'test', senderName: 'Bob', creatorToneDescription: '', temperature: 0.5, maxLength: 10, model: 'gpt-3.5-turbo' })
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'gpt-3.5-turbo' }))
+    expect(openaiCtor).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'sk-valid-env-key-123456' }))
   })
 
   it('classifyIntent parses response', async () => {
@@ -85,6 +90,14 @@ describe('AIService', () => {
     mockEmbeddings.create.mockResolvedValueOnce({ data: [{ embedding: [4] }] })
     const res = await service.generateEmbedding('hi')
     expect(res).toEqual([4])
+    expect(openaiCtor).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'stored-key' }))
+  })
+
+  it('prefers stored token over env key', async () => {
+    process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
+    mockEmbeddings.create.mockResolvedValueOnce({ data: [{ embedding: [5] }] })
+    const res = await service.generateEmbedding('hi')
+    expect(res).toEqual([5])
     expect(openaiCtor).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'stored-key' }))
   })
 

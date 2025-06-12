@@ -52,12 +52,13 @@ export class AIService {
    * stored token. Logs the source when DEBUG_AI is enabled.
    */
   private async getClient(): Promise<{ client: OpenAI; hasKey: boolean; keySource: string }> {
-    let apiKey = process.env.OPENAI_API_KEY;
-    let source = "env";
+    const settings = await storage.getSettings(1); // For MVP, assume user ID 1
+    let apiKey = settings.openaiToken || undefined;
+    let source = "storage";
+
     if (!apiKey) {
-      const settings = await storage.getSettings(1); // For MVP, assume user ID 1
-      apiKey = settings.openaiToken || undefined;
-      source = "storage";
+      apiKey = process.env.OPENAI_API_KEY;
+      source = "env";
     }
 
     if (!apiKey) {
@@ -112,9 +113,9 @@ export class AIService {
         console.debug('[DEBUG-AI] generateReply called', { senderName, model });
       }
 
-      const { client, hasKey, keySource: source } = await this.getClient();
-      keySource = source;
 
+      const { client, hasKey, keySource: src } = await this.getClient();
+      keySource = src;
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');
