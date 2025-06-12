@@ -88,5 +88,8 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed] AI reply generation errors now show detailed messages.
 - [Codex][Fixed] generateReply correctly accesses keySource across error handling.
 
+[Codex][Changed] Mobile chat header now includes menu icon and sits at page top.
+[Codex][Changed] ChatHeader only appears in conversation view; thread list restored MobileHeader.
+
 ## 2025-06-13
 - [Codex][Changed] Mobile conversation view now uses `ChatHeader` for WhatsApp-style back navigation.

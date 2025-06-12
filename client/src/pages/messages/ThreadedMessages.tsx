@@ -6,6 +6,8 @@
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed - hide mobile filter dropdown in conversation view]
+// See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
+// See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThreadList from '@/components/ThreadList';
@@ -35,6 +37,7 @@ import {
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import ChatHeader from '@/components/layout/ChatHeader';
+import MobileHeader from '@/components/layout/MobileHeader';
 import { ThreadType } from '@shared/schema';
 
 const ThreadedMessages: React.FC = () => {
@@ -154,19 +157,20 @@ const ThreadedMessages: React.FC = () => {
     // Mobile view - show either thread list or conversation based on showThreadList state
     if (isMobile) {
       return (
-        <div className="h-full">
+        <div className="h-full flex flex-col">
           {showThreadList ? (
-            // Thread list view for mobile
-            <div className="h-full">
-              <ThreadList 
-                activeThreadId={activeThreadId} 
-                onSelectThread={handleThreadSelect}
-                source={activeTab}
-              />
-            </div>
+            <>
+              <MobileHeader />
+              <div className="flex-1 pt-16">
+                <ThreadList
+                  activeThreadId={activeThreadId}
+                  onSelectThread={handleThreadSelect}
+                  source={activeTab}
+                />
+              </div>
+            </>
           ) : (
-            // Conversation view for mobile with back button
-            <div className="h-full flex flex-col">
+            <>
               <ChatHeader
                 name={activeThreadData?.participantName || 'Conversation'}
                 avatarUrl={activeThreadData?.participantAvatar || ''}
@@ -185,7 +189,7 @@ const ThreadedMessages: React.FC = () => {
                   />
                 )}
               </div>
-            </div>
+            </>
           )}
         </div>
       );
