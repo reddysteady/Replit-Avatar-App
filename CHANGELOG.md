@@ -133,10 +133,10 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] Deep debug trace in Messages mutation when auto-reply triggers.
 - [Codex][Fixed] Fallback fetch ensures AI settings exist before evaluating channel flags.
 
-
-
 2025-06-13
 - [Codex][Fixed] Test route now triggers AI auto-reply when enabled.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 
+2025-06-18
+[Codex][Added] Unit test for custom message auto-reply.
