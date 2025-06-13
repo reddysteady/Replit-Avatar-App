@@ -195,6 +195,8 @@ CHANGLOG.md file.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 - [Codex][Added] Unit test for custom message auto-reply.
 
+[Codex][Fixed-2] Batch messages now create threads and refresh the thread list.
+
 ## 2025-06-14
 
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
