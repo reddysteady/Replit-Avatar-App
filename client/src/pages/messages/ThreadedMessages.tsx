@@ -51,7 +51,7 @@ import ChatHeader from "@/components/layout/ChatHeader";
 
 // Removed mobile headers so tools remain desktop-only
 
-import { ThreadType } from "@shared/schema";
+import { ThreadType, Settings } from "@shared/schema";
 
 const ThreadedMessages: React.FC = () => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
@@ -144,6 +144,10 @@ const ThreadedMessages: React.FC = () => {
   } = useQuery({
     queryKey: ["/api/threads"],
     staleTime: 10000,
+  });
+
+  const { data: settings } = useQuery<Settings>({
+    queryKey: ["/api/settings"],
   });
 
   // Keep active thread data in sync when thread list updates
@@ -403,7 +407,7 @@ const ThreadedMessages: React.FC = () => {
                               }
                               return res.json();
                             })
-                            .then(() => {
+                            .then((newMsg) => {
                               queryClient.invalidateQueries({
                                 queryKey: ["/api/threads"],
                               });
@@ -412,6 +416,34 @@ const ThreadedMessages: React.FC = () => {
                                 description: `Message added to thread ${customThreadId}`,
                               });
                               setCustomMessage("");
+
+                              const thread = Array.isArray(threads)
+                                ? (threads as any[]).find((t) => t.id === Number(customThreadId))
+                                : null;
+                              const channelAutoReply = thread?.source === 'instagram'
+                                ? settings?.aiSettings?.autoReplyInstagram
+                                : thread?.source === 'youtube'
+                                ? settings?.aiSettings?.autoReplyYoutube
+                                : false;
+
+                              if (thread?.autoReply && channelAutoReply) {
+                                console.log('Triggering auto-reply for custom message', newMsg.id);
+                                const endpoint = thread.source === 'instagram'
+                                  ? '/api/instagram/ai-reply'
+                                  : '/api/youtube/ai-reply';
+
+                                fetch(endpoint, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ messageId: newMsg.id })
+                                })
+                                  .then(() => {
+                                    console.log('Auto-reply triggered after custom message');
+                                  })
+                                  .catch((err) => {
+                                    console.error('Auto-reply error:', err);
+                                  });
+                              }
                             })
                             .catch((err) => {
                               console.error("Generate error:", err);
