@@ -12,6 +12,7 @@
 // See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 // See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
 // See CHANGELOG.md for 2025-06-12 [Fixed - mobile header visibility]
+// See CHANGELOG.md for 2025-06-14 [Added - header generate message]
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ThreadList from "@/components/ThreadList";
@@ -68,6 +69,36 @@ const ThreadedMessages: React.FC = () => {
   const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(
     null,
   );
+
+  const handleGenerateCustomMessage = () => {
+    if (!activeThreadId) return;
+    fetch(`/api/test/generate-for-user/${activeThreadId}`, {
+      method: "POST",
+    })
+      .then((res) => {
+        if (!res.ok) {
+          return res.text().then((t) => {
+            throw new Error(`Server error: ${t}`);
+          });
+        }
+        return res.json();
+      })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
+        toast({
+          title: "Message generated",
+          description: `Message added to thread ${activeThreadId}`,
+        });
+      })
+      .catch((err) => {
+        console.error("Generate error:", err);
+        toast({
+          title: "Error",
+          description: String(err),
+          variant: "destructive",
+        });
+      });
+  };
 
 
   // Check for mobile view on mount and on resize
@@ -221,6 +252,7 @@ const ThreadedMessages: React.FC = () => {
                   avatarUrl={activeThreadData.participantAvatar}
                   platform={activeThreadData.source}
                   onBack={() => setShowThreadList(true)}
+                  onGenerateCustomMessage={handleGenerateCustomMessage}
                 />
               )}
               <div className="flex-1 overflow-auto">

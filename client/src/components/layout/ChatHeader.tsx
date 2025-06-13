@@ -1,7 +1,7 @@
 // See CHANGELOG.md for 2025-06-14 [Changed - removed tools menu on mobile]
+// See CHANGELOG.md for 2025-06-14 [Added - generate custom message action]
 import React, { useState } from "react";
-import { Link } from "wouter";
-import { ArrowLeft, Menu, Trash2 } from "lucide-react";
+import { ArrowLeft, Menu, Trash2, MessageSquarePlus } from "lucide-react";
 // Using simple image tag to ensure SSR markup includes the URL
 
 type ChatHeaderProps = {
@@ -10,6 +10,7 @@ type ChatHeaderProps = {
   platform?: string;
   onBack?: () => void;
   onDeleteThread?: () => void;
+  onGenerateCustomMessage?: () => void;
 };
 
 const ChatHeader = ({
@@ -18,8 +19,10 @@ const ChatHeader = ({
   platform = "",
   onBack,
   onDeleteThread,
+  onGenerateCustomMessage,
 }: ChatHeaderProps) => {
   const handleDeleteThread = onDeleteThread ?? (() => {});
+  const handleGenerateCustomMessage = onGenerateCustomMessage ?? (() => {});
 
   if (typeof window !== "undefined" && (window as any).DEBUG_AI) {
     console.debug("[DEBUG-AI] ChatHeader render", {
@@ -90,6 +93,16 @@ const ChatHeader = ({
               >
                 <Trash2 className="w-4 h-4 text-red-500" />
                 <span>Delete Thread</span>
+              </button>
+              <button
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
+                onClick={() => {
+                  handleGenerateCustomMessage();
+                  setMenuOpen(false);
+                }}
+              >
+                <MessageSquarePlus className="w-4 h-4 text-blue-500" />
+                <span>Generate Custom Message</span>
               </button>
             </div>
             <div className="border-t border-gray-200 my-2" />
