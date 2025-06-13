@@ -10,6 +10,7 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-13 [Added]
+// See CHANGELOG.md for 2025-06-13 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-14 [Added]
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
@@ -381,6 +382,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isOutbound: rawMsg.isOutbound || false,
         isAiGenerated: rawMsg.isAiGenerated ?? false,
       };
+
+      // Auto-reply logic mirroring Instagram webhook
+      const settings = await storage.getSettings(thread.userId);
+      const aiSettings = settings.aiSettings as any;
+
+      if (aiSettings?.autoReplyInstagram && thread.autoReply) {
+        const aiReplyContent = await aiService.generateReply({
+          content: rawMsg.content,
+          senderName: thread.participantName,
+          creatorToneDescription: aiSettings.creatorToneDescription ?? '',
+          temperature: aiSettings.temperature ?? 0.7,
+          maxLength: aiSettings.maxResponseLength ?? 500,
+          model: aiSettings.model ?? 'gpt-4o',
+          flexProcessing: aiSettings.flexProcessing ?? false,
+        });
+
+        await storage.addMessageToThread(threadId, {
+          source: 'instagram',
+          content: aiReplyContent,
+          externalId: `auto-${Date.now()}`,
+          senderId: '0',
+          senderName: 'Auto-Reply Bot',
+          senderAvatar: undefined,
+          timestamp: new Date(),
+          status: 'auto-replied',
+          isOutbound: true,
+          isAiGenerated: true,
+          userId: thread.userId,
+          metadata: {},
+        });
+      }
 
       res.json(mapped);
     } catch (err) {
