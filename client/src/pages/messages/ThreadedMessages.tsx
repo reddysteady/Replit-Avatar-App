@@ -37,23 +37,18 @@ import {
   Loader2,
   SearchX,
   ChevronDown,
-  FileQuestion,
   RefreshCw,
   Link2,
+  Wrench,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import ToolsDrawer from "@/components/ToolsDrawer";
 import { Input } from "@/components/ui/input";
 import ChatHeader from "@/components/layout/ChatHeader";
 
 // Removed mobile headers so tools remain desktop-only
 
-import { ThreadType, Settings } from "@shared/schema";
+import { ThreadType, Settings, MessageThread } from "@shared/schema";
 
 const ThreadedMessages: React.FC = () => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
@@ -67,6 +62,7 @@ const ThreadedMessages: React.FC = () => {
   const queryClient = useQueryClient();
   const [customThreadId, setCustomThreadId] = useState("");
   const [customMessage, setCustomMessage] = useState("");
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(
     null,
   );
@@ -352,241 +348,113 @@ const ThreadedMessages: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Accordion type="single" collapsible>
-                <AccordionItem value="tools">
-                  <AccordionTrigger className="bg-gray-900 text-white px-4 py-2 rounded flex items-center h-9 border-gray-900 hover:bg-gray-800">
-                    <FileQuestion className="h-4 w-4 mr-2" />
-                    Tools
-                  </AccordionTrigger>
-                  <AccordionContent className="absolute right-0 z-10 mt-1 bg-white border border-gray-200 shadow-lg rounded w-64">
-                    <div className="px-4 py-3">
-                      <Button
-                        className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
-                        onClick={() => {
-                          fetch("/api/test/generate-batch", { method: "POST" })
-                            .then((res) => {
-                              if (!res.ok) {
-                                return res.text().then((t) => {
-                                  throw new Error(`Server error: ${t}`);
-                                });
-                              }
-                              return res.json();
-                            })
-                            .then(() => {
-                              queryClient.invalidateQueries({
-                                queryKey: ["/api/instagram/messages"],
-                              });
-                              queryClient.invalidateQueries({
-                                queryKey: ["/api/youtube/messages"],
-                              });
-                              queryClient.invalidateQueries({
-                                queryKey: ["/api/threads"],
-                              });
-                              toast({
-                                title: "Batch generated",
-                                description: "10 messages created",
-                              });
-                            })
-                            .catch((err) => {
-                              console.error("Batch error:", err);
-                              toast({
-                                title: "Error",
-                                description: String(err),
-                                variant: "destructive",
-                              });
-                            });
-                        }}
-                      >
-                        Generate Batch Messages
-                      </Button>
-                      <Select
-                        onValueChange={(id) => setCustomThreadId(id)}
-                        value={customThreadId}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Generate For Thread" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-60 overflow-y-auto">
-                          {Array.isArray(threads) &&
-                            (threads as any[]).map((thread: any) => (
-                              <SelectItem
-                                key={thread.id}
-                                value={String(thread.id)}
-                              >
-                                {thread.participantName}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        className="mt-2"
-                        placeholder="Custom message"
-                        value={customMessage}
-                        onChange={(e) => setCustomMessage(e.target.value)}
-                      />
-                      <Button
-                        className="w-full mt-2"
-                        onClick={() => {
-                          if (!customThreadId) return;
-                          fetch(
-                            `/api/test/generate-for-user/${customThreadId}`,
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ content: customMessage }),
-                            },
-                          )
-                            .then((res) => {
-                              if (!res.ok) {
-                                return res.text().then((t) => {
-                                  throw new Error(`Server error: ${t}`);
-                                });
-                              }
-                              return res.json();
-                            })
-                            .then((newMsg) => {
-                              queryClient.invalidateQueries({
-                                queryKey: ["/api/threads"],
-                              });
-                              toast({
-                                title: "Message generated",
-                                description: `Message added to thread ${customThreadId}`,
-                              });
-                              setCustomMessage("");
 
-                              const thread = Array.isArray(threads)
-                                ? (threads as any[]).find((t) => t.id === Number(customThreadId))
-                                : null;
-                              const channelAutoReply = thread?.source === 'instagram'
-                                ? settings?.aiSettings?.autoReplyInstagram
-                                : thread?.source === 'youtube'
-                                ? settings?.aiSettings?.autoReplyYoutube
-                                : false;
+            <div className="hidden md:block">
+              <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} className="flex items-center bg-gray-50 hover:bg-gray-100 text-black border border-gray-300">
+                <Wrench className="w-4 h-4 mr-2" />
+                Tools
+              </Button>
 
-                              if (thread?.autoReply && channelAutoReply) {
-                                console.log('Triggering auto-reply for custom message', newMsg.id);
-                                const endpoint = thread.source === 'instagram'
-                                  ? '/api/instagram/ai-reply'
-                                  : '/api/youtube/ai-reply';
-
-                                fetch(endpoint, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ messageId: newMsg.id })
-                                })
-                                  .then(() => {
-                                    console.log('Auto-reply triggered after custom message');
-                                  })
-                                  .catch((err) => {
-                                    console.error('Auto-reply error:', err);
-                                  });
-                              }
-                            })
-                            .catch((err) => {
-                              console.error("Generate error:", err);
-                              toast({
-                                title: "Error",
-                                description: String(err),
-                                variant: "destructive",
-                              });
-                            });
-                        }}
-                      >
-                        Send Custom Message
-                      </Button>
-                      {/* Database refresh replicates Testing Tools page */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: "Database Refresh",
-                            description: "Refreshing messages from database...",
-                          });
-                          // Refetch messages directly from storage
-                          queryClient.invalidateQueries({
-                            queryKey: ["/api/instagram/messages"],
-                          });
-                          queryClient.invalidateQueries({
-                            queryKey: ["/api/youtube/messages"],
-                          });
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Reload - database
-                      </Button>
-                      {/* Clear frontend cache for fresh data */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: "Cache Refresh",
-                            description:
-                              "Clearing frontend cache and refreshing data...",
-                          });
-                          // Invalidate all cached queries
-                          queryClient.invalidateQueries();
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Reload - frontend cache
-                      </Button>
-                      {/* Setup Instagram webhook for real-time updates */}
-                      <Button
-                        className="w-full mt-2"
-                        variant="outline"
-                        onClick={() => {
-                          const setupWebhook = async () => {
-                            try {
-                              const response = await fetch(
-                                "/api/instagram/setup-webhook",
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                },
-                              );
-                              const data = await response.json();
-
-                              if (response.ok) {
-                                toast({
-                                  title: "Webhook Setup",
-                                  description:
-                                    "Instagram webhook successfully configured",
-                                });
-                              } else {
-                                toast({
-                                  title: "Webhook Setup Failed",
-                                  description:
-                                    data.message ||
-                                    "Failed to set up Instagram webhook",
-                                  variant: "destructive",
-                                });
-                              }
-                            } catch (error) {
-                              toast({
-                                title: "Webhook Setup Error",
-                                description:
-                                  "An error occurred during webhook setup",
-                                variant: "destructive",
-                              });
-                            }
-                          };
-                          setupWebhook();
-                        }}
-                      >
-                        <Link2 className="h-4 w-4 mr-2" />
-                        Setup Webhook
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
             </div>
           </div>
+          <ToolsDrawer
+            open={toolsOpen}
+            onClose={() => setToolsOpen(false)}
+            onGenerateBatch={() => {
+              fetch('/api/test/generate-batch', { method: 'POST' })
+                .then((res) => {
+                  if (!res.ok) {
+                    return res.text().then((t) => { throw new Error(`Server error: ${t}`) })
+                  }
+                  return res.json()
+                })
+                .then(() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] })
+                  queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] })
+                  toast({ title: 'Batch generated', description: '10 messages created' })
+                })
+                .catch((err) => {
+                  console.error('Batch error:', err)
+                  toast({ title: 'Error', description: String(err), variant: 'destructive' })
+                })
+            }}
+            threads={Array.isArray(threads) ? (threads as MessageThread[]) : []}
+            customThreadId={customThreadId}
+            setCustomThreadId={setCustomThreadId}
+            customMessage={customMessage}
+            setCustomMessage={setCustomMessage}
+            onSendCustom={() => {
+              if (!customThreadId) return
+              fetch(`/api/test/generate-for-user/${customThreadId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: customMessage }),
+              })
+                .then((res) => {
+                  if (!res.ok) {
+                    return res.text().then((t) => {
+                      throw new Error(`Server error: ${t}`)
+                    })
+                  }
+                  return res.json()
+                })
+                .then((newMsg) => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+                  toast({ title: 'Message generated', description: `Message added to thread ${customThreadId}` })
+                  setCustomMessage('')
+
+                  const thread = Array.isArray(threads) ? (threads as any[]).find((t) => t.id === Number(customThreadId)) : null
+                  const channelAutoReply = thread?.source === 'instagram'
+                    ? settings?.aiSettings?.autoReplyInstagram
+                    : thread?.source === 'youtube'
+                      ? settings?.aiSettings?.autoReplyYoutube
+                      : false
+
+                  if (thread?.autoReply && channelAutoReply) {
+                    const endpoint = thread.source === 'instagram' ? '/api/instagram/ai-reply' : '/api/youtube/ai-reply'
+                    fetch(endpoint, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ messageId: newMsg.id })
+                    }).catch((err) => console.error('Auto-reply error:', err))
+                  }
+                })
+                .catch((err) => {
+                  console.error('Generate error:', err)
+                  toast({ title: 'Error', description: String(err), variant: 'destructive' })
+                })
+            }}
+            canSend={true}
+            onReloadDb={() => {
+              toast({ title: 'Database Refresh', description: 'Refreshing messages from database...' })
+              queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] })
+              queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] })
+            }}
+            onClearCache={() => {
+              toast({ title: 'Cache Refresh', description: 'Clearing frontend cache and refreshing data...' })
+              queryClient.invalidateQueries()
+            }}
+            onSetupWebhook={() => {
+              const setupWebhook = async () => {
+                try {
+                  const response = await fetch('/api/instagram/setup-webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                  })
+                  const data = await response.json()
+
+                  if (response.ok) {
+                    toast({ title: 'Webhook Setup', description: 'Instagram webhook successfully configured' })
+                  } else {
+                    toast({ title: 'Webhook Setup Failed', description: data.message || 'Failed to set up Instagram webhook', variant: 'destructive' })
+                  }
+                } catch (error) {
+                  toast({ title: 'Webhook Setup Error', description: 'An error occurred during webhook setup', variant: 'destructive' })
+                }
+              }
+              setupWebhook()
+            }}
+          />
         </div>
         {/* Desktop tabs */}
         <div className="hidden md:block">
