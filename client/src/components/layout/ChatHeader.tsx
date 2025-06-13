@@ -10,6 +10,7 @@ type ChatHeaderProps = {
   platform?: string;
   onBack?: () => void;
   onDeleteThread?: () => void;
+  onGenerateCustomMessage?: () => void; 
 };
 
 const ChatHeader = ({
@@ -18,6 +19,7 @@ const ChatHeader = ({
   platform = "",
   onBack,
   onDeleteThread,
+  onGenerateCustomMessage,
 }: ChatHeaderProps) => {
   const handleDeleteThread = onDeleteThread ?? (() => {});
 
@@ -91,6 +93,23 @@ const ChatHeader = ({
                 <Trash2 className="w-4 h-4 text-red-500" />
                 <span>Delete Thread</span>
               </button>
+              {onGenerateCustomMessage && (
+                <button
+                  className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
+                  onClick={() => {
+                    onGenerateCustomMessage();
+                    setMenuOpen(false);
+                  }}
+                >
+                  {/* You can pick any icon, here's a simple send icon from lucide-react: */}
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L11 13"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+                  </svg>
+                  <span>Generate Custom Message</span>
+                </button>
+              )}
+
             </div>
             <div className="border-t border-gray-200 my-2" />
           </div>
