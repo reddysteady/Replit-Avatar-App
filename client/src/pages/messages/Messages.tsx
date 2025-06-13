@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-17 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
@@ -75,7 +76,9 @@ const Messages = () => {
     queryKey: ['/api/settings'],
   });
 
-  const canSend = !!settings;
+  const settingsReady = queryClient.getQueryData(['/api/settings']);
+  const canSend = !!settingsReady;
+  if (!settingsReady) queryClient.fetchQuery({ queryKey: ['/api/settings'] });
 
   const sendCustom = useMutation({
     mutationFn: (payload: CustomMsgPayload) =>
@@ -86,17 +89,29 @@ const Messages = () => {
       const { thread } = variables;
       await queryClient.invalidateQueries({ queryKey: ['/api/threads', thread.id] });
 
-      const ai = settings?.aiSettings;
+      if (process.env.NODE_ENV === 'development' && (window as any).DEBUG_AUTO_REPLY) {
+        console.trace('[AUTO-DEBUG]', {
+          threadId: thread.id,
+          auto: thread.autoReply,
+          source: thread.source,
+          aiSettingsLoaded: !!settings?.aiSettings,
+          instagramFlag: settings?.aiSettings?.autoReplyInstagram,
+          youtubeFlag: settings?.aiSettings?.autoReplyYoutube,
+        });
+      }
+
+      let ai = settings?.aiSettings;
+      if (!ai) {
+        const freshSettings = await queryClient.fetchQuery({ queryKey: ['/api/settings'] });
+        ai = (freshSettings as Settings).aiSettings;
+      }
+
       const channelOK =
         thread.source === 'instagram'
           ? ai?.autoReplyInstagram
           : thread.source === 'youtube'
             ? ai?.autoReplyYoutube
             : false;
-
-      if (process.env.NODE_ENV === 'development' && (window as any).DEBUG_AUTO_REPLY) {
-        console.trace('[AUTO]', { threadId: thread.id, auto: thread.autoReply, channelOK });
-      }
 
       if (thread.autoReply && channelOK) {
         await apiRequest('POST', `/api/${thread.source}/ai-reply`, {
