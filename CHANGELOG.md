@@ -194,9 +194,9 @@ CHANGLOG.md file.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 - [Codex][Added] Unit test for custom message auto-reply.
-
-## 2025-06-14
-
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
 - [Codex][Changed] Burger menu includes textbox to send custom message; button
   disabled when empty.
+- [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
+  grouping.
+
