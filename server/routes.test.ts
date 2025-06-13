@@ -1,6 +1,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-14 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import express from 'express'
 import type { Server } from 'http'
@@ -40,13 +41,16 @@ afterAll(() => {
 
 describe('test routes', () => {
   it('generate-batch creates messages', async () => {
-    const before = (mem as any).msgs.size || 0
+    const beforeMsgs = (mem as any).msgs.size || 0
+    const beforeThreads = (mem as any).threads.size || 0
     const res = await fetch(`${baseUrl}/api/test/generate-batch`, { method: 'POST' })
     expect(res.status).toBe(200)
     const data = await res.json()
     expect(data.count).toBe(10)
-    const after = (mem as any).msgs.size || 0
-    expect(after - before).toBe(10)
+    const afterMsgs = (mem as any).msgs.size || 0
+    const afterThreads = (mem as any).threads.size || 0
+    expect(afterMsgs - beforeMsgs).toBe(10)
+    expect(afterThreads - beforeThreads).toBeGreaterThanOrEqual(10)
     const messages = Array.from((mem as any).msgs.values()).slice(-10)
     const hi = messages.filter((m: any) => m.isHighIntent)
     expect(hi.length).toBeGreaterThanOrEqual(3)

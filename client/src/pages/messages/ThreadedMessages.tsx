@@ -9,6 +9,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed - hide mobile filter dropdown in conversation view]
 // See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 // See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 // See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
 // See CHANGELOG.md for 2025-06-12 [Fixed - mobile header visibility]
@@ -378,6 +379,9 @@ const ThreadedMessages: React.FC = () => {
                               });
                               queryClient.invalidateQueries({
                                 queryKey: ["/api/youtube/messages"],
+                              });
+                              queryClient.invalidateQueries({
+                                queryKey: ["/api/threads"],
                               });
                               toast({
                                 title: "Batch generated",
