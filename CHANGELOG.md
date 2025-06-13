@@ -127,4 +127,10 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 
 [Codex][Fixed] Send Custom Message now auto-replies after settings load.
 
+## 2025-06-17
+
+- [Codex][Changed] Send Custom Message button waits for settings cache before enabling.
+- [Codex][Added] Deep debug trace in Messages mutation when auto-reply triggers.
+- [Codex][Fixed] Fallback fetch ensures AI settings exist before evaluating channel flags.
+
 
