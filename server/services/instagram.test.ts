@@ -165,4 +165,48 @@ describe('Instagram webhook auto-reply', () => {
     expect(res.status).toBe(200)
     expect(mockAiService.generateReply).not.toHaveBeenCalled()
   })
+
+  it('skips auto-reply when global setting disabled', async () => {
+    await mem.updateSettings(1, { aiSettings: { autoReplyInstagram: false } })
+    vi.spyOn(mem, 'findOrCreateThreadByParticipant').mockResolvedValueOnce({
+      id: 4,
+      userId: 1,
+      externalParticipantId: 'u2',
+      participantName: 'u',
+      source: 'instagram',
+      createdAt: new Date(),
+      lastMessageAt: new Date(),
+      unreadCount: 0,
+      status: 'active',
+      autoReply: true,
+      metadata: {},
+    } as any)
+    vi.spyOn(mem, 'addMessageToThread').mockResolvedValueOnce({
+      id: 7,
+      threadId: 4,
+    } as any)
+
+    const payload = {
+      object: 'instagram',
+      entry: [
+        {
+          messaging: [
+            {
+              sender: { id: 'u2' },
+              message: { mid: 'm3', text: 'hi' },
+              timestamp: Date.now(),
+            },
+          ],
+        },
+      ],
+    }
+
+    const res = await fetch(`${baseUrl}/webhook/instagram`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    expect(res.status).toBe(200)
+    expect(mockAiService.generateReply).not.toHaveBeenCalled()
+  })
 })
