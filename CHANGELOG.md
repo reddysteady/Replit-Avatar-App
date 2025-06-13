@@ -125,4 +125,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Fixed] ThreadList uses `autoReply` payload when toggling per-thread AI replies.
 - [Codex][Changed] Instagram auto-replies require both global and thread flags; `processNewMessage` now returns the saved message and thread.
 
+[Codex][Fixed] Send Custom Message now auto-replies after settings load.
+
 
