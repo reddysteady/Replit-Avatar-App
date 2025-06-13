@@ -1,0 +1,5 @@
+\nnode_modules\nbuild\ndist
+.local/
+node_modules/
+dist/
+build/
