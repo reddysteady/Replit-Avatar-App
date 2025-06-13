@@ -203,3 +203,10 @@ CHANGLOG.md file.
 
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
+
+## 2025-06-17
+
+- [Codex][Changed] Desktop Tools dropdown replaced with drawer on md+ screens.
+- [Codex][Added] Unit tests ensure Tools drawer opens, focuses input, and closes
+  with ESC.
+- [Codex][Changed] README updated for Tools drawer usage.
