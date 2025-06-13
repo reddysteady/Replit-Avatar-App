@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "build": "vite build",
     "serve": "vite preview",
+    "check": "eslint .",
     "lint": "eslint . --ext .ts,.tsx",
     "type-check": "tsc --noEmit",
     "test": "vitest",

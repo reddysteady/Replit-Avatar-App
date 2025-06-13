@@ -20,6 +20,7 @@ import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 import { db } from "./db";
 import { z } from "zod";
 import { messages } from "@shared/schema";
@@ -285,20 +286,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       for (let i = 0; i < 10; i++) {
-        const isHighIntent = highIntentIndexes.has(i);
-        const source = Math.random() > 0.5 ? 'instagram' : 'youtube';
+        const isHighIntent = highIntentIndexes.has(i)
+        const source = Math.random() > 0.5 ? 'instagram' : 'youtube'
 
         if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] creating message', { index: i, isHighIntent, source });
+          console.debug('[DEBUG-AI] creating message', { index: i, isHighIntent, source })
         }
 
-        const message = await storage.createMessage({
+        const senderId = faker.internet.userName().toLowerCase()
+        const senderName = faker.person.fullName()
+        const senderAvatar = faker.image.avatar()
+
+        const thread = await storage.findOrCreateThreadByParticipant(
+          1,
+          senderId,
+          senderName,
+          source,
+          senderAvatar
+        )
+
+        const message = await storage.addMessageToThread(thread.id, {
           source,
           content: faker.lorem.sentence(),
           externalId: `faker-${Date.now()}-${i}`,
-          senderId: faker.internet.userName().toLowerCase(),
-          senderName: faker.person.fullName(),
-          senderAvatar: faker.image.avatar(),
+          senderId,
+          senderName,
+          senderAvatar,
           timestamp: new Date(),
           status: 'new',
           isHighIntent,
@@ -307,13 +320,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? faker.number.int({ min: 80, max: 100 })
             : undefined,
           userId: 1,
-        });
+          metadata: {},
+        })
 
         if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] created message', { id: message.id });
+          console.debug('[DEBUG-AI] created message', { id: message.id, threadId: thread.id })
         }
 
-        messages.push(message);
+        messages.push(message)
       }
 
       if (process.env.DEBUG_AI) {
