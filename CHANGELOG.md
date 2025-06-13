@@ -198,3 +198,5 @@ CHANGLOG.md file.
 ## 2025-06-14
 
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
+- [Codex][Changed] Burger menu includes textbox to send custom message; button
+  disabled when empty.
