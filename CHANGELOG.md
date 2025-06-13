@@ -124,5 +124,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 
 - [Codex][Fixed] ThreadList uses `autoReply` payload when toggling per-thread AI replies.
 - [Codex][Changed] Instagram auto-replies require both global and thread flags; `processNewMessage` now returns the saved message and thread.
+- [Codex][Added] DATABASE_URL, INSTAGRAM_VERIFY_TOKEN, and WEBHOOK_BASE_URL example variables.
 
 
