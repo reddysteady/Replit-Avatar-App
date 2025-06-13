@@ -30,65 +30,53 @@ const MobileHeader = () => {
         
         {isMenuOpen && (
           <div className="bg-white pb-3 pt-2 border-b border-neutral-200 space-y-1">
-            <Link href="/instagram">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                (location === "/" || location === "/instagram") 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                Instagram DMs
-              </a>
+            <Link href="/instagram" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              (location === "/" || location === "/instagram") 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              Instagram DMs
             </Link>
-            <Link href="/youtube">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                location === "/youtube" 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                YouTube Comments
-              </a>
+            <Link href="/youtube" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              location === "/youtube" 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              YouTube Comments
             </Link>
-            <Link href="/settings">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                location === "/settings" 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                Settings
-              </a>
+            <Link href="/settings" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              location === "/settings" 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              Settings
             </Link>
-            <Link href="/analytics">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                location === "/analytics" 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                Analytics
-              </a>
+            <Link href="/analytics" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              location === "/analytics" 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              Analytics
             </Link>
-            <Link href="/automation">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                location === "/automation" 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                Automation Rules
-              </a>
+            <Link href="/automation" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              location === "/automation" 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              Automation Rules
             </Link>
-            <Link href="/testing">
-              <a className={cn(
-                "block px-4 py-2 text-base font-medium",
-                location === "/testing" 
-                  ? "bg-primary-50 text-primary-700" 
-                  : "text-neutral-700 hover:bg-neutral-100"
-              )}>
-                Testing Tools
-              </a>
+            <Link href="/testing" className={cn(
+              "block px-4 py-2 text-base font-medium",
+              location === "/testing" 
+                ? "bg-primary-50 text-primary-700" 
+                : "text-neutral-700 hover:bg-neutral-100"
+            )}>
+              Testing Tools
             </Link>
           </div>
         )}
