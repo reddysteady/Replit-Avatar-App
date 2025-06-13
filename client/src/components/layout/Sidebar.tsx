@@ -25,19 +25,21 @@ type NavItemProps = {
 
 const NavItem = ({ href, icon, children, active }: NavItemProps) => {
   return (
-    <Link href={href} className={cn(
-      "flex items-center px-2 py-2 text-sm font-medium rounded-md",
-      active
-        ? "bg-blue-600 text-white"
-        : "text-neutral-700 hover:bg-neutral-100"
-    )}>
-      <span className={cn(
-        "h-5 w-5 mr-3",
-        active ? "text-white" : "text-neutral-500"
+    <Link href={href}>
+      <a className={cn(
+        "flex items-center px-2 py-2 text-sm font-medium rounded-md",
+        active
+          ? "bg-blue-600 text-white"
+          : "text-neutral-700 hover:bg-neutral-100"
       )}>
-        {icon}
-      </span>
-      {children}
+        <span className={cn(
+          "h-5 w-5 mr-3",
+          active ? "text-white" : "text-neutral-500"
+        )}>
+          {icon}
+        </span>
+        {children}
+      </a>
     </Link>
   );
 };
