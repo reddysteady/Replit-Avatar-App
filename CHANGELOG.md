@@ -138,4 +138,5 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 2025-06-13
 - [Codex][Fixed] Test route now triggers AI auto-reply when enabled.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
+- [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 

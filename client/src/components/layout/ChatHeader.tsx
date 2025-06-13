@@ -19,6 +19,14 @@ const ChatHeader = ({
   onBack,
   onDeleteThread,
 }: ChatHeaderProps) => {
+  const handleDeleteThread = onDeleteThread ?? (() => {});
+
+  if (typeof window !== "undefined" && (window as any).DEBUG_AI) {
+    console.debug("[DEBUG-AI] ChatHeader render", {
+      hasDelete: !!onDeleteThread,
+    });
+  }
+
   const [menuOpen, setMenuOpen] = useState(false);
   // Mobile header no longer exposes tools actions
 
@@ -69,26 +77,22 @@ const ChatHeader = ({
             onClick={() => setMenuOpen(false)}
           />
           <div className="fixed top-0 right-0 z-50 w-2/5 max-w-sm min-w-[240px] h-full bg-white shadow-2xl rounded-l-lg py-4 px-4 flex flex-col space-y-2">
-            {onDeleteThread && (
-              <div>
-                <div className="text-xs text-gray-500 font-semibold uppercase mb-1 mt-2 px-1">
-                  Thread Actions
-                </div>
-                <button
-                  className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
-                  onClick={() => {
-                    onDeleteThread();
-                    setMenuOpen(false);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                  <span>Delete Thread</span>
-                </button>
+            <div>
+              <div className="text-xs text-gray-500 font-semibold uppercase mb-1 mt-2 px-1">
+                Thread Actions
               </div>
-            )}
-            {onDeleteThread && (
-              <div className="border-t border-gray-200 my-2" />
-            )}
+              <button
+                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
+                onClick={() => {
+                  handleDeleteThread();
+                  setMenuOpen(false);
+                }}
+              >
+                <Trash2 className="w-4 h-4 text-red-500" />
+                <span>Delete Thread</span>
+              </button>
+            </div>
+            <div className="border-t border-gray-200 my-2" />
           </div>
         </>
       )}
