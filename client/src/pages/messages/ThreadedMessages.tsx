@@ -71,10 +71,12 @@ const ThreadedMessages: React.FC = () => {
     null,
   );
 
-  const handleGenerateCustomMessage = () => {
+  const handleGenerateCustomMessage = (msg: string) => {
     if (!activeThreadId) return;
     fetch(`/api/test/generate-for-user/${activeThreadId}`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: msg }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -253,7 +255,7 @@ const ThreadedMessages: React.FC = () => {
                   avatarUrl={activeThreadData.participantAvatar}
                   platform={activeThreadData.source}
                   onBack={() => setShowThreadList(true)}
-                  onGenerateCustomMessage={handleGenerateCustomMessage}
+                  onGenerateCustomMessage={(m) => handleGenerateCustomMessage(m)}
                 />
               )}
               <div className="flex-1 overflow-auto">
