@@ -13,6 +13,7 @@
 // See CHANGELOG.md for 2025-06-13 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-14 [Added]
+// See CHANGELOG.md for 2025-06-13 [Added-2]
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Changed]
 import type { Express } from "express";
@@ -850,6 +851,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
                   });
                   
                   // Send reply to Instagram
+                  const delaySec = aiSettings.responseDelay || 0;
+                  if (delaySec > 0) {
+                    await new Promise((r) => setTimeout(r, delaySec * 1000));
+                  }
                   await instagramService.sendReply(instagramMessage.id, aiReply);
                   
                   // Update message status
@@ -974,6 +979,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
       
       // Send reply to Instagram (in a real app, this would use the actual Instagram API)
       try {
+        const delaySec = settings.aiSettings?.responseDelay || 0;
+        if (delaySec > 0) {
+          await new Promise((r) => setTimeout(r, delaySec * 1000));
+        }
         await instagramService.sendReply(message.externalId, aiReply);
       } catch (instagramError) {
         log("Note: Instagram reply simulation - would fail in production app");
@@ -1058,6 +1067,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
       });
       
       // Send reply to YouTube
+      const delaySec = settings.aiSettings?.responseDelay || 0;
+      if (delaySec > 0) {
+        await new Promise((r) => setTimeout(r, delaySec * 1000));
+      }
       await youtubeService.sendReply(message.externalId, aiReply);
       
       // Update message status
@@ -1346,7 +1359,8 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
           model: settings.aiModel || "gpt-4o",
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
           autoReplyYoutube: settings.aiAutoRepliesYoutube || false,
-          flexProcessing: false
+          flexProcessing: false,
+          responseDelay: 0
         };
       }
       
@@ -1388,6 +1402,7 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
           autoReplyInstagram: z.boolean().optional(),
           autoReplyYoutube: z.boolean().optional(),
           flexProcessing: z.boolean().optional(),
+          responseDelay: z.number().min(0).optional(),
         }).optional(),
         notificationSettings: z.object({
           email: z.string().email().optional(),

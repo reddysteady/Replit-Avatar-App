@@ -194,6 +194,7 @@ CHANGLOG.md file.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 - [Codex][Added] Unit test for custom message auto-reply.
+- [Codex][Added] Configurable response delay for automated AI replies.
 
 ## 2025-06-14
 

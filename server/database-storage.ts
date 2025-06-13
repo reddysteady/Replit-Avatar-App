@@ -3,6 +3,7 @@
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-14 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
+// See CHANGELOG.md for 2025-06-13 [Added-2]
 import { 
   messages, 
   users, 
@@ -453,7 +454,8 @@ export class DatabaseStorage implements IStorage {
         model: "gpt-4o",
         autoReplyInstagram: false,
         autoReplyYoutube: false,
-        flexProcessing: false
+        flexProcessing: false,
+        responseDelay: 0
       },
       notificationSettings: {
         email: "",
