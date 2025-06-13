@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Changed]
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
@@ -9,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
 import FilterButtons from "@/components/FilterButtons";
 import StatusInfo from "@/components/StatusInfo";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -17,19 +18,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings } from "@shared/schema";
+import { Settings, MessageThread } from "@shared/schema";
 import { Link } from "wouter";
 import { ChevronDown, ChevronUp, RefreshCw, Link2, MessageSquare, FileQuestion, Search } from "lucide-react";
 import AutoRepliesToggle from "../../components/AutoRepliesToggle";
 import { useToast } from "@/hooks/use-toast";
 import { MessageType } from "@shared/schema";
 import { Input } from "@/components/ui/input";
+import { apiRequest } from "@/lib/queryClient";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+interface CustomMsgPayload {
+  threadId: number;
+  content: string;
+  thread: MessageThread;
+}
 
 
 const Messages = () => {
@@ -65,6 +73,38 @@ const Messages = () => {
   // Query settings to check connection status
   const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
+  });
+
+  const canSend = !!settings;
+
+  const sendCustom = useMutation({
+    mutationFn: (payload: CustomMsgPayload) =>
+      apiRequest('POST', `/api/test/generate-for-user/${payload.threadId}`, {
+        content: payload.content,
+      }).then(res => res.json()),
+    onSuccess: async (newMsg: MessageType, variables: CustomMsgPayload) => {
+      const { thread } = variables;
+      await queryClient.invalidateQueries({ queryKey: ['/api/threads', thread.id] });
+
+      const ai = settings?.aiSettings;
+      const channelOK =
+        thread.source === 'instagram'
+          ? ai?.autoReplyInstagram
+          : thread.source === 'youtube'
+            ? ai?.autoReplyYoutube
+            : false;
+
+      if (process.env.NODE_ENV === 'development' && (window as any).DEBUG_AUTO_REPLY) {
+        console.trace('[AUTO]', { threadId: thread.id, auto: thread.autoReply, channelOK });
+      }
+
+      if (thread.autoReply && channelOK) {
+        await apiRequest('POST', `/api/${thread.source}/ai-reply`, {
+          threadId: thread.id,
+          triggerMsgId: newMsg.id,
+        });
+      }
+    },
   });
   
   // Check if Instagram is connected
@@ -192,56 +232,34 @@ const Messages = () => {
                       />
                       <Button
                         className="w-full mt-2"
+                        disabled={!canSend}
                         onClick={() => {
                           if (!customThreadId) return;
-                          fetch(`/api/test/generate-for-user/${customThreadId}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content: customMessage })
-                          })
-                            .then(res => {
-                              if (!res.ok) {
-                                return res.text().then(t => { throw new Error(`Server error: ${t}`); });
-                              }
-                              return res.json();
-                            })
-                            .then(newMsg => {
-                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
-                              toast({ title: 'Message generated', description: `Message added to thread ${customThreadId}` });
+                          const thread = Array.isArray(threads)
+                            ? (threads as MessageThread[]).find((t) => t.id === Number(customThreadId))
+                            : undefined;
+                          if (!thread) return;
+
+                          sendCustom.mutate({
+                            threadId: Number(customThreadId),
+                            content: customMessage,
+                            thread,
+                          }, {
+                            onSuccess: () => {
+                              toast({
+                                title: 'Message generated',
+                                description: `Message added to thread ${customThreadId}`,
+                              });
                               setCustomMessage('');
-
-                              const thread = Array.isArray(threads)
-                                ? threads.find((t: any) => t.id === Number(customThreadId))
-                                : null;
-                              const channelAutoReply = thread?.source === 'instagram'
-                                ? settings?.aiSettings?.autoReplyInstagram
-                                : thread?.source === 'youtube'
-                                ? settings?.aiSettings?.autoReplyYoutube
-                                : false;
-
-                              if (thread?.autoReply && channelAutoReply) {
-                                console.log('Triggering auto-reply for custom message', newMsg.id);
-                                const endpoint = thread.source === 'instagram'
-                                  ? '/api/instagram/ai-reply'
-                                  : '/api/youtube/ai-reply';
-
-                                fetch(endpoint, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ messageId: newMsg.id })
-                                })
-                                  .then(() => {
-                                    console.log('Auto-reply triggered after custom message');
-                                  })
-                                  .catch(err => {
-                                    console.error('Auto-reply error:', err);
-                                  });
-                              }
-                            })
-                            .catch(err => {
-                              console.error('Generate error:', err);
-                              toast({ title: 'Error', description: String(err), variant: 'destructive' });
-                            });
+                            },
+                            onError: (err) => {
+                              toast({
+                                title: 'Error',
+                                description: err instanceof Error ? err.message : String(err),
+                                variant: 'destructive',
+                              });
+                            },
+                          });
                         }}
                       >
                         Send Custom Message
