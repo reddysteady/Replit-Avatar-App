@@ -1,9 +1,10 @@
-// See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
-import { useState } from "react";
+
+// See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
 
 const MobileHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -79,22 +80,16 @@ const MobileHeader = () => {
                 Automation Rules
               </a>
             </Link>
-            
-            <div className="pt-4 pb-3 border-t border-neutral-200">
-              <div className="flex items-center px-4">
-                <div className="flex-shrink-0">
-                  <img 
-                    className="h-10 w-10 rounded-full" 
-                    src="https://avatars.githubusercontent.com/u/1" 
-                    alt="User profile"
-                  />
-                </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-neutral-800">Sarah Connor</div>
-                  <div className="text-sm font-medium text-neutral-500">sarah@example.com</div>
-                </div>
-              </div>
-            </div>
+            <Link href="/testing">
+              <a className={cn(
+                "block px-4 py-2 text-base font-medium",
+                location === "/testing" 
+                  ? "bg-primary-50 text-primary-700" 
+                  : "text-neutral-700 hover:bg-neutral-100"
+              )}>
+                Testing Tools
+              </a>
+            </Link>
           </div>
         )}
       </div>
