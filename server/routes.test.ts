@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed]
 // See CHANGELOG.md for 2025-06-14 [Added]
+// See CHANGELOG.md for 2025-06-13 [Added]
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import express from 'express'
 import type { Server } from 'http'
@@ -73,6 +74,30 @@ describe('test routes', () => {
     const msgs = await mem.getThreadMessages(thread.id)
     const stored = msgs.find(m => m.id === msg.id)
     expect(stored?.content).toBe('Custom test message')
+  })
+
+  it('generate-for-user triggers auto-reply when enabled', async () => {
+    await mem.updateSettings(1, { aiAutoRepliesInstagram: true, aiSettings: { autoReplyInstagram: true } })
+    const thread = await mem.createThread({
+      userId: 1,
+      externalParticipantId: 'x',
+      participantName: 'user',
+      source: 'instagram',
+      metadata: {}
+    })
+    await mem.updateThread(thread.id, { autoReply: true })
+    mockAiService.generateReply.mockResolvedValueOnce('ok')
+    const res = await fetch(`${baseUrl}/api/test/generate-for-user/${thread.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: 'hi' })
+    })
+    expect(res.status).toBe(200)
+    const msgs = await mem.getThreadMessages(thread.id)
+    expect(msgs.length).toBe(2)
+    const reply = msgs.find(m => m.isOutbound)
+    expect(reply?.content).toBe('ok')
+    expect(mockAiService.generateReply).toHaveBeenCalled()
   })
 
 
