@@ -12,6 +12,7 @@
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-14 [Added]
+// See CHANGELOG.md for 2025-06-12 [Changed-2]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
@@ -796,13 +797,14 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
                 };
                 
                 // Process and store the message
-                const savedMessage = await instagramService.processNewMessage(instagramMessage, 1);
+                const { message: savedMessage, thread } =
+                  await instagramService.processNewMessage(instagramMessage, 1);
                 
                 // Check if auto-reply is enabled
                 const settings = await storage.getSettings(1);
                 const aiSettings = settings.aiSettings as any;
 
-                if (aiSettings?.autoReplyInstagram) {
+                if (aiSettings?.autoReplyInstagram && thread.autoReply) {
                   // Generate AI reply
                   const aiReply = await aiService.generateReply({
                     content: instagramMessage.message,

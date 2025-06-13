@@ -4,8 +4,14 @@
  */
 
 import axios from 'axios';
+// See CHANGELOG.md for 2025-06-12 [Changed]
 import { storage } from "../storage";
-import { type InsertMessage, type MessageType } from "@shared/schema";
+import {
+  type InsertMessage,
+  type Message,
+  type MessageThread,
+  type MessageType,
+} from "@shared/schema";
 import { aiService } from "./openai";
 import { log } from "../logger";
 
@@ -118,7 +124,10 @@ export class InstagramService {
   /**
    * Processes a new Instagram message, adding AI metadata and storing it
    */
-  async processNewMessage(message: InstagramMessage, userId: number) {
+  async processNewMessage(
+    message: InstagramMessage,
+    userId: number
+  ): Promise<{ message: Message; thread: MessageThread }> {
     try {
       log(`Processing new Instagram message: ${message.id}`);
       
@@ -148,7 +157,18 @@ export class InstagramService {
         metadata: {}
       };
       
-      const savedMessage = await storage.createMessage(insertMessage);
+      const thread = await storage.findOrCreateThreadByParticipant(
+        userId,
+        message.from.id,
+        message.from.username,
+        "instagram",
+        message.from.profile_pic_url
+      );
+
+      const savedMessage = await storage.addMessageToThread(
+        thread.id,
+        insertMessage
+      );
       
       // Update analytics for the new message
       try {
@@ -162,7 +182,7 @@ export class InstagramService {
         console.error("Error updating analytics:", error);
       }
       
-      return savedMessage;
+      return { message: savedMessage, thread };
     } catch (error: any) {
       console.error("Error processing Instagram message:", error.message);
       throw new Error(`Failed to process Instagram message: ${error.message}`);

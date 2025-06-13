@@ -117,6 +117,7 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 - [Codex][Added] Auto-reply label for AI responses.
 [Codex][Added] Per-thread AI reply toggle and PATCH endpoint.
 [Codex][Fixed] Auto-reply schema cleanup and patch route response shape.
+[Codex][Changed] Instagram webhook checks thread `autoReply` before sending AI replies.
 
 ## 2025-06-16
 
