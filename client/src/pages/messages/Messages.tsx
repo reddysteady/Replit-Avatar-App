@@ -205,10 +205,38 @@ const Messages = () => {
                               }
                               return res.json();
                             })
-                            .then(() => {
+                            .then(newMsg => {
                               queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
                               toast({ title: 'Message generated', description: `Message added to thread ${customThreadId}` });
                               setCustomMessage('');
+
+                              const thread = Array.isArray(threads)
+                                ? threads.find((t: any) => t.id === Number(customThreadId))
+                                : null;
+                              const channelAutoReply = thread?.source === 'instagram'
+                                ? settings?.aiSettings?.autoReplyInstagram
+                                : thread?.source === 'youtube'
+                                ? settings?.aiSettings?.autoReplyYoutube
+                                : false;
+
+                              if (thread?.autoReply && channelAutoReply) {
+                                console.log('Triggering auto-reply for custom message', newMsg.id);
+                                const endpoint = thread.source === 'instagram'
+                                  ? '/api/instagram/ai-reply'
+                                  : '/api/youtube/ai-reply';
+
+                                fetch(endpoint, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ messageId: newMsg.id })
+                                })
+                                  .then(() => {
+                                    console.log('Auto-reply triggered after custom message');
+                                  })
+                                  .catch(err => {
+                                    console.error('Auto-reply error:', err);
+                                  });
+                              }
                             })
                             .catch(err => {
                               console.error('Generate error:', err);
