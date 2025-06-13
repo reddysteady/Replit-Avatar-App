@@ -122,5 +122,6 @@ Follow the instructions in [Changelog Guide](CHANGELOG_GUIDE.md) to update this 
 ## 2025-06-16
 
 - [Codex][Fixed] ThreadList uses `autoReply` payload when toggling per-thread AI replies.
+- [Codex][Changed] Instagram auto-replies require both global and thread flags; `processNewMessage` now returns the saved message and thread.
 
 
