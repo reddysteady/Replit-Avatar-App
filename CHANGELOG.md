@@ -198,3 +198,8 @@ CHANGLOG.md file.
 ## 2025-06-14
 
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
+
+## 2025-06-16
+
+- [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
+  grouping.

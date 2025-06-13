@@ -7,21 +7,21 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed-3]
 // See CHANGELOG.md for 2025-06-15 [Changed]
 
-import React from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { ThreadType, MessageType } from '@shared/schema';
-import { Switch } from '@/components/ui/switch';
-import { BotIcon } from '@/components/ui/bot-icon';
+import React from 'react'
+import { formatDistanceToNow } from 'date-fns'
+import { ThreadType, MessageType } from '@shared/schema'
+import { Switch } from '@/components/ui/switch'
+import { BotIcon } from '@/components/ui/bot-icon'
 
 interface ThreadRowProps {
-  thread: ThreadType;
-  onClick?: () => void;
-  creatorId?: string;
-  selected?: boolean;
-  handleAutoReplyToggle?: (threadId: number, val: boolean) => void;
+  thread: ThreadType
+  onClick?: () => void
+  creatorId?: string
+  selected?: boolean
+  handleAutoReplyToggle?: (threadId: number, val: boolean) => void
 }
 
-const fallbackUrl = 'https://via.placeholder.com/40';
+const fallbackUrl = 'https://via.placeholder.com/40'
 
 const ThreadRow: React.FC<ThreadRowProps> = ({
   thread,
@@ -30,19 +30,19 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
   selected = false,
   handleAutoReplyToggle,
 }) => {
-  const isSelected = Boolean(selected);
-  const lastMsg: MessageType | undefined = thread.messages?.at(-1);
-  const lastMessageAt = lastMsg?.timestamp ?? thread.lastMessageAt;
-  const lastContent = lastMsg?.content ?? thread.lastMessageContent ?? '';
+  const isSelected = Boolean(selected)
+  const lastMsg: MessageType | undefined = thread.messages?.at(-1)
+  const lastMessageAt = lastMsg?.timestamp ?? thread.lastMessageAt
+  const lastContent = lastMsg?.content ?? thread.lastMessageContent ?? ''
 
   const senderPrefix = lastMsg
-    ? (lastMsg.sender?.id === creatorId || lastMsg.isOutbound
-        ? 'You:'
-        : thread.participantName.split(' ')[0] + ':')
-    : '';
+    ? lastMsg.sender?.id === creatorId || lastMsg.isOutbound
+      ? 'You:'
+      : thread.participantName.split(' ')[0] + ':'
+    : ''
 
   const snippet =
-    lastContent.length > 60 ? lastContent.slice(0, 57) + '…' : lastContent;
+    lastContent.length > 60 ? lastContent.slice(0, 57) + '…' : lastContent
 
   return (
     <div
@@ -51,16 +51,18 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
       }`}
       onClick={onClick}
     >
-        <img
-          src={thread.participantAvatar ?? fallbackUrl}
-          className={`w-10 h-10 rounded-full mr-3 ring-2 ${
-            thread.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
-          }`}
-        />
+      <img
+        src={thread.participantAvatar ?? fallbackUrl}
+        className={`w-10 h-10 rounded-full mr-3 ring-2 ${
+          thread.isHighIntent ? 'ring-orange-500' : 'ring-gray-300'
+        }`}
+      />
       {/* Ensure flex item can shrink so the snippet truncates correctly */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center">
-          <span className="font-semibold text-gray-900">{thread.participantName}</span>
+          <span className="font-semibold text-gray-900">
+            {thread.participantName}
+          </span>
           {thread.isHighIntent && (
             <span className="ml-2 bg-amber-100 text-amber-800 text-xs font-medium px-2 py-0.5 rounded-md">
               High Intent
@@ -78,17 +80,18 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
           {snippet}
         </div>
         <div className="flex items-center gap-2 ml-10 mt-1 text-xs text-muted-foreground">
-          <BotIcon className="w-4 h-4" />
-          <span>AI Replies</span>
+          <div className="flex items-center gap-1">
+            <BotIcon className="w-4 h-4" />
+            <span>AI Replies</span>
+          </div>
           <Switch
             checked={thread.autoReply ?? false}
             onCheckedChange={(val) => handleAutoReplyToggle?.(thread.id, val)}
-            className="ml-auto"
           />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ThreadRow;
+export default ThreadRow
