@@ -9,6 +9,7 @@
 // See CHANGELOG.md for 2025-06-10 [Added]
 // See CHANGELOG.md for 2025-06-10 [Fixed - hide mobile filter dropdown in conversation view]
 // See CHANGELOG.md for 2025-06-12 [Changed - mobile header integrates menu]
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 // See CHANGELOG.md for 2025-06-12 [Changed - show ChatHeader only in conversation view]
 // See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
 // See CHANGELOG.md for 2025-06-12 [Fixed - mobile header visibility]
@@ -66,10 +67,12 @@ const ThreadedMessages: React.FC = () => {
     null,
   );
 
-  const handleGenerateCustomMessage = () => {
+  const handleGenerateCustomMessage = (msg: string) => {
     if (!activeThreadId) return;
     fetch(`/api/test/generate-for-user/${activeThreadId}`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: msg }),
     })
       .then((res) => {
         if (!res.ok) {
@@ -248,7 +251,7 @@ const ThreadedMessages: React.FC = () => {
                   avatarUrl={activeThreadData.participantAvatar}
                   platform={activeThreadData.source}
                   onBack={() => setShowThreadList(true)}
-                  onGenerateCustomMessage={handleGenerateCustomMessage}
+                  onGenerateCustomMessage={(m) => handleGenerateCustomMessage(m)}
                 />
               )}
               <div className="flex-1 overflow-auto">
@@ -345,11 +348,13 @@ const ThreadedMessages: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center space-x-2">
+
             <div className="hidden md:block">
               <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} className="flex items-center bg-gray-50 hover:bg-gray-100 text-black border border-gray-300">
                 <Wrench className="w-4 h-4 mr-2" />
                 Tools
               </Button>
+
             </div>
           </div>
           <ToolsDrawer

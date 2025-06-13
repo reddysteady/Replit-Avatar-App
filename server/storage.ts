@@ -3,6 +3,7 @@
 // [Fixed] 2025-06-10 - high-intent threads are now flagged correctly
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
+// See CHANGELOG.md for 2025-06-13 [Added-2]
 import {
   messages, 
   users, 
@@ -145,7 +146,7 @@ export class MemStorage {
       id: 1,
       userId: 1,
       apiKeys: {},
-      aiSettings: { flexProcessing: false },
+      aiSettings: { flexProcessing: false, responseDelay: 0 },
       notificationSettings: {},
       aiAutoRepliesInstagram: false,
       aiAutoRepliesYoutube: false,
@@ -609,7 +610,7 @@ export class MemStorage {
         id: this.settingsId++,
         userId,
         apiKeys: {},
-        aiSettings: { flexProcessing: false },
+        aiSettings: { flexProcessing: false, responseDelay: 0 },
         notificationSettings: {},
         aiAutoRepliesInstagram: false,
         aiAutoRepliesYoutube: false,

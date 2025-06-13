@@ -194,19 +194,15 @@ CHANGLOG.md file.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 - [Codex][Added] Unit test for custom message auto-reply.
-
-## 2025-06-14
-
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
-
-## 2025-06-16
-
+- [Codex][Changed] Burger menu includes textbox to send custom message; button
+  disabled when empty.
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
-
-## 2025-06-17
-
-- [Codex][Changed] Desktop Tools dropdown replaced with drawer on md+ screens.
 - [Codex][Added] Unit tests ensure Tools drawer opens, focuses input, and closes
   with ESC.
 - [Codex][Changed] README updated for Tools drawer usage.
+- [Codex][Fixed-2] Batch messages now create threads and refresh the thread list.
+- [Codex][Added] Configurable response delay for automated AI replies.
+- [Codex][Changed] Desktop Tools dropdown replaced with drawer on md+ screens.
+

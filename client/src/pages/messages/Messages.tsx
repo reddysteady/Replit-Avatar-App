@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -187,11 +188,13 @@ const Messages = () => {
             Messages
           </h1>
           <div className="flex items-center space-x-2">
+
             <div className="hidden md:block">
               <Button variant="outline" size="sm" onClick={() => setToolsOpen(true)} className="flex items-center bg-gray-50 hover:bg-gray-100 text-black border border-gray-300">
                 <Wrench className="w-4 h-4 mr-2" />
                 Tools
               </Button>
+
             </div>
 
             <div className="flex items-center space-x-2">

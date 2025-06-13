@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+npm test             # optional: run tests first
+npx lint-staged      # run lint-staged on staged files

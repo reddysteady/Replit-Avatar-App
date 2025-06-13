@@ -1,7 +1,9 @@
 // See CHANGELOG.md for 2025-06-14 [Changed - removed tools menu on mobile]
 // See CHANGELOG.md for 2025-06-14 [Added - generate custom message action]
+// See CHANGELOG.md for 2025-06-14 [Added - custom message textbox]
 import React, { useState } from "react";
 import { ArrowLeft, Menu, Trash2, MessageSquarePlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
 // Using simple image tag to ensure SSR markup includes the URL
 
 type ChatHeaderProps = {
@@ -10,7 +12,7 @@ type ChatHeaderProps = {
   platform?: string;
   onBack?: () => void;
   onDeleteThread?: () => void;
-  onGenerateCustomMessage?: () => void;
+  onGenerateCustomMessage?: (msg: string) => void;
 };
 
 const ChatHeader = ({
@@ -23,6 +25,7 @@ const ChatHeader = ({
 }: ChatHeaderProps) => {
   const handleDeleteThread = onDeleteThread ?? (() => {});
   const handleGenerateCustomMessage = onGenerateCustomMessage ?? (() => {});
+  const [customMsg, setCustomMsg] = useState("");
 
   if (typeof window !== "undefined" && (window as any).DEBUG_AI) {
     console.debug("[DEBUG-AI] ChatHeader render", {
@@ -95,15 +98,23 @@ const ChatHeader = ({
                 <span>Delete Thread</span>
               </button>
               <button
-                className="flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1"
+                className={`flex items-center space-x-2 w-full text-left py-2 my-1 font-medium text-gray-900 rounded-md hover:bg-gray-100 focus:outline-none focus:bg-gray-200 min-h-[44px] px-1 ${!customMsg.trim() ? "opacity-50 cursor-not-allowed" : ""}`}
+                disabled={!customMsg.trim()}
                 onClick={() => {
-                  handleGenerateCustomMessage();
+                  handleGenerateCustomMessage(customMsg);
                   setMenuOpen(false);
+                  setCustomMsg("");
                 }}
               >
                 <MessageSquarePlus className="w-4 h-4 text-blue-500" />
                 <span>Generate Custom Message</span>
               </button>
+              <Input
+                className="mt-1"
+                placeholder="Custom message"
+                value={customMsg}
+                onChange={(e) => setCustomMsg(e.target.value)}
+              />
             </div>
             <div className="border-t border-gray-200 my-2" />
           </div>
