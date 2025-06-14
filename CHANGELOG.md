@@ -203,3 +203,7 @@ CHANGLOG.md file.
 
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
+
+## 2025-06-17
+
+- [Codex][Changed] Right-align AI Replies toggle in `ThreadRow`.
