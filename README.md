@@ -46,8 +46,9 @@ everyone.
 Open the **Testing Tools** page from the sidebar when running the dev server.
 Use **Generate Batch Messages** to create 10 demo messages (at least three
 flagged high intent). Use **Generate For Thread** to add a fake incoming message
-to a specific thread ID. The Tools dropdown has returned to the Messages page
-header for quick access, but the dedicated Testing Tools page remains available.
+to a specific thread ID. The Messages page now shows a desktop-only **Tools
+drawer**, opened via the wrench icon. The dedicated Testing Tools page remains
+available.
 
 ## Continuous Integration
 
