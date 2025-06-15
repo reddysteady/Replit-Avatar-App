@@ -13,35 +13,35 @@
 // dotenv/config is imported in server/index.ts before this service is
 // instantiated, so manual .env parsing is unnecessary.
 
-
-import OpenAI from "openai";
-import { storage } from "../storage";
-import { log } from "../logger";
+import OpenAI from 'openai'
+import { storage } from '../storage'
+import { log } from '../logger'
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const DEFAULT_MODEL = "gpt-4o";
+const DEFAULT_MODEL = 'gpt-4o'
 
 interface GenerateReplyParams {
-  content: string;
-  senderName: string;
-  creatorToneDescription: string;
-  temperature: number;
-  maxLength: number;
-  model?: string;
-  contextSnippets?: string[]; // Additional context from content RAG pipeline
-  flexProcessing?: boolean;
+  content: string
+  senderName: string
+  creatorToneDescription: string
+  temperature: number
+  maxLength: number
+  model?: string
+  contextSnippets?: string[] // Additional context from content RAG pipeline
+  flexProcessing?: boolean
+  systemPrompt?: string
 }
 
 interface ClassifyIntentResult {
-  isHighIntent: boolean;
-  confidence: number;
-  category: string;
+  isHighIntent: boolean
+  confidence: number
+  category: string
 }
 
 interface DetectSensitiveResult {
-  isSensitive: boolean;
-  confidence: number;
-  category: string;
+  isSensitive: boolean
+  confidence: number
+  category: string
 }
 
 export class AIService {
@@ -51,24 +51,32 @@ export class AIService {
    * Retrieve an OpenAI client using either the environment variable or the
    * stored token. Logs the source when DEBUG_AI is enabled.
    */
-  private async getClient(): Promise<{ client: OpenAI; hasKey: boolean; keySource: string }> {
-    const settings = await storage.getSettings(1); // For MVP, assume user ID 1
-    let apiKey = settings.openaiToken || undefined;
-    let source = "storage";
+  private async getClient(): Promise<{
+    client: OpenAI
+    hasKey: boolean
+    keySource: string
+  }> {
+    const settings = await storage.getSettings(1) // For MVP, assume user ID 1
+    let apiKey = settings.openaiToken || undefined
+    let source = 'storage'
 
     if (!apiKey) {
-      apiKey = process.env.OPENAI_API_KEY;
-      source = "env";
+      apiKey = process.env.OPENAI_API_KEY
+      source = 'env'
     }
 
     if (!apiKey) {
-      log("OpenAI API key not found in env or storage.");
+      log('OpenAI API key not found in env or storage.')
     } else if (process.env.DEBUG_AI) {
-      console.debug(`[DEBUG-AI] Using ${source} API key`);
+      console.debug(`[DEBUG-AI] Using ${source} API key`)
     }
 
-    const key = apiKey || undefined;
-    return { client: new OpenAI({ apiKey: key }), hasKey: Boolean(apiKey), keySource: source };
+    const key = apiKey || undefined
+    return {
+      client: new OpenAI({ apiKey: key }),
+      hasKey: Boolean(apiKey),
+      keySource: source,
+    }
   }
 
   /**
@@ -76,27 +84,27 @@ export class AIService {
    */
   private isValidKeyFormat(apiKey: string): boolean {
     // OpenAI keys start with 'sk-' and are typically 51 characters
-    return apiKey.startsWith('sk-') && apiKey.length >= 20;
+    return apiKey.startsWith('sk-') && apiKey.length >= 20
   }
-  
+
   /**
    * Generates embeddings for content or queries
    * Used for the RAG pipeline to enable semantic search
    */
   async generateEmbedding(text: string): Promise<number[]> {
     try {
-      const { client } = await this.getClient();
+      const { client } = await this.getClient()
       const response = await client.embeddings.create({
-        model: "text-embedding-ada-002",
+        model: 'text-embedding-ada-002',
         input: text,
-      });
-      
-      return response.data[0].embedding;
+      })
+
+      return response.data[0].embedding
     } catch (error) {
-      console.error("Error generating embedding:", error);
+      console.error('Error generating embedding:', error)
       // Return a dummy embedding in case of failure
       // In production, you might want to handle this differently
-      return Array(1536).fill(0);
+      return Array(1536).fill(0)
     }
   }
 
@@ -105,38 +113,49 @@ export class AIService {
    * with contextual awareness using RAG pipeline
    */
   async generateReply(params: GenerateReplyParams): Promise<string> {
-    let keySource = "env";
+    let keySource = 'env'
     try {
-      const { content, senderName, creatorToneDescription, temperature, maxLength, contextSnippets, flexProcessing, model } = params;
+      const {
+        content,
+        senderName,
+        creatorToneDescription,
+        temperature,
+        maxLength,
+        contextSnippets,
+        flexProcessing,
+        model,
+      } = params
 
       if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] generateReply called', { senderName, model });
+        console.debug('[DEBUG-AI] generateReply called', { senderName, model })
       }
 
-
-      const { client, hasKey, keySource: src } = await this.getClient();
-      keySource = src;
+      const { client, hasKey, keySource: src } = await this.getClient()
+      keySource = src
       if (!hasKey) {
         if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback');
+          console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback')
         }
-        log("OpenAI API key not found. Using fallback reply.");
-        return this.generateFallbackReply(content, senderName);
+        log('OpenAI API key not found. Using fallback reply.')
+        return this.generateFallbackReply(content, senderName)
       }
 
       // Basic key format validation
-      const settings = await storage.getSettings(1);
-      const currentKey = keySource === "env" ? process.env.OPENAI_API_KEY : settings.openaiToken;
+      const settings = await storage.getSettings(1)
+      const currentKey =
+        keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
       if (currentKey && !this.isValidKeyFormat(currentKey)) {
         if (process.env.DEBUG_AI) {
-          console.debug(`[DEBUG-AI] Invalid API key format from ${keySource}`);
+          console.debug(`[DEBUG-AI] Invalid API key format from ${keySource}`)
         }
-        log(`Invalid OpenAI API key format from ${keySource}. Using fallback reply.`);
-        return this.generateFallbackReply(content, senderName);
+        log(
+          `Invalid OpenAI API key format from ${keySource}. Using fallback reply.`,
+        )
+        return this.generateFallbackReply(content, senderName)
       }
 
       // Build context from RAG pipeline if available
-      let contextSection = "";
+      let contextSection = ''
       if (contextSnippets && contextSnippets.length > 0) {
         contextSection = `
         IMPORTANT CONTEXT: The following are direct quotes from the creator's content that show their expertise, opinions, and communication style. Use this to ensure your response authentically represents them:
@@ -144,14 +163,16 @@ export class AIService {
         ${contextSnippets.map((snippet, index) => `[${index + 1}] "${snippet}"`).join('\n\n')}
         
         Use the above content to inform your response when relevant. Don't explicitly reference these quotes or mention that you're using them as context. Instead, seamlessly incorporate the creator's expertise, preferences, and tone into your response as if you are truly their digital twin.
-        `;
+        `
       }
 
-      const systemPrompt = `
+      const systemPrompt =
+        params.systemPrompt ??
+        `
         You are the AI avatar of a content creator, acting as their digital twin. Your primary goal is to respond exactly as they would, using their unique voice, expertise, and style.
         
         Creator's tone and communication style:
-        ${creatorToneDescription || "Professional, friendly, and helpful with a focus on authentic engagement."}
+        ${creatorToneDescription || 'Professional, friendly, and helpful with a focus on authentic engagement.'}
         
         ${contextSection}
         
@@ -166,81 +187,107 @@ export class AIService {
         - If you don't know something specific about the creator's opinion, acknowledge this gracefully and suggest they follow for future updates
         - Never mention that you're an AI, an assistant, or that you're using content snippets
         - Never sign the message with a name, simply respond as if you are the creator
-      `;
+      `
 
       const userPrompt = `
         Here is a message from a follower named ${senderName}:
         "${content}"
         
         Write a response that matches the creator's tone and communication style.
-        ${contextSnippets && contextSnippets.length > 0 ? "Use the contextual information when it's relevant to the question." : ""}
-      `;
+        ${contextSnippets && contextSnippets.length > 0 ? "Use the contextual information when it's relevant to the question." : ''}
+      `
 
       const response = await client.chat.completions.create({
         model: model || DEFAULT_MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
         temperature: temperature,
         max_tokens: maxLength,
-        service_tier: flexProcessing ? "flex" : undefined,
-      });
+        service_tier: flexProcessing ? 'flex' : undefined,
+      })
 
       if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] OpenAI response', response);
+        console.debug('[DEBUG-AI] OpenAI response', response)
       }
 
-      return response.choices[0].message.content || "Thank you for your message!";
+      return (
+        response.choices[0].message.content || 'Thank you for your message!'
+      )
     } catch (error: any) {
-      console.error("Error generating AI reply:", error.message);
-      
+      console.error('Error generating AI reply:', error.message)
+
       // Handle different types of API errors
-      if (error.status === 401 || error.message.includes("401") || error.message.includes("Unauthorized")) {
-        log(`Invalid OpenAI API key from ${keySource}. Using fallback reply.`);
-        return this.generateFallbackReply(params.content, params.senderName);
-      }
-      
-      if (error.status === 429 || error.message.includes("429") || error.message.includes("quota exceeded")) {
-        log("OpenAI quota exceeded. Using fallback reply.");
-        return this.generateFallbackReply(params.content, params.senderName);
+      if (
+        error.status === 401 ||
+        error.message.includes('401') ||
+        error.message.includes('Unauthorized')
+      ) {
+        log(`Invalid OpenAI API key from ${keySource}. Using fallback reply.`)
+        return this.generateFallbackReply(params.content, params.senderName)
       }
 
-      if (error.status === 403 || error.message.includes("403") || error.message.includes("insufficient_quota")) {
-        log("OpenAI insufficient quota/permissions. Using fallback reply.");
-        return this.generateFallbackReply(params.content, params.senderName);
+      if (
+        error.status === 429 ||
+        error.message.includes('429') ||
+        error.message.includes('quota exceeded')
+      ) {
+        log('OpenAI quota exceeded. Using fallback reply.')
+        return this.generateFallbackReply(params.content, params.senderName)
       }
-      
-      throw new Error(`Failed to generate AI reply: ${error.message}`);
+
+      if (
+        error.status === 403 ||
+        error.message.includes('403') ||
+        error.message.includes('insufficient_quota')
+      ) {
+        log('OpenAI insufficient quota/permissions. Using fallback reply.')
+        return this.generateFallbackReply(params.content, params.senderName)
+      }
+
+      throw new Error(`Failed to generate AI reply: ${error.message}`)
     }
   }
-  
+
   /**
    * Generates a fallback reply when OpenAI API is unavailable
    */
   private generateFallbackReply(content: string, senderName: string): string {
     // Analyze the message content for some basic context
-    const contentLower = content.toLowerCase();
-    let replyTemplate = "";
-    
+    const contentLower = content.toLowerCase()
+    let replyTemplate = ''
+
     // Simple message categorization based on keywords
-    if (contentLower.includes("question") || contentLower.includes("help") || 
-        contentLower.includes("how do") || contentLower.includes("what is") || 
-        contentLower.includes("?")) {
-      replyTemplate = `Hey ${senderName}, thanks for your question! I'll get back to you with a more detailed response soon. In the meantime, feel free to check out my recent content which might address similar topics.`;
-    } else if (contentLower.includes("love") || contentLower.includes("awesome") || 
-               contentLower.includes("great") || contentLower.includes("amazing") ||
-               contentLower.includes("good")) {
-      replyTemplate = `Thanks so much for your kind words, ${senderName}! I really appreciate your support and I'm glad you're enjoying my content. Stay tuned for more coming soon!`;
-    } else if (contentLower.includes("collab") || contentLower.includes("business") || 
-               contentLower.includes("work together") || contentLower.includes("partner") ||
-               contentLower.includes("opportunity")) {
-      replyTemplate = `Hi ${senderName}, thanks for reaching out about collaboration! I'm always interested in exploring new opportunities. Let me review the details and I'll get back to you soon with more thoughts on how we might work together.`;
+    if (
+      contentLower.includes('question') ||
+      contentLower.includes('help') ||
+      contentLower.includes('how do') ||
+      contentLower.includes('what is') ||
+      contentLower.includes('?')
+    ) {
+      replyTemplate = `Hey ${senderName}, thanks for your question! I'll get back to you with a more detailed response soon. In the meantime, feel free to check out my recent content which might address similar topics.`
+    } else if (
+      contentLower.includes('love') ||
+      contentLower.includes('awesome') ||
+      contentLower.includes('great') ||
+      contentLower.includes('amazing') ||
+      contentLower.includes('good')
+    ) {
+      replyTemplate = `Thanks so much for your kind words, ${senderName}! I really appreciate your support and I'm glad you're enjoying my content. Stay tuned for more coming soon!`
+    } else if (
+      contentLower.includes('collab') ||
+      contentLower.includes('business') ||
+      contentLower.includes('work together') ||
+      contentLower.includes('partner') ||
+      contentLower.includes('opportunity')
+    ) {
+      replyTemplate = `Hi ${senderName}, thanks for reaching out about collaboration! I'm always interested in exploring new opportunities. Let me review the details and I'll get back to you soon with more thoughts on how we might work together.`
     } else {
-      replyTemplate = `Hey ${senderName}, thanks for your message! I appreciate you reaching out. I'll get back to you soon with a more personalized response.`;
+      replyTemplate = `Hey ${senderName}, thanks for your message! I appreciate you reaching out. I'll get back to you soon with a more personalized response.`
     }
-    
-    return replyTemplate;
+
+    return replyTemplate
   }
 
   /**
@@ -262,31 +309,31 @@ export class AIService {
           "confidence": number between 0 and 1,
           "category": one of ["general_inquiry", "service_inquiry", "collaboration", "business_opportunity", "feedback", "other"]
         }
-      `;
+      `
 
-      const { client } = await this.getClient();
+      const { client } = await this.getClient()
       const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
         temperature: 0.3,
-      });
+      })
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const result = JSON.parse(response.choices[0].message.content || '{}')
 
       return {
         isHighIntent: result.isHighIntent || false,
         confidence: Math.max(0, Math.min(1, result.confidence || 0)),
-        category: result.category || "general_inquiry"
-      };
+        category: result.category || 'general_inquiry',
+      }
     } catch (error: any) {
-      console.error("Error classifying message intent:", error.message);
+      console.error('Error classifying message intent:', error.message)
       // Return default values in case of error
       return {
         isHighIntent: false,
         confidence: 0,
-        category: "general_inquiry"
-      };
+        category: 'general_inquiry',
+      }
     }
   }
 
@@ -310,31 +357,31 @@ export class AIService {
           "confidence": number between 0 and 1,
           "category": one of ["not_sensitive", "legal", "complaint", "refund", "account_issue", "personal_info", "harmful", "other"]
         }
-      `;
+      `
 
-      const { client } = await this.getClient();
+      const { client } = await this.getClient()
       const response = await client.chat.completions.create({
         model: DEFAULT_MODEL,
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" },
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
         temperature: 0.3,
-      });
+      })
 
-      const result = JSON.parse(response.choices[0].message.content || "{}");
+      const result = JSON.parse(response.choices[0].message.content || '{}')
 
       return {
         isSensitive: result.isSensitive || false,
         confidence: Math.max(0, Math.min(1, result.confidence || 0)),
-        category: result.category || "not_sensitive"
-      };
+        category: result.category || 'not_sensitive',
+      }
     } catch (error: any) {
-      console.error("Error detecting sensitive content:", error.message);
+      console.error('Error detecting sensitive content:', error.message)
       // Return default values in case of error
       return {
         isSensitive: false,
         confidence: 0,
-        category: "not_sensitive"
-      };
+        category: 'not_sensitive',
+      }
     }
   }
 
@@ -345,28 +392,32 @@ export class AIService {
     try {
       // For simple keyword matching, we don't need AI, but for more complex rule matching
       // we could use AI to determine if a message matches a rule's intent
-      
+
       // This is a simple implementation that could be expanded
-      const matchedRules = rules.filter(rule => {
-        if (!rule.enabled) return false;
-        
+      const matchedRules = rules.filter((rule) => {
+        if (!rule.enabled) return false
+
         // Simple keyword matching
-        if (rule.triggerType === "keywords" && rule.triggerKeywords && rule.triggerKeywords.length > 0) {
-          const lowerText = text.toLowerCase();
-          return rule.triggerKeywords.some((keyword: string) => 
-            lowerText.includes(keyword.toLowerCase())
-          );
+        if (
+          rule.triggerType === 'keywords' &&
+          rule.triggerKeywords &&
+          rule.triggerKeywords.length > 0
+        ) {
+          const lowerText = text.toLowerCase()
+          return rule.triggerKeywords.some((keyword: string) =>
+            lowerText.includes(keyword.toLowerCase()),
+          )
         }
-        
-        return false;
-      });
-      
-      return matchedRules;
+
+        return false
+      })
+
+      return matchedRules
     } catch (error: any) {
-      console.error("Error matching automation rules:", error.message);
-      return [];
+      console.error('Error matching automation rules:', error.message)
+      return []
     }
   }
 }
 
-export const aiService = new AIService();
+export const aiService = new AIService()
