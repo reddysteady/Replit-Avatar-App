@@ -26,7 +26,7 @@ integration), link out to a dedicated doc instead of bloating this file.
   - Annotated at the top of each new/edited file with the reason for change.
   - Validated by npm run type-check, npm run lint, and npm test before commit.
 
-
+- **All UI components and styling** must adhere to the project’s STYLEGUIDE.md; agents should reference this guide when generating or reviewing code and UI elements.
 - **Agents may not** merge to protected branches or deploy; humans must review.
 - **Conflict detection:** Agents must pull latest, run `git diff`, and
   regenerate if merge conflicts appear.
