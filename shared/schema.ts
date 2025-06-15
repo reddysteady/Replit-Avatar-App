@@ -1,5 +1,5 @@
 // See CHANGELOG.md for 2025-06-12 [Added]
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index, vector } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -154,7 +154,7 @@ export const contentItems = pgTable("content_items", {
   content: text("content").notNull(),
   url: text("url").notNull(),
   engagementScore: integer("engagement_score").notNull(),
-  embedding: vector("embedding", { dimensions: 1536 }), // OpenAI embeddings have 1536 dimensions
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   metadata: jsonb("metadata").default({}),
