@@ -1,144 +1,47 @@
-# Avatar App Menu Architecture
+## 📜 Menu Architecture (v1) <!-- keep heading stable for deep links -->
 
-## Main Menu (Near-Term Architecture)
+### Main (left-hand) menu
 
-### 🧵 Conversations
+| Icon | Label             | Route                               | Page component         | Stored data touched                     | Core features / controls                                                                                                                           |
+| ---- | ----------------- | ----------------------------------- | ---------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🧵   | **Conversations** | `/` <br>`/instagram` <br>`/youtube` | `ThreadedMessages.tsx` | `messages` (table) <br>`messageThreads` | List & search threads · unread badge · message composer · “Generate reply” with AI · per-thread **Auto-Reply** toggle · high-intent flag · archive |
+| 📊   | **Insights**      | `/analytics`                        | `Analytics.tsx`        | `analytics`                             | Volume charts · high-intent heat-map · time-saved KPI · download CSV                                                                               |
+| ⚙️   | **Settings**      | `/settings` (loads first sub-tab)   | `Settings.tsx`         | —                                       | Tabs jump into sub-pages below                                                                                                                     |
 
-**Purpose:**
-Inbox for all message threads (DMs, comments, chats) connected to the user’s linked platforms.
-
-**Features/Controls:**
-
-* List of conversation threads (with unread indicator)
-* Search and filter by user or channel
-* Thread view: displays message history
-* Message entry textbox
-* AI generate reply
-* Manual or auto-reply toggle per thread
-* Intent flagging visual indicator
-* Delete/archive thread
+> **Mobile nav** surfaces the same items via `MobileHeader.tsx`.
 
 ---
 
-### 📊 Insights
+### ⚙️ Settings subsections
 
-**Purpose:**
-Analytics dashboard for user engagement, avatar activity, and business value.
-
-**Features/Controls:**
-
-* Message volume chart (daily/weekly)
-* Fan engagement breakdown (replies, high-intent, conversion)
-* Time saved (messages handled by avatar)
-* Sentiment analysis trends
-* Download/export data
+| Sub-page                        | Route                        | Page component                                                | Stored data                                  | Key UI / logic                                                                          |
+| ------------------------------- | ---------------------------- | ------------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| 🧠 Persona (Voice & Boundaries) | `/settings/persona`          | `AvatarSettingsPage.tsx` → hosts `PrivacyPersonalityForm.tsx` | `personaConfig` JSON + `systemPrompt` string | Tone & style; allowed / restricted topics; fallback reply; prompt preview; last-updated |
+| 📥 Content Sources              | `/settings/sources`          | `ContentSourcesPage.tsx` *(planned)*                          | `connectedSources[]`                         | OAuth connect/disconnect; ingest & redact; toggle for RAG usage                         |
+| ⚙️ AI Behavior                  | `/settings/ai` (default tab) | **AI Settings** tab inside `Settings.tsx`                     | `aiSettings`                                 | Model, temperature, max tokens, global auto-reply, typing delay                         |
+| 🔒 Moderation & Safety          | `/settings/moderation`       | `ModerationSettingsPage.tsx` *(planned)*                      | `moderationRules`                            | Restricted keywords, NSFW filter, escalation workflow, review queue                     |
+| 📤 Replies & Delays             | `/settings/replies`          | `ReplyDelaySettingsPage.tsx` *(planned)*                      | `replySettings`                              | Typing simulation, send delay, manual approval queue, OOO replies                       |
+| 💬 Prompt Preview (Dev)         | `/settings/prompt-preview`   | `PromptPreviewPage.tsx`                                       | `systemPrompt` + history                     | View / diff current prompt, run test message, copy prompt                               |
 
 ---
 
-### ⚙️ Settings
+### Road-map (not yet in UI)
 
-> **All settings-related configuration is grouped under this main menu item.**
-> Each subsection is a dedicated page within the Settings area.
-
-#### 🧠 Persona
-
-* **Purpose:** Configure the avatar’s communication style, boundaries, and safety preferences.
-* **Features/Controls:**
-
-  * PrivacyPersonalityForm (tone, style tags, allowed/restricted topics, fallback reply)
-  * System prompt preview
-  * Save and reset persona settings
-  * Last-updated timestamp
-
-#### 📥 Content Sources
-
-* **Purpose:** Manage which social/content platforms are connected for ingestion and training.
-* **Features/Controls:**
-
-  * OAuth connect/disconnect for IG, YouTube, X, etc.
-  * Show list of currently connected sources
-  * Ingest content (manual/auto)
-  * Review and redact imported chunks
-  * Toggle which sources can be used for grounding avatar replies
-
-#### ⚙️ AI Behavior
-
-* **Purpose:** Control technical AI and language model parameters.
-* **Features/Controls:**
-
-  * Select language model (GPT-4, Claude, etc.)
-  * Temperature slider (creativity vs. accuracy)
-  * Max tokens (response length cap)
-  * Global auto-reply toggle
-  * Enable/disable typing delay
-  * Prompt debug mode
-
-#### 🔒 Moderation & Safety
-
-* **Purpose:** Configure safety nets, restricted topics, and escalation rules.
-* **Features/Controls:**
-
-  * Add/remove restricted phrases or topics
-  * Enable NSFW and hate speech filters
-  * High-intent classifier threshold (manual override)
-  * Define escalation workflows (flag to human, block, etc.)
-  * Moderation logs and review queue
-
-#### 📤 Replies & Delays
-
-* **Purpose:** Control the pacing and review flow for avatar-generated messages.
-* **Features/Controls:**
-
-  * Enable/disable typing simulation (show “typing...” indicator)
-  * Configure delay (randomized or fixed seconds)
-  * Manual approval queue for high-intent/sensitive messages
-  * Reply scheduling (future)
-  * Out-of-office auto-responses
-
-#### 💬 Prompt Preview (Dev)
-
-* **Purpose:** Debug and review the current system prompt and prompt history for the avatar.
-* **Features/Controls:**
-
-  * View latest system prompt (as sent to the LLM)
-  * Compare with previous versions
-  * Test sample input messages with current prompt
-  * Copy to clipboard
-  * Show prompt diff when persona or model settings change
+| Label               | Purpose                             | Notes                                                                |
+| ------------------- | ----------------------------------- | -------------------------------------------------------------------- |
+| 🤖 **Automation**   | Visual rule builder (“If X then Y”) | Cross-channel workflows, Zapier/Make export                          |
+| 🧑‍🎤 **My Avatar** | Avatar appearance & public bio      | Photo / animation preview; editable display name; future intro video |
 
 ---
 
-## 🚀 Potential Future (Roadmap Candidates)
+### UX & Dev conventions
 
-### 🤖 Automation (Advanced Workflow/Endgame)
-
-**Purpose:**
-Platform for user-defined, multi-step automation and AI-driven rules (beyond messaging).
-
-**Possible Features/Controls:**
-
-* Complex rule builder ("If X then Y" workflows)
-* Cross-channel automations
-* Integration with external tools (Zapier/Make)
-* Scheduled sequences, event-based triggers
-* Advanced exception handling
-* Auto-action logs and analytics
-
-### 🧑‍🎤 My Avatar
-
-**Purpose:**
-Preview and customize the digital avatar’s appearance and public profile.
-
-**Features/Controls:**
-
-* Avatar preview (photo/animation)
-* Edit display name and public bio
-* Set avatar profile picture
-* Public links and social handles
-* Avatar introduction video upload (future)
+* **Icons:** Greyscale by default; accent for active state. Sized 20 – 24 px.
+* **Route naming:** Always kebab-case; group under `/settings/*` for any config.
+* **Components:** One top-level page file per route; sub-components live in `client/src/components`.
+* **Stored data:** All new per-user settings should serialize into the `settings` table inside the appropriate JSON column.
+* **Doc linkage:** Whenever a route, label or component name changes, update this file *and* reference it from `AGENTS.md` Pre-Flight ▶ “Menu schema”.
 
 ---
 
-**Note:**
-Each page should have a clear header, brief description of its purpose, and context-sensitive help (tooltip or “Learn more” link) for each control.
-
+> **Reminder to contributors:** When adding a new submenu, extend the table above, implement a Radix `NavItem` in both `Sidebar.tsx` and `MobileHeader.tsx`, create or update route in `App.tsx`, and write at least one Vitest rendering test that asserts the nav link exists and becomes active.

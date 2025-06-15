@@ -49,6 +49,8 @@ Log each step with `[AGENT‑PRECHECK]`. Abort if any item fails.
 5. .npm test passes (Vitest suite).
 6. If the task touches an **external service** (API, DB, queue, etc.) run its
    health‑check script under `scripts/health/` and ensure success.
+7. Run `npm outdated` and fail if critical packages are >1 major behind.
+8. Ensure `docs/stage_1_persona.md` is referenced whenever the task involves persona logic.
 
 ---
 
