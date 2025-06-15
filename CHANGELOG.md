@@ -207,3 +207,6 @@ CHANGLOG.md file.
 described in docs/stage_1_persona.md.
 
 2025-06-18 [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.
+
+2025-06-19 [Codex][Fixed] Removed extra top padding on mobile conversation
+screen.
