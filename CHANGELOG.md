@@ -205,3 +205,5 @@ CHANGLOG.md file.
 
 2025-06-18 [Codex][Added] AvatarPersonaConfig interface for persona setup
 described in docs/stage_1_persona.md.
+
+2025-06-18 [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.

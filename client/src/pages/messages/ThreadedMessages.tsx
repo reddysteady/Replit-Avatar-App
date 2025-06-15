@@ -14,25 +14,26 @@
 // See CHANGELOG.md for 2025-06-13 [Removed - Messages page header]
 // See CHANGELOG.md for 2025-06-12 [Fixed - mobile header visibility]
 // See CHANGELOG.md for 2025-06-14 [Added - header generate message]
-import React, { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import ThreadList from "@/components/ThreadList";
-import ConversationThread from "@/components/ConversationThread";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+// See CHANGELOG.md for 2025-06-18 [Fixed - restore mobile burger menu]
+import React, { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import ThreadList from '@/components/ThreadList'
+import ConversationThread from '@/components/ConversationThread'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select'
 import {
   Loader2,
   SearchX,
@@ -40,102 +41,101 @@ import {
   FileQuestion,
   RefreshCw,
   Link2,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+} from 'lucide-react'
+import { useToast } from '@/hooks/use-toast'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
-import ChatHeader from "@/components/layout/ChatHeader";
+} from '@/components/ui/accordion'
+import { Input } from '@/components/ui/input'
+import ChatHeader from '@/components/layout/ChatHeader'
+import MobileHeader from '@/components/layout/MobileHeader'
 
 // Removed mobile headers so tools remain desktop-only
 
-import { ThreadType, Settings } from "@shared/schema";
+import { ThreadType, Settings } from '@shared/schema'
 
 const ThreadedMessages: React.FC = () => {
-  const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
-  const [hasSelectedThread, setHasSelectedThread] = useState(false);
+  const [activeThreadId, setActiveThreadId] = useState<number | null>(null)
+  const [hasSelectedThread, setHasSelectedThread] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    "all" | "instagram" | "youtube" | "high-intent"
-  >("all");
-  const [isMobile, setIsMobile] = useState(false);
-  const [showThreadList, setShowThreadList] = useState(true);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [customThreadId, setCustomThreadId] = useState("");
-  const [customMessage, setCustomMessage] = useState("");
+    'all' | 'instagram' | 'youtube' | 'high-intent'
+  >('all')
+  const [isMobile, setIsMobile] = useState(false)
+  const [showThreadList, setShowThreadList] = useState(true)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
+  const [customThreadId, setCustomThreadId] = useState('')
+  const [customMessage, setCustomMessage] = useState('')
   const [activeThreadData, setActiveThreadData] = useState<ThreadType | null>(
     null,
-  );
+  )
 
   const handleGenerateCustomMessage = (msg: string) => {
-    if (!activeThreadId) return;
+    if (!activeThreadId) return
     fetch(`/api/test/generate-for-user/${activeThreadId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: msg }),
     })
       .then((res) => {
         if (!res.ok) {
           return res.text().then((t) => {
-            throw new Error(`Server error: ${t}`);
-          });
+            throw new Error(`Server error: ${t}`)
+          })
         }
-        return res.json();
+        return res.json()
       })
       .then(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
+        queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
         toast({
-          title: "Message generated",
+          title: 'Message generated',
           description: `Message added to thread ${activeThreadId}`,
-        });
+        })
       })
       .catch((err) => {
-        console.error("Generate error:", err);
+        console.error('Generate error:', err)
         toast({
-          title: "Error",
+          title: 'Error',
           description: String(err),
-          variant: "destructive",
-        });
-      });
-  };
-
+          variant: 'destructive',
+        })
+      })
+  }
 
   // Check for mobile view on mount and on resize
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-    };
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+    }
 
     // Initial check
-    checkMobile();
+    checkMobile()
 
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Show or hide thread list based on active thread when on mobile
   useEffect(() => {
     if (isMobile) {
       if (activeThreadId && activeThreadData) {
-        setShowThreadList(false);
+        setShowThreadList(false)
       } else {
-        setShowThreadList(true);
+        setShowThreadList(true)
       }
     } else {
-      setShowThreadList(true);
+      setShowThreadList(true)
     }
-  }, [isMobile, activeThreadId, activeThreadData]);
-
+  }, [isMobile, activeThreadId, activeThreadData])
 
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
-    setActiveThreadId(threadId);
-    setHasSelectedThread(true);
+    setActiveThreadId(threadId)
+    setHasSelectedThread(true)
 
     // Store thread data for consistent profile rendering
     if (threadData) {
@@ -144,29 +144,29 @@ const ThreadedMessages: React.FC = () => {
         ...threadData,
         id: threadId,
         // Ensure we have sensible defaults for required fields
-        participantName: threadData.participantName || "User",
-        source: threadData.source || "instagram",
-      });
+        participantName: threadData.participantName || 'User',
+        source: threadData.source || 'instagram',
+      })
     } else if (threads) {
       // Find thread data in the threads list
       const selectedThread = (threads as any[]).find(
         (t: any) => t.id === threadId,
-      );
+      )
       if (selectedThread) {
         setActiveThreadData({
           ...selectedThread,
           // Ensure we have sensible defaults for required fields
-          participantName: selectedThread.participantName || "User",
-          source: selectedThread.source || "instagram",
-        });
+          participantName: selectedThread.participantName || 'User',
+          source: selectedThread.source || 'instagram',
+        })
       }
     }
 
     // On mobile, hide the thread list when a thread is selected
     if (isMobile) {
-      setShowThreadList(false);
+      setShowThreadList(false)
     }
-  };
+  }
 
   // No explicit back/delete actions when headers hidden
 
@@ -176,26 +176,26 @@ const ThreadedMessages: React.FC = () => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["/api/threads"],
+    queryKey: ['/api/threads'],
     staleTime: 10000,
-  });
+  })
 
   const { data: settings } = useQuery<Settings>({
-    queryKey: ["/api/settings"],
-  });
+    queryKey: ['/api/settings'],
+  })
 
   // Keep active thread data in sync when thread list updates
   useEffect(() => {
-    if (!activeThreadId || !Array.isArray(threads)) return;
-    const t = (threads as any[]).find((thr: any) => thr.id === activeThreadId);
+    if (!activeThreadId || !Array.isArray(threads)) return
+    const t = (threads as any[]).find((thr: any) => thr.id === activeThreadId)
     if (t) {
       setActiveThreadData({
         ...t,
-        participantName: t.participantName || "User",
-        source: t.source || "instagram",
-      });
+        participantName: t.participantName || 'User',
+        source: t.source || 'instagram',
+      })
     }
-  }, [activeThreadId, threads]);
+  }, [activeThreadId, threads])
 
   const renderContent = () => {
     if (isLoading) {
@@ -203,7 +203,7 @@ const ThreadedMessages: React.FC = () => {
         <div className="flex items-center justify-center h-full">
           <Loader2 className="h-10 w-10 animate-spin text-gray-400" />
         </div>
-      );
+      )
     }
 
     if (error) {
@@ -218,7 +218,7 @@ const ThreadedMessages: React.FC = () => {
             refreshing the page.
           </p>
         </div>
-      );
+      )
     }
 
     // Automatically select the first thread only on initial load
@@ -230,9 +230,9 @@ const ThreadedMessages: React.FC = () => {
       threads.length > 0
     ) {
       setTimeout(() => {
-        setActiveThreadId(threads[0]?.id);
-        setHasSelectedThread(true);
-      }, 0);
+        setActiveThreadId(threads[0]?.id)
+        setHasSelectedThread(true)
+      }, 0)
     }
 
     // Mobile view - show either thread list or conversation based on showThreadList state
@@ -255,7 +255,9 @@ const ThreadedMessages: React.FC = () => {
                   avatarUrl={activeThreadData.participantAvatar}
                   platform={activeThreadData.source}
                   onBack={() => setShowThreadList(true)}
-                  onGenerateCustomMessage={(m) => handleGenerateCustomMessage(m)}
+                  onGenerateCustomMessage={(m) =>
+                    handleGenerateCustomMessage(m)
+                  }
                 />
               )}
               <div className="flex-1 overflow-auto">
@@ -265,8 +267,8 @@ const ThreadedMessages: React.FC = () => {
                     threadData={activeThreadData}
                     showBackButton={false}
                     onDeleted={() => {
-                      setActiveThreadId(null);
-                      setActiveThreadData(null);
+                      setActiveThreadId(null)
+                      setActiveThreadData(null)
                     }}
                   />
                 )}
@@ -274,7 +276,7 @@ const ThreadedMessages: React.FC = () => {
             </>
           )}
         </div>
-      );
+      )
     }
 
     // Desktop view - always show split view
@@ -297,20 +299,20 @@ const ThreadedMessages: React.FC = () => {
               threadData={activeThreadData}
               showBackButton={false}
               onDeleted={() => {
-                setActiveThreadId(null);
-                setActiveThreadData(null);
+                setActiveThreadId(null)
+                setActiveThreadData(null)
               }}
             />
           </div>
         </div>
-      );
+      )
     }
 
     return (
       <div className="flex h-full">
         {/* Thread list */}
         <div
-          className={`${activeThreadId ? "hidden md:block" : "w-full"} md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white`}
+          className={`${activeThreadId ? 'hidden md:block' : 'w-full'} md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white`}
         >
           <ThreadList
             activeThreadId={activeThreadId}
@@ -325,8 +327,8 @@ const ThreadedMessages: React.FC = () => {
             <ConversationThread
               threadId={activeThreadId}
               onDeleted={() => {
-                setActiveThreadId(null);
-                setActiveThreadData(null);
+                setActiveThreadId(null)
+                setActiveThreadData(null)
               }}
             />
           ) : (
@@ -343,11 +345,12 @@ const ThreadedMessages: React.FC = () => {
           )}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
-    <div className="h-full flex flex-col bg-gray-50">
+    <div className="h-full flex flex-col bg-gray-50 md:pt-0 pt-16">
+      {isMobile && showThreadList && <MobileHeader />}
       <div className="hidden md:block p-4 border-b border-gray-200 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
@@ -364,38 +367,38 @@ const ThreadedMessages: React.FC = () => {
                       <Button
                         className="w-full mb-2 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
                         onClick={() => {
-                          fetch("/api/test/generate-batch", { method: "POST" })
+                          fetch('/api/test/generate-batch', { method: 'POST' })
                             .then((res) => {
                               if (!res.ok) {
                                 return res.text().then((t) => {
-                                  throw new Error(`Server error: ${t}`);
-                                });
+                                  throw new Error(`Server error: ${t}`)
+                                })
                               }
-                              return res.json();
+                              return res.json()
                             })
                             .then(() => {
                               queryClient.invalidateQueries({
-                                queryKey: ["/api/instagram/messages"],
-                              });
+                                queryKey: ['/api/instagram/messages'],
+                              })
                               queryClient.invalidateQueries({
-                                queryKey: ["/api/youtube/messages"],
-                              });
+                                queryKey: ['/api/youtube/messages'],
+                              })
                               queryClient.invalidateQueries({
-                                queryKey: ["/api/threads"],
-                              });
+                                queryKey: ['/api/threads'],
+                              })
                               toast({
-                                title: "Batch generated",
-                                description: "10 messages created",
-                              });
+                                title: 'Batch generated',
+                                description: '10 messages created',
+                              })
                             })
                             .catch((err) => {
-                              console.error("Batch error:", err);
+                              console.error('Batch error:', err)
                               toast({
-                                title: "Error",
+                                title: 'Error',
                                 description: String(err),
-                                variant: "destructive",
-                              });
-                            });
+                                variant: 'destructive',
+                              })
+                            })
                         }}
                       >
                         Generate Batch Messages
@@ -428,69 +431,82 @@ const ThreadedMessages: React.FC = () => {
                       <Button
                         className="w-full mt-2"
                         onClick={() => {
-                          if (!customThreadId) return;
+                          if (!customThreadId) return
                           fetch(
                             `/api/test/generate-for-user/${customThreadId}`,
                             {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ content: customMessage }),
                             },
                           )
                             .then((res) => {
                               if (!res.ok) {
                                 return res.text().then((t) => {
-                                  throw new Error(`Server error: ${t}`);
-                                });
+                                  throw new Error(`Server error: ${t}`)
+                                })
                               }
-                              return res.json();
+                              return res.json()
                             })
                             .then((newMsg) => {
                               queryClient.invalidateQueries({
-                                queryKey: ["/api/threads"],
-                              });
+                                queryKey: ['/api/threads'],
+                              })
                               toast({
-                                title: "Message generated",
+                                title: 'Message generated',
                                 description: `Message added to thread ${customThreadId}`,
-                              });
-                              setCustomMessage("");
+                              })
+                              setCustomMessage('')
 
                               const thread = Array.isArray(threads)
-                                ? (threads as any[]).find((t) => t.id === Number(customThreadId))
-                                : null;
-                              const channelAutoReply = thread?.source === 'instagram'
-                                ? settings?.aiSettings?.autoReplyInstagram
-                                : thread?.source === 'youtube'
-                                ? settings?.aiSettings?.autoReplyYoutube
-                                : false;
+                                ? (threads as any[]).find(
+                                    (t) => t.id === Number(customThreadId),
+                                  )
+                                : null
+                              const channelAutoReply =
+                                thread?.source === 'instagram'
+                                  ? settings?.aiSettings?.autoReplyInstagram
+                                  : thread?.source === 'youtube'
+                                    ? settings?.aiSettings?.autoReplyYoutube
+                                    : false
 
                               if (thread?.autoReply && channelAutoReply) {
-                                console.log('Triggering auto-reply for custom message', newMsg.id);
-                                const endpoint = thread.source === 'instagram'
-                                  ? '/api/instagram/ai-reply'
-                                  : '/api/youtube/ai-reply';
+                                console.log(
+                                  'Triggering auto-reply for custom message',
+                                  newMsg.id,
+                                )
+                                const endpoint =
+                                  thread.source === 'instagram'
+                                    ? '/api/instagram/ai-reply'
+                                    : '/api/youtube/ai-reply'
 
                                 fetch(endpoint, {
                                   method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ messageId: newMsg.id })
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    messageId: newMsg.id,
+                                  }),
                                 })
                                   .then(() => {
-                                    console.log('Auto-reply triggered after custom message');
+                                    console.log(
+                                      'Auto-reply triggered after custom message',
+                                    )
                                   })
                                   .catch((err) => {
-                                    console.error('Auto-reply error:', err);
-                                  });
+                                    console.error('Auto-reply error:', err)
+                                  })
                               }
                             })
                             .catch((err) => {
-                              console.error("Generate error:", err);
+                              console.error('Generate error:', err)
                               toast({
-                                title: "Error",
+                                title: 'Error',
                                 description: String(err),
-                                variant: "destructive",
-                              });
-                            });
+                                variant: 'destructive',
+                              })
+                            })
                         }}
                       >
                         Send Custom Message
@@ -501,16 +517,16 @@ const ThreadedMessages: React.FC = () => {
                         variant="outline"
                         onClick={() => {
                           toast({
-                            title: "Database Refresh",
-                            description: "Refreshing messages from database...",
-                          });
+                            title: 'Database Refresh',
+                            description: 'Refreshing messages from database...',
+                          })
                           // Refetch messages directly from storage
                           queryClient.invalidateQueries({
-                            queryKey: ["/api/instagram/messages"],
-                          });
+                            queryKey: ['/api/instagram/messages'],
+                          })
                           queryClient.invalidateQueries({
-                            queryKey: ["/api/youtube/messages"],
-                          });
+                            queryKey: ['/api/youtube/messages'],
+                          })
                         }}
                       >
                         <RefreshCw className="h-4 w-4 mr-2" />
@@ -522,12 +538,12 @@ const ThreadedMessages: React.FC = () => {
                         variant="outline"
                         onClick={() => {
                           toast({
-                            title: "Cache Refresh",
+                            title: 'Cache Refresh',
                             description:
-                              "Clearing frontend cache and refreshing data...",
-                          });
+                              'Clearing frontend cache and refreshing data...',
+                          })
                           // Invalidate all cached queries
-                          queryClient.invalidateQueries();
+                          queryClient.invalidateQueries()
                         }}
                       >
                         <RefreshCw className="h-4 w-4 mr-2" />
@@ -541,41 +557,41 @@ const ThreadedMessages: React.FC = () => {
                           const setupWebhook = async () => {
                             try {
                               const response = await fetch(
-                                "/api/instagram/setup-webhook",
+                                '/api/instagram/setup-webhook',
                                 {
-                                  method: "POST",
+                                  method: 'POST',
                                   headers: {
-                                    "Content-Type": "application/json",
+                                    'Content-Type': 'application/json',
                                   },
                                 },
-                              );
-                              const data = await response.json();
+                              )
+                              const data = await response.json()
 
                               if (response.ok) {
                                 toast({
-                                  title: "Webhook Setup",
+                                  title: 'Webhook Setup',
                                   description:
-                                    "Instagram webhook successfully configured",
-                                });
+                                    'Instagram webhook successfully configured',
+                                })
                               } else {
                                 toast({
-                                  title: "Webhook Setup Failed",
+                                  title: 'Webhook Setup Failed',
                                   description:
                                     data.message ||
-                                    "Failed to set up Instagram webhook",
-                                  variant: "destructive",
-                                });
+                                    'Failed to set up Instagram webhook',
+                                  variant: 'destructive',
+                                })
                               }
                             } catch (error) {
                               toast({
-                                title: "Webhook Setup Error",
+                                title: 'Webhook Setup Error',
                                 description:
-                                  "An error occurred during webhook setup",
-                                variant: "destructive",
-                              });
+                                  'An error occurred during webhook setup',
+                                variant: 'destructive',
+                              })
                             }
-                          };
-                          setupWebhook();
+                          }
+                          setupWebhook()
                         }}
                       >
                         <Link2 className="h-4 w-4 mr-2" />
@@ -594,7 +610,7 @@ const ThreadedMessages: React.FC = () => {
             value={activeTab}
             onValueChange={(value) =>
               setActiveTab(
-                value as "all" | "instagram" | "youtube" | "high-intent",
+                value as 'all' | 'instagram' | 'youtube' | 'high-intent',
               )
             }
             className="mt-4"
@@ -618,37 +634,37 @@ const ThreadedMessages: React.FC = () => {
                   className="w-full justify-between bg-gray-200 hover:bg-gray-300 text-black border border-gray-300"
                 >
                   <span>
-                    {activeTab === "all"
-                      ? "All Messages"
-                      : activeTab === "instagram"
-                        ? "Instagram"
-                        : "YouTube"}
+                    {activeTab === 'all'
+                      ? 'All Messages'
+                      : activeTab === 'instagram'
+                        ? 'Instagram'
+                        : 'YouTube'}
                   </span>
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-full">
                 <DropdownMenuItem
-                  onClick={() => setActiveTab("all")}
-                  className={activeTab === "all" ? "bg-gray-100" : ""}
+                  onClick={() => setActiveTab('all')}
+                  className={activeTab === 'all' ? 'bg-gray-100' : ''}
                 >
                   All Messages
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setActiveTab("instagram")}
-                  className={activeTab === "instagram" ? "bg-gray-100" : ""}
+                  onClick={() => setActiveTab('instagram')}
+                  className={activeTab === 'instagram' ? 'bg-gray-100' : ''}
                 >
                   Instagram
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setActiveTab("youtube")}
-                  className={activeTab === "youtube" ? "bg-gray-100" : ""}
+                  onClick={() => setActiveTab('youtube')}
+                  className={activeTab === 'youtube' ? 'bg-gray-100' : ''}
                 >
                   YouTube
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => setActiveTab("high-intent")}
-                  className={activeTab === "high-intent" ? "bg-gray-100" : ""}
+                  onClick={() => setActiveTab('high-intent')}
+                  className={activeTab === 'high-intent' ? 'bg-gray-100' : ''}
                 >
                   High Intent
                 </DropdownMenuItem>
@@ -660,7 +676,7 @@ const ThreadedMessages: React.FC = () => {
 
       <div className="flex-1 overflow-hidden">{renderContent()}</div>
     </div>
-  );
-};
+  )
+}
 
-export default ThreadedMessages;
+export default ThreadedMessages
