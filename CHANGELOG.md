@@ -199,7 +199,9 @@ CHANGLOG.md file.
   disabled when empty.
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
-- [Codex][Fixed-2] Batch messages now create threads and refresh the thread list.
+- [Codex][Fixed-2] Batch messages now create threads and refresh the thread
+  list.
 - [Codex][Added] Configurable response delay for automated AI replies.
 
-
+2025-06-18 [Codex][Added] AvatarPersonaConfig interface for persona setup
+described in docs/stage_1_persona.md.
