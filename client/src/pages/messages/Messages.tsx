@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Settings, MessageThread } from "@shared/schema";
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, RefreshCw, Link2, MessageSquare, FileQuestion, Search } from "lucide-react";
 import AutoRepliesToggle from "../../components/AutoRepliesToggle";
 import { useToast } from "@/hooks/use-toast";
@@ -419,7 +419,7 @@ const Messages = () => {
                 ) : (
                   <div className="flex flex-col space-y-2">
                     <StatusInfo status="disconnected" message="Instagram Account Not Connected" />
-                    <Link href="/connect/instagram">
+                    <Link to="/connect/instagram">
                       <Button size="sm" variant="outline">
                         Connect Instagram
                       </Button>

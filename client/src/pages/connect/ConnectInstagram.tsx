@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Settings } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { InstagramAuth } from "@/components/InstagramAuth";
-import { Link } from "wouter";
+import { Link } from "react-router-dom";
 
 const ConnectInstagram = () => {
   const { toast } = useToast();
@@ -50,10 +50,11 @@ const ConnectInstagram = () => {
                       </div>
                       <div className="mt-4">
                         <div className="-mx-2 -my-1.5 flex">
-                          <Link href="/instagram">
-                            <a className="bg-green-100 px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                              Go to Messages
-                            </a>
+                          <Link 
+                            to="/instagram"
+                            className="bg-green-100 px-2 py-1.5 rounded-md text-sm font-medium text-green-800 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            Go to Messages
                           </Link>
                         </div>
                       </div>

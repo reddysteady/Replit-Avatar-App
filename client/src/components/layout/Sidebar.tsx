@@ -16,17 +16,17 @@ type SidebarProps = {
 }
 
 type NavItemProps = {
-  href: string
+  to: string
   icon?: React.ReactNode
   children: React.ReactNode
   active?: boolean
   className?: string
 }
 
-const NavItem = ({ href, icon, children, active, className }: NavItemProps) => {
+const NavItem = ({ to, icon, children, active, className }: NavItemProps) => {
   return (
     <Link
-      to={href}
+      to={to}
       className={cn(
         'flex items-center px-2 py-2 text-sm font-medium rounded-md',
         active ? 'text-blue-500' : 'text-neutral-700 hover:text-neutral-900',
@@ -64,7 +64,7 @@ const Sidebar = ({ className }: SidebarProps) => {
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto bg-white">
             <nav className="mt-5 flex-1 px-2 space-y-1">
               <NavItem
-                href="/"
+                to="/"
                 icon={<MessageSquare />}
                 active={
                   location.pathname === '/' ||
@@ -75,7 +75,7 @@ const Sidebar = ({ className }: SidebarProps) => {
                 Conversations
               </NavItem>
               <NavItem
-                href="/analytics"
+                to="/analytics"
                 icon={<BarChart2 />}
                 active={location.pathname === '/analytics'}
               >

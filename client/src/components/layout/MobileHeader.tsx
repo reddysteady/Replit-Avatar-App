@@ -1,6 +1,6 @@
 // See CHANGELOG.md for 2025-06-16 [Changed - mobile drawer navigation]
 import React from 'react'
-import { Link, useLocation } from 'wouter'
+import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
