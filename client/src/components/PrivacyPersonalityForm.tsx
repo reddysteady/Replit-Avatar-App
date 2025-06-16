@@ -56,7 +56,33 @@ export default function PrivacyPersonalityForm({
   }, [initialConfig, form])
 
   const submit = (data: AvatarPersonaConfig) => {
-    onSave(data)
+    // Ensure we have valid data
+    const cleanedData = {
+      ...data,
+      toneDescription: data.toneDescription?.trim() || '',
+      styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
+      allowedTopics: Array.isArray(data.allowedTopics) ? data.allowedTopics.filter(Boolean) : [],
+      restrictedTopics: Array.isArray(data.restrictedTopics) ? data.restrictedTopics.filter(Boolean) : [],
+      fallbackReply: data.fallbackReply?.trim() || ''
+    }
+
+    // Additional validation
+    if (!cleanedData.toneDescription) {
+      form.setError('toneDescription', { message: 'Tone description is required' })
+      return
+    }
+
+    if (cleanedData.allowedTopics.length === 0) {
+      form.setError('allowedTopics', { message: 'Select at least one topic' })
+      return
+    }
+
+    if (!cleanedData.fallbackReply || cleanedData.fallbackReply === 'custom') {
+      form.setError('fallbackReply', { message: 'Please provide a fallback reply' })
+      return
+    }
+
+    onSave(cleanedData)
   }
 
   return (
