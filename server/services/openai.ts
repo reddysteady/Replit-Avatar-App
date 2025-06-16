@@ -196,7 +196,21 @@ export class AIService {
           systemPrompt += `\n\n${contextSection}`
         }
       }
-
+      
+      /* ────────────────────────────────────────────────────────── */
+      /* 🔍 DEBUG: dump the exact payload that will be sent to OpenAI */
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] Final prompt payload', {
+          model: model || DEFAULT_MODEL,
+          senderName,
+          systemPrompt,
+          contextSnippets,      // raw array for quick inspection
+        })
+      }
+      
+      /* ────────────────────────────────────────────────────────── */
+      // now continue with userPrompt / messages / client.chat …
+      
       const userPrompt = `
         Here is a message from a follower named ${senderName}:
         "${content}"

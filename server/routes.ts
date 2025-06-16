@@ -1689,7 +1689,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const settings = await storage.getSettings(1)
     res.json({
       personaConfig: settings.personaConfig || null,
-      systemPrompt: settings.systemPrompt || '',
     })
   })
 
@@ -1703,17 +1702,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           restrictedTopics: z.array(z.string()),
           fallbackReply: z.string(),
         }),
-        systemPrompt: z.string(),
       })
 
-      const { personaConfig, systemPrompt } = schema.parse(req.body)
+      const { personaConfig} = schema.parse(req.body)
       const updated = await storage.updateSettings(1, {
         personaConfig,
-        systemPrompt,
       })
       res.json({
         personaConfig: updated.personaConfig,
-        systemPrompt: updated.systemPrompt,
       })
     } catch (error: any) {
       res.status(400).json({ message: error.message })
