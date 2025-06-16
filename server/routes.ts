@@ -447,7 +447,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const aiReplyContent = await aiService.generateReply({
           content: rawMsg.content,
           senderName: thread.participantName,
-          creatorToneDescription: aiSettings.creatorToneDescription ?? '',
           temperature: aiSettings.temperature ?? 0.7,
           maxLength: aiSettings.maxResponseLength ?? 500,
           model: aiSettings.model ?? 'gpt-4o',
@@ -914,8 +913,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const aiReply = await aiService.generateReply({
                     content: instagramMessage.message,
                     senderName: instagramMessage.from.username,
-                    creatorToneDescription:
-                      aiSettings.creatorToneDescription || '',
                     temperature: (aiSettings.temperature || 70) / 100,
                     maxLength: aiSettings.maxResponseLength || 500,
                     model: aiSettings.model || 'gpt-4o',
@@ -1458,7 +1455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(settings)
+      const { creatorToneDescription, ...settingsResponse } = settings
+      res.json(settingsResponse)
     } catch (error: any) {
       res.status(500).json({ message: error.message })
     }
@@ -1487,7 +1485,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiSettings: z
           .object({
             temperature: z.number().min(0).max(1).optional(),
-            creatorToneDescription: z.string().optional(),
             maxResponseLength: z.number().min(50).max(2000).optional(),
             model: z.string().optional(),
             autoReplyInstagram: z.boolean().optional(),
@@ -1646,7 +1643,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: Boolean(enabled),
             autoReplyYoutube: false,
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
@@ -1667,7 +1663,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: false,
             autoReplyYoutube: Boolean(enabled),
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
