@@ -1455,6 +1455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/settings', async (req, res) => {
     try {
+      log(`Settings POST request body: ${JSON.stringify(req.body)}`, 'debug')
+      
       const schema = z.object({
         apiKeys: z
           .object({
@@ -1586,6 +1588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedSettings = await storage.updateSettings(userId, updates)
       res.json({ success: true, settings: updatedSettings })
     } catch (error: any) {
+      log(`Settings update error: ${error.message}`, 'error')
+      if (error.issues && Array.isArray(error.issues)) {
+        // This is a Zod validation error
+        const zodError = error.issues.map((issue: any) => `${issue.path.join('.')}: ${issue.message}`).join(', ')
+        return res.status(400).json({ message: `Validation error: ${zodError}` })
+      }
       res.status(500).json({ message: error.message })
     }
   })
