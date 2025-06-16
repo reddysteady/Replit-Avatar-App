@@ -3,6 +3,7 @@
 // See CHANGELOG.md for 2025-06-14 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-13 [Added-2]
+// See CHANGELOG.md for 2025-06-16 [Changed-2]
 import {
   messages,
   users,
@@ -236,7 +237,9 @@ export class DatabaseStorage implements IStorage {
 
       // Log the data being inserted for debugging
       if (process.env.DEBUG_AI) {
-        log(`[DEBUG-AI] Adding message to thread ${threadId}: ${JSON.stringify(cleanMessageData)}`)
+        log(
+          `[DEBUG-AI] Adding message to thread ${threadId}: ${JSON.stringify(cleanMessageData)}`,
+        )
       }
 
       const [newMessage] = await db
@@ -490,14 +493,20 @@ export class DatabaseStorage implements IStorage {
       },
       aiSettings: {
         temperature: 0.7,
-        creatorToneDescription:
-          'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
         maxResponseLength: 500,
         model: 'gpt-4o',
         autoReplyInstagram: false,
         autoReplyYoutube: false,
         flexProcessing: false,
         responseDelay: 0,
+      },
+      personaConfig: {
+        toneDescription:
+          'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: 'Sorry, I cannot discuss that topic.',
       },
       notificationSettings: {
         email: '',
@@ -514,8 +523,6 @@ export class DatabaseStorage implements IStorage {
       airtableToken: '',
       airtableBaseId: '',
       airtableTableName: 'Leads',
-      creatorToneDescription:
-        'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
       aiTemperature: 70, // 0.7
       aiModel: 'gpt-4o',
       maxResponseLength: 500,

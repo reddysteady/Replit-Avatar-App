@@ -10,6 +10,7 @@
 // See CHANGELOG.md for 2025-06-12 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-16 [Changed]
+// See CHANGELOG.md for 2025-06-16 [Changed-2]
 
 // dotenv/config is imported in server/index.ts before this service is
 // instantiated, so manual .env parsing is unnecessary.
@@ -35,6 +36,7 @@ interface GenerateReplyParams {
   model?: string
   contextSnippets?: string[] // Additional context from content RAG pipeline
   flexProcessing?: boolean
+  personaConfig?: AvatarPersonaConfig | null
 }
 
 interface ClassifyIntentResult {
@@ -128,6 +130,7 @@ export class AIService {
         contextSnippets,
         flexProcessing,
         model,
+        personaConfig,
       } = params
 
       if (process.env.DEBUG_AI) {
@@ -172,16 +175,15 @@ export class AIService {
 
       let systemPrompt = settings.systemPrompt
       if (!systemPrompt) {
-        if (settings.personaConfig) {
+        const persona = personaConfig ?? settings.personaConfig
+        if (persona) {
           if (process.env.DEBUG_AI) {
             console.debug(
               '[DEBUG-AI] Persona config:',
-              JSON.stringify(settings.personaConfig, null, 2),
+              JSON.stringify(persona, null, 2),
             )
           }
-          systemPrompt = buildSystemPrompt(
-            settings.personaConfig as AvatarPersonaConfig,
-          )
+          systemPrompt = buildSystemPrompt(persona as AvatarPersonaConfig)
         } else {
           systemPrompt = DEFAULT_SYSTEM_PROMPT
         }
