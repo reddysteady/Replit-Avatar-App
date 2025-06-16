@@ -1444,7 +1444,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(settings)
+      const { creatorToneDescription, ...settingsResponse } = settings
+      res.json(settingsResponse)
     } catch (error: any) {
       res.status(500).json({ message: error.message })
     }
@@ -1473,7 +1474,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiSettings: z
           .object({
             temperature: z.number().min(0).max(1).optional(),
-            creatorToneDescription: z.string().optional(),
             maxResponseLength: z.number().min(50).max(2000).optional(),
             model: z.string().optional(),
             autoReplyInstagram: z.boolean().optional(),
@@ -1542,10 +1542,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Also update legacy fields for backward compatibility
         if (data.aiSettings.temperature !== undefined) {
           updates.aiTemperature = Math.round(data.aiSettings.temperature * 100)
-        }
-        if (data.aiSettings.creatorToneDescription !== undefined) {
-          updates.creatorToneDescription =
-            data.aiSettings.creatorToneDescription
         }
         if (data.aiSettings.maxResponseLength !== undefined) {
           updates.maxResponseLength = data.aiSettings.maxResponseLength
