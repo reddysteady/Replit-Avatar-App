@@ -15,6 +15,7 @@
 // See CHANGELOG.md for 2025-06-13 [Added-2]
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Changed]
+// See CHANGELOG.md for 2025-06-16 [Changed-2]
 import type { Express } from 'express'
 import { faker } from '@faker-js/faker'
 import { createServer, type Server } from 'http'
@@ -29,6 +30,7 @@ import { youtubeService } from './services/youtube'
 import { airtableService } from './services/airtable'
 import { aiService } from './services/openai'
 import { contentService } from './services/content'
+import type { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { oauthService } from './services/oauth'
 import { log } from './logger'
 
@@ -681,8 +683,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generatedReply = await aiService.generateReply({
         content: messages[messages.length - 1]?.content ?? '',
         senderName: thread.participantName,
-        creatorToneDescription:
-          (settings.aiSettings as any)?.creatorToneDescription || '',
+        personaConfig:
+          settings.personaConfig as unknown as AvatarPersonaConfig | null,
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -822,9 +824,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
-        creatorToneDescription:
-          (settings.aiSettings as any)?.creatorToneDescription ||
-          'Friendly and professional',
+        personaConfig:
+          settings.personaConfig as unknown as AvatarPersonaConfig | null,
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
@@ -1035,8 +1036,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiReply = await aiService.generateReply({
           content: message.content,
           senderName: message.senderName,
-          creatorToneDescription:
-            (settings.aiSettings as any)?.creatorToneDescription || '',
+          personaConfig:
+            settings.personaConfig as unknown as AvatarPersonaConfig | null,
           temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
           maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
           contextSnippets: useContext ? contextSnippets : undefined,
@@ -1133,8 +1134,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
-        creatorToneDescription:
-          (settings.aiSettings as any)?.creatorToneDescription || '',
+        personaConfig:
+          settings.personaConfig as unknown as AvatarPersonaConfig | null,
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 500,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -1205,8 +1206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reply = await aiService.generateReply({
         content: data.content,
         senderName: data.senderName,
-        creatorToneDescription:
-          (settings.aiSettings as any)?.creatorToneDescription || '',
+        personaConfig:
+          settings.personaConfig as unknown as AvatarPersonaConfig | null,
         temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
         maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
         contextSnippets:
@@ -1458,7 +1459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const { creatorToneDescription, ...settingsResponse } = settings
+      const { personaConfig, ...settingsResponse } = settings
       res.json(settingsResponse)
     } catch (error: any) {
       res.status(500).json({ message: error.message })

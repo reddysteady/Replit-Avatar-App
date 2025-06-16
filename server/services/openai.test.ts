@@ -1,6 +1,7 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-11 [Fixed-3]
 // See CHANGELOG.md for 2025-06-16 [Changed]
+// See CHANGELOG.md for 2025-06-16 [Changed-2]
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AIService } from './openai'
 import { storage } from '../storage'
@@ -58,7 +59,7 @@ describe('AIService', () => {
     const reply = await service.generateReply({
       content: 'hi',
       senderName: 'Bob',
-      creatorToneDescription: '',
+      personaConfig: null,
       temperature: 0.5,
       maxLength: 10,
       model: 'gpt-4',
@@ -75,7 +76,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'test',
       senderName: 'Bob',
-      creatorToneDescription: '',
+      personaConfig: null,
       temperature: 0.5,
       maxLength: 10,
       flexProcessing: true,
@@ -97,7 +98,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'test',
       senderName: 'Bob',
-      creatorToneDescription: '',
+      personaConfig: null,
       temperature: 0.5,
       maxLength: 10,
       model: 'gpt-3.5-turbo',
@@ -135,7 +136,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'hi',
       senderName: 'Bob',
-      creatorToneDescription: '',
+      personaConfig: persona,
       temperature: 0.5,
       maxLength: 10,
     })
@@ -170,7 +171,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'hi',
       senderName: 'Bob',
-      creatorToneDescription: '',
+      personaConfig: null,
       temperature: 0.5,
       maxLength: 10,
     })
