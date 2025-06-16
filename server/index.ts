@@ -5,6 +5,9 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./logger";
 
+// Enable AI debugging
+process.env.DEBUG_AI = 'true';
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

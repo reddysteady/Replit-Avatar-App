@@ -169,15 +169,25 @@ export class AIService {
 
       let systemPrompt = settings.systemPrompt
       if (!systemPrompt) {
-        systemPrompt = buildSystemPrompt(
-          (settings.personaConfig as any as AvatarPersonaConfig) || {
-            toneDescription: creatorToneDescription,
-            styleTags: [],
-            allowedTopics: [],
-            restrictedTopics: [],
-            fallbackReply: '',
-          },
-        )
+        const personaConfig = (settings.personaConfig as any as AvatarPersonaConfig) || {
+          toneDescription: creatorToneDescription,
+          styleTags: [],
+          allowedTopics: [],
+          restrictedTopics: [],
+          fallbackReply: '',
+        }
+        
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] Persona config:', JSON.stringify(personaConfig, null, 2))
+          console.debug('[DEBUG-AI] CreatorToneDescription:', creatorToneDescription)
+        }
+        
+        systemPrompt = buildSystemPrompt(personaConfig)
+        
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] Generated system prompt:', systemPrompt)
+        }
+        
         if (contextSection) {
           systemPrompt += `\n\n${contextSection}`
         }
