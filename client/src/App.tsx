@@ -21,6 +21,11 @@ import Automation from '@/pages/automation/Automation'
 import Testing from '@/pages/testing/Testing'
 import Privacy from '@/pages/privacy/Privacy'
 import AvatarSettingsPage from '@/pages/settings/AvatarSettingsPage'
+import ContentSourcesPage from '@/pages/settings/ContentSourcesPage'
+import AISettingsPage from '@/pages/settings/AISettingsPage'
+import AutomationPage from '@/pages/settings/AutomationPage'
+import NotificationSettings from '@/pages/settings/NotificationSettings'
+import APIKeysPage from '@/pages/settings/APIKeysPage'
 
 import Sidebar from '@/components/layout/Sidebar'
 
@@ -38,7 +43,14 @@ function AppLayout() {
           />
           <Route path="/connect/instagram" element={<ConnectInstagram />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/sources" element={<ContentSourcesPage />} />
           <Route path="/settings/persona" element={<AvatarSettingsPage />} />
+          <Route path="/settings/ai" element={<AISettingsPage />} />
+          <Route path="/settings/automation" element={<AutomationPage />} />
+          <Route path="/settings/notifications" element={<NotificationSettings />} />
+          <Route path="/settings/api" element={<APIKeysPage />} />
+          <Route path="/settings/testing-tools" element={<Testing />} />
+          <Route path="/settings/privacy" element={<Privacy />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/automation" element={<Automation />} />
           <Route path="/testing" element={<Testing />} />
