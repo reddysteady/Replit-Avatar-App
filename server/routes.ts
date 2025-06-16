@@ -342,7 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const message = await storage.addMessageToThread(thread.id, {
           source,
           content: faker.lorem.sentence(),
-          externalId: `faker-${Date.now()}-${i}`,
+          externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
           senderId,
           senderName,
           senderAvatar,

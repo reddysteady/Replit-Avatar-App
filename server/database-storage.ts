@@ -1,4 +1,3 @@
-
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-14 [Added]
@@ -93,19 +92,19 @@ export class DatabaseStorage implements IStorage {
       isHighIntent: intentMap.get(thread.id) ?? false
     }));
   }
-  
+
   async getThreadMessages(threadId: number): Promise<MessageType[]> {
     log(`Fetching thread messages for thread ID ${threadId}`);
-    
+
     // Get ALL messages for the thread, including threaded conversations
     const threadMessages = await db
       .select()
       .from(messages)
       .where(eq(messages.threadId, threadId))
       .orderBy(messages.timestamp);
-    
+
     log(`Found ${threadMessages.length} messages for thread ID ${threadId}`);
-    
+
     // Log message details for debugging
     const messageDetails = threadMessages.map(m => ({
       id: m.id,
@@ -114,9 +113,9 @@ export class DatabaseStorage implements IStorage {
       threadId: m.threadId,
       timestamp: m.timestamp
     }));
-    
+
     log(`Thread messages with details: ${JSON.stringify(messageDetails)}`);
-    
+
     // Build parent-child relationships for debugging
     const parentChildMap = new Map();
     threadMessages.forEach(msg => {
@@ -127,38 +126,38 @@ export class DatabaseStorage implements IStorage {
         parentChildMap.get(msg.parentMessageId).push(msg.id);
       }
     });
-    
+
     // Convert to a regular object for console logging
     const parentChildObj: Record<number, number[]> = {};
     parentChildMap.forEach((children, parentId) => {
       parentChildObj[parentId] = children;
     });
-    
+
     log(`Parent-child relationships: ${JSON.stringify(parentChildObj)}`);
-    
+
     // Map database messages to MessageType with proper parent-child relationships
     const mappedMessages = threadMessages.map(msg => {
       // Ensure content is never undefined/null
       if (!msg.content) {
         msg.content = `Message from ${msg.isOutbound ? 'You' : (msg.senderName || 'User')}`;
       }
-      
+
       // Map to MessageType with correct parent-child relationship
       return this.mapMessageToMessageType(msg);
     });
-    
+
     return mappedMessages;
   }
-  
+
   async createThread(thread: InsertMessageThread): Promise<MessageThread> {
     const [newThread] = await db
       .insert(messageThreads)
       .values(thread)
       .returning();
-    
+
     return newThread;
   }
-  
+
   async updateThread(id: number, updates: Partial<MessageThread>): Promise<MessageThread | undefined> {
     const [updatedThread] = await db
       .update(messageThreads)
@@ -167,10 +166,10 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(messageThreads.id, id))
       .returning();
-    
+
     return updatedThread;
   }
-  
+
   async findOrCreateThreadByParticipant(
     userId: number, 
     externalParticipantId: string, 
@@ -189,11 +188,11 @@ export class DatabaseStorage implements IStorage {
           eq(messageThreads.source, source)
         )
       );
-    
+
     if (existingThread) {
       return existingThread;
     }
-    
+
     // Create new thread if one doesn't exist
     const [newThread] = await db
       .insert(messageThreads)
@@ -209,40 +208,30 @@ export class DatabaseStorage implements IStorage {
         metadata: {}
       })
       .returning();
-    
+
     return newThread;
   }
-  
-  async addMessageToThread(threadId: number, message: InsertMessage): Promise<Message> {
-    // First, get the thread to ensure it exists
-    const thread = await this.getThread(threadId);
-    if (!thread) {
-      throw new Error(`Thread with ID ${threadId} not found`);
-    }
-    
-    // Ensure threadId is set in the message
-    const messageWithThread = {
-      ...message,
-      threadId
-    };
-    
-    // Create the message
+
+  async addMessageToThread(threadId: number, messageData: Omit<InsertMessage, 'threadId' | 'id'>): Promise<Message> {
+    // Ensure we don't pass an 'id' field to let the database auto-generate it
+    const { id, ...cleanMessageData } = messageData as any;
+
     const [newMessage] = await db
       .insert(messages)
-      .values(messageWithThread)
+      .values({ ...cleanMessageData, threadId })
       .returning();
-    
+
     // Update thread's last message information
     await this.updateThread(threadId, {
       lastMessageAt: new Date(),
-      lastMessageContent: message.content,
+      lastMessageContent: messageData.content,
       // Increment unread count if it's an inbound message
-      unreadCount: message.isOutbound ? thread.unreadCount : (thread.unreadCount || 0) + 1
+      unreadCount: messageData.isOutbound ? thread.unreadCount : (thread.unreadCount || 0) + 1
     });
-    
+
     return newMessage;
   }
-  
+
   async markThreadAsRead(threadId: number): Promise<boolean> {
     try {
       await db
@@ -298,7 +287,7 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
-  
+
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -327,7 +316,7 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(eq(messages.source, "instagram"))
       .orderBy(desc(messages.timestamp));
-    
+
     return instagramMessages.map(msg => this.mapMessageToMessageType(msg));
   }
 
@@ -337,7 +326,7 @@ export class DatabaseStorage implements IStorage {
       .from(messages)
       .where(eq(messages.source, "youtube"))
       .orderBy(desc(messages.timestamp));
-    
+
     return youtubeMessages.map(msg => this.mapMessageToMessageType(msg));
   }
 
@@ -351,11 +340,11 @@ export class DatabaseStorage implements IStorage {
     // Process the parentMessageId carefully to properly establish threads
     // Must be a number (not a string) for the React component to handle it correctly
     let parentId = undefined;
-    
+
     if (msg.parentMessageId !== undefined && msg.parentMessageId !== null) {
       parentId = Number(msg.parentMessageId);
       log(`Converting parentMessageId for message ${msg.id}: ${msg.parentMessageId} -> ${parentId}`);
-      
+
       // Check if it's a valid number after conversion
       if (isNaN(parentId)) {
         parentId = undefined;
@@ -411,11 +400,11 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(messages.id, id))
       .returning();
-    
+
     if (!updatedMessage) {
       throw new Error(`Message with ID ${id} not found`);
     }
-    
+
     return updatedMessage;
   }
 
@@ -425,11 +414,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(settings)
       .where(eq(settings.userId, userId));
-    
+
     if (existingSettings) {
       return existingSettings as Settings;
     }
-    
+
     // Create default settings with JSON fields if not found
     const defaultSettings: InsertSettings = {
       userId,
@@ -462,7 +451,7 @@ export class DatabaseStorage implements IStorage {
         notifyOnHighIntent: true,
         notifyOnSensitiveTopics: true
       },
-      
+
       // Legacy fields (for backward compatibility)
       aiAutoRepliesInstagram: false,
       aiAutoRepliesYoutube: false,
@@ -480,14 +469,14 @@ export class DatabaseStorage implements IStorage {
       notifyOnHighIntent: true,
       notifyOnSensitiveTopics: true
     };
-    
+
       const [newSettings] = await db.insert(settings).values(defaultSettings).returning();
       return newSettings as Settings;
   }
 
   async updateSettings(userId: number, updates: Partial<Settings>): Promise<Settings> {
     const existingSettings = await this.getSettings(userId);
-    
+
     const [updatedSettings] = await db
       .update(settings)
       .set(updates)
@@ -511,7 +500,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(automationRules)
       .where(eq(automationRules.id, id));
-    
+
     return rule;
   }
 
@@ -520,7 +509,7 @@ export class DatabaseStorage implements IStorage {
       .insert(automationRules)
       .values(rule)
       .returning();
-    
+
     return newRule;
   }
 
@@ -533,7 +522,7 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(automationRules.id, id))
       .returning();
-    
+
     return updatedRule;
   }
 
@@ -541,7 +530,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(automationRules)
       .where(eq(automationRules.id, id));
-    
+
     // Check if the rule still exists to determine success
     const rule = await this.getAutomationRule(id);
     return rule === undefined;
@@ -553,7 +542,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(leads)
       .where(eq(leads.id, id));
-    
+
     return lead;
   }
 
@@ -570,7 +559,7 @@ export class DatabaseStorage implements IStorage {
       .insert(leads)
       .values(lead)
       .returning();
-    
+
     return newLead;
   }
 
@@ -580,7 +569,7 @@ export class DatabaseStorage implements IStorage {
       .set(updates)
       .where(eq(leads.id, id))
       .returning();
-    
+
     return updatedLead;
   }
 
@@ -590,11 +579,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(analytics)
       .where(eq(analytics.userId, userId));
-    
+
     if (existingAnalytics) {
       return existingAnalytics;
     }
-    
+
     // Create default analytics if not found
     const defaultAnalytics: InsertAnalytics = {
       userId,
@@ -615,24 +604,24 @@ export class DatabaseStorage implements IStorage {
       ],
       sensitiveTopicsCount: 0
     };
-    
+
     const [newAnalytics] = await db
       .insert(analytics)
       .values(defaultAnalytics)
       .returning();
-    
+
     return newAnalytics;
   }
 
   async updateAnalytics(userId: number, updates: Partial<Analytics>): Promise<Analytics> {
     const existingAnalytics = await this.getAnalytics(userId);
-    
+
     const [updatedAnalytics] = await db
       .update(analytics)
       .set(updates)
       .where(eq(analytics.id, existingAnalytics.id))
       .returning();
-    
+
     return updatedAnalytics;
   }
 }
