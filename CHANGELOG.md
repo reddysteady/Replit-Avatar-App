@@ -163,8 +163,8 @@ CHANGLOG.md file.
   lookup.
 - [Codex][Added] Migration adds PGVector extension and `content_items` table.
 - [Codex][Fixed] ChatHeader now shows on mobile when selecting a thread.
-- [Codex][Added] Documented SUPABASE_DATABASE_URL, OPENAI_API_KEY, and other server
-  environment variables in README.
+- [Codex][Added] Documented SUPABASE_DATABASE_URL, OPENAI_API_KEY, and other
+  server environment variables in README.
 - [Codex][Added] /api/content/search endpoint and ranking tests.
 - [Codex][Added] Content item storage and vector search. [Codex][Added] Thread
   auto-reply patch route with storage update. [Codex][Added] autoReply field to
@@ -200,15 +200,17 @@ CHANGLOG.md file.
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
 
-
 ## 2025-06-15
 
 - [Codex][Changed] Right-align AI Replies toggle in `ThreadRow`.
 - [Codex][Fixed-2] Batch messages now create threads and refresh the thread
   list.
 - [Codex][Added] Configurable response delay for automated AI replies.
-- [Codex][Added] AvatarPersonaConfig interface for persona setup
-described in docs/stage_1_persona.md.
+- [Codex][Added] AvatarPersonaConfig interface for persona setup described in
+  docs/stage_1_persona.md.
 - [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.
-- [Codex][Fixed] Removed extra top padding on mobile conversation
-screen.
+- [Codex][Fixed] Removed extra top padding on mobile conversation screen.
+- [Codex][Added] Persona settings route and sidebar link.
+- [Codex][Added] PrivacyPersonalityForm and AvatarSettingsPage.
+- [Codex][Added] buildSystemPrompt utility and persona API storage.
+- [Codex][Changed] OpenAI service uses stored systemPrompt.
