@@ -37,6 +37,8 @@ This command starts the Express server which:
 3. Handles both backend and frontend in a single process
 
 ## Recent Changes
+- 2025-06-16: Fixed Response Delay setting to properly affect auto-replies in threaded messages
+- 2025-06-16: Resolved database connection timeout issues by switching to standard PostgreSQL configuration
 - 2025-06-15: Fixed database connection issues by removing unsupported vector type
 - 2025-06-15: Improved PostgreSQL pool configuration with proper timeouts
 - 2025-06-15: Successfully deployed database schema and resolved startup failures

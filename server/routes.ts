@@ -454,6 +454,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           flexProcessing: aiSettings.flexProcessing ?? false,
         })
 
+        // Apply response delay if configured
+        const delaySec = aiSettings?.responseDelay || 0
+        if (delaySec > 0) {
+          await new Promise((r) => setTimeout(r, delaySec * 1000))
+        }
+
         await storage.addMessageToThread(threadId, {
           source: 'instagram',
           content: aiReplyContent,
