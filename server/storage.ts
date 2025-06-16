@@ -160,7 +160,7 @@ export class MemStorage {
     this.users.set(1, defaultUser)
 
     // Create default settings
-    const defaultSettings: Settings = {
+    const defaultSettings = {
       id: 1,
       userId: 1,
       apiKeys: {},
@@ -182,15 +182,13 @@ export class MemStorage {
       airtableToken: '',
       airtableBaseId: '',
       airtableTableName: 'Leads',
-      creatorToneDescription:
-        'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
       aiTemperature: 70, // 0.7
       aiModel: 'gpt-4o',
       maxResponseLength: 500,
       notificationEmail: 'demo@example.com',
       notifyOnHighIntent: true,
       notifyOnSensitiveTopics: true,
-    }
+    } as Settings
     this.settingsMap.set(1, defaultSettings)
 
     // Create default analytics
@@ -698,14 +696,13 @@ export class MemStorage {
         airtableToken: '',
         airtableBaseId: '',
         airtableTableName: 'Leads',
-        creatorToneDescription: '',
         aiTemperature: 70, // 0.7
         aiModel: 'gpt-4o',
         maxResponseLength: 500,
         notificationEmail: '',
         notifyOnHighIntent: true,
         notifyOnSensitiveTopics: true,
-      }
+      } as Settings
 
       this.settingsMap.set(userId, settings)
     }
