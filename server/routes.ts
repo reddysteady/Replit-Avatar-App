@@ -447,7 +447,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const aiReplyContent = await aiService.generateReply({
           content: rawMsg.content,
           senderName: thread.participantName,
-          creatorToneDescription: aiSettings.creatorToneDescription ?? '',
           temperature: aiSettings.temperature ?? 0.7,
           maxLength: aiSettings.maxResponseLength ?? 500,
           model: aiSettings.model ?? 'gpt-4o',
@@ -678,7 +677,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generatedReply = await aiService.generateReply({
         content: messages[messages.length - 1]?.content ?? '',
         senderName: thread.participantName,
-        creatorToneDescription: settings.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -818,8 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
-        creatorToneDescription:
-          settings.creatorToneDescription || 'Friendly and professional',
+
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
@@ -912,8 +909,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const aiReply = await aiService.generateReply({
                     content: instagramMessage.message,
                     senderName: instagramMessage.from.username,
-                    creatorToneDescription:
-                      aiSettings.creatorToneDescription || '',
                     temperature: (aiSettings.temperature || 70) / 100,
                     maxLength: aiSettings.maxResponseLength || 500,
                     model: aiSettings.model || 'gpt-4o',
@@ -1032,7 +1027,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiReply = await aiService.generateReply({
           content: message.content,
           senderName: message.senderName,
-          creatorToneDescription: settings.creatorToneDescription || '',
           temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
           maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
           contextSnippets: useContext ? contextSnippets : undefined,
@@ -1129,7 +1123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
-        creatorToneDescription: settings.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 500,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -1200,7 +1193,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reply = await aiService.generateReply({
         content: data.content,
         senderName: data.senderName,
-        creatorToneDescription: settings.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
         maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
         contextSnippets:
@@ -1435,7 +1427,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: settings.aiTemperature
             ? settings.aiTemperature / 100
             : 0.7,
-          creatorToneDescription: settings.creatorToneDescription || '',
           maxResponseLength: settings.maxResponseLength || 500,
           model: settings.aiModel || 'gpt-4o',
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
@@ -1462,7 +1453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/settings', async (req, res) => {
     try {
       log(`Settings POST request body: ${JSON.stringify(req.body)}`, 'debug')
-      
+
       const schema = z.object({
         apiKeys: z
           .object({
@@ -1597,8 +1588,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       log(`Settings update error: ${error.message}`, 'error')
       if (error.issues && Array.isArray(error.issues)) {
         // This is a Zod validation error
-        const zodError = error.issues.map((issue: any) => `${issue.path.join('.')}: ${issue.message}`).join(', ')
-        return res.status(400).json({ message: `Validation error: ${zodError}` })
+        const zodError = error.issues
+          .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+          .join(', ')
+        return res
+          .status(400)
+          .json({ message: `Validation error: ${zodError}` })
       }
       res.status(500).json({ message: error.message })
     }
@@ -1641,7 +1636,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: Boolean(enabled),
             autoReplyYoutube: false,
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
@@ -1662,7 +1656,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: false,
             autoReplyYoutube: Boolean(enabled),
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
