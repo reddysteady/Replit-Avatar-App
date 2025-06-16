@@ -5,8 +5,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { log } from "./logger";
 
-// Enable AI debugging
-process.env.DEBUG_AI = 'true';
+// Debug mode can be enabled by setting DEBUG_AI=true in environment
+// process.env.DEBUG_AI = 'true';
 
 const app = express();
 app.use(express.json());

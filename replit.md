@@ -37,6 +37,8 @@ This command starts the Express server which:
 3. Handles both backend and frontend in a single process
 
 ## Recent Changes
+- 2025-06-16: Fixed Persona configuration system - set up proper AvatarPersonaConfig with style tags, allowed/restricted topics, and fallback replies
+- 2025-06-16: Verified AI responses now correctly use full persona system including topic restrictions and fallback handling
 - 2025-06-16: Fixed Response Delay setting to properly affect auto-replies in threaded messages
 - 2025-06-16: Resolved database connection timeout issues by switching to standard PostgreSQL configuration
 - 2025-06-15: Fixed database connection issues by removing unsupported vector type
