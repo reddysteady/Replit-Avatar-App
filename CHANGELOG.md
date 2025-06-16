@@ -216,7 +216,7 @@ CHANGLOG.md file.
 - [Codex][Changed] OpenAI service uses stored systemPrompt.
 - [Codex][Added] Thread delete popover with confirmation in `ThreadRow` and
   state handling in `ThreadList`.
-
-## 2025-06-16
-
+- [Codex][Changed] Navigation updated to match docs/menu_architecture.md for
+  desktop and mobile.
+- [Codex][Changed] Switched routing to react-router-dom.
 - [Codex][Fixed] Batch message senderId uses nanoid to avoid duplicates.

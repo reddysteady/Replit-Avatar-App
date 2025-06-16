@@ -1,5 +1,10 @@
 // See CHANGELOG.md for 2025-06-12 [Changed - remove MobileHeader]
-import { Switch, Route, Redirect } from 'wouter'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom'
 import { queryClient } from './lib/queryClient'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
@@ -19,26 +24,27 @@ import AvatarSettingsPage from '@/pages/settings/AvatarSettingsPage'
 
 import Sidebar from '@/components/layout/Sidebar'
 
-function Router() {
+function AppLayout() {
   return (
     <div className="h-screen flex overflow-hidden">
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        <Switch>
-          <Route path="/" component={ThreadedMessages} />
-          <Route path="/instagram" component={ThreadedMessages} />
-          <Route path="/youtube">
-            <Redirect to="/instagram" />
-          </Route>
-          <Route path="/connect/instagram" component={ConnectInstagram} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/settings/persona" component={AvatarSettingsPage} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/automation" component={Automation} />
-          <Route path="/testing" component={Testing} />
-          <Route path="/privacy" component={Privacy} />
-          <Route component={NotFound} />
-        </Switch>
+        <Routes>
+          <Route path="/" element={<ThreadedMessages />} />
+          <Route path="/instagram" element={<ThreadedMessages />} />
+          <Route
+            path="/youtube"
+            element={<Navigate to="/instagram" replace />}
+          />
+          <Route path="/connect/instagram" element={<ConnectInstagram />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings/persona" element={<AvatarSettingsPage />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/automation" element={<Automation />} />
+          <Route path="/testing" element={<Testing />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </div>
     </div>
   )
@@ -50,7 +56,9 @@ function App() {
       <ThemeProvider>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <Router>
+            <AppLayout />
+          </Router>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
