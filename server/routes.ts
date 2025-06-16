@@ -447,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const aiReplyContent = await aiService.generateReply({
           content: rawMsg.content,
           senderName: thread.participantName,
-          creatorToneDescription: aiSettings.creatorToneDescription ?? '',
+          creatorToneDescription: settings.creatorToneDescription || '',
           temperature: aiSettings.temperature ?? 0.7,
           maxLength: aiSettings.maxResponseLength ?? 500,
           model: aiSettings.model ?? 'gpt-4o',
@@ -913,7 +913,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     content: instagramMessage.message,
                     senderName: instagramMessage.from.username,
                     creatorToneDescription:
-                      aiSettings.creatorToneDescription || '',
+                      settings.creatorToneDescription || '',
                     temperature: (aiSettings.temperature || 70) / 100,
                     maxLength: aiSettings.maxResponseLength || 500,
                     model: aiSettings.model || 'gpt-4o',
@@ -1435,7 +1435,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: settings.aiTemperature
             ? settings.aiTemperature / 100
             : 0.7,
-          creatorToneDescription: settings.creatorToneDescription || '',
           maxResponseLength: settings.maxResponseLength || 500,
           model: settings.aiModel || 'gpt-4o',
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
@@ -1453,7 +1452,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json(settings)
+      const { creatorToneDescription, ...settingsResponse } = settings
+      res.json(settingsResponse)
     } catch (error: any) {
       res.status(500).json({ message: error.message })
     }
@@ -1462,7 +1462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/settings', async (req, res) => {
     try {
       log(`Settings POST request body: ${JSON.stringify(req.body)}`, 'debug')
-      
+
       const schema = z.object({
         apiKeys: z
           .object({
@@ -1482,7 +1482,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiSettings: z
           .object({
             temperature: z.number().min(0).max(1).optional(),
-            creatorToneDescription: z.string().optional(),
             maxResponseLength: z.number().min(50).max(2000).optional(),
             model: z.string().optional(),
             autoReplyInstagram: z.boolean().optional(),
@@ -1552,10 +1551,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (data.aiSettings.temperature !== undefined) {
           updates.aiTemperature = Math.round(data.aiSettings.temperature * 100)
         }
-        if (data.aiSettings.creatorToneDescription !== undefined) {
-          updates.creatorToneDescription =
-            data.aiSettings.creatorToneDescription
-        }
         if (data.aiSettings.maxResponseLength !== undefined) {
           updates.maxResponseLength = data.aiSettings.maxResponseLength
         }
@@ -1597,8 +1592,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       log(`Settings update error: ${error.message}`, 'error')
       if (error.issues && Array.isArray(error.issues)) {
         // This is a Zod validation error
-        const zodError = error.issues.map((issue: any) => `${issue.path.join('.')}: ${issue.message}`).join(', ')
-        return res.status(400).json({ message: `Validation error: ${zodError}` })
+        const zodError = error.issues
+          .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+          .join(', ')
+        return res
+          .status(400)
+          .json({ message: `Validation error: ${zodError}` })
       }
       res.status(500).json({ message: error.message })
     }
@@ -1641,7 +1640,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: Boolean(enabled),
             autoReplyYoutube: false,
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
@@ -1662,7 +1660,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
             autoReplyInstagram: false,
             autoReplyYoutube: Boolean(enabled),
             temperature: 0.7,
-            creatorToneDescription: '',
             maxResponseLength: 500,
             model: 'gpt-4o',
           }
