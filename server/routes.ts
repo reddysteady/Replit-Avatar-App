@@ -826,7 +826,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderName: message.senderName,
         personaConfig:
           settings.personaConfig as unknown as AvatarPersonaConfig | null,
-```text
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
