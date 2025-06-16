@@ -18,22 +18,37 @@ import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 
 interface Props {
   onSave: (config: AvatarPersonaConfig) => void
+  initialConfig?: AvatarPersonaConfig | null
+  isLoading?: boolean
 }
 
 const STYLE_OPTIONS = ['Friendly', 'Professional', 'Sarcastic', 'Humorous']
 const ALLOWED_PRESETS = ['My pets', 'Content creation', 'Travel tips']
 const RESTRICTED_PRESETS = ['Politics', 'Religion', 'Personal relationships']
 
-export default function PrivacyPersonalityForm({ onSave }: Props) {
+export default function PrivacyPersonalityForm({ onSave, initialConfig, isLoading }: Props) {
   const form = useForm<AvatarPersonaConfig>({
     defaultValues: {
-      toneDescription: '',
-      styleTags: [],
-      allowedTopics: [],
-      restrictedTopics: [],
-      fallbackReply: '',
+      toneDescription: initialConfig?.toneDescription || '',
+      styleTags: initialConfig?.styleTags || [],
+      allowedTopics: initialConfig?.allowedTopics || [],
+      restrictedTopics: initialConfig?.restrictedTopics || [],
+      fallbackReply: initialConfig?.fallbackReply || '',
     },
   })
+
+  // Update form when initialConfig changes
+  React.useEffect(() => {
+    if (initialConfig) {
+      form.reset({
+        toneDescription: initialConfig.toneDescription || '',
+        styleTags: initialConfig.styleTags || [],
+        allowedTopics: initialConfig.allowedTopics || [],
+        restrictedTopics: initialConfig.restrictedTopics || [],
+        fallbackReply: initialConfig.fallbackReply || '',
+      })
+    }
+  }, [initialConfig, form])
 
   const submit = (data: AvatarPersonaConfig) => {
     onSave(data)
@@ -214,8 +229,8 @@ export default function PrivacyPersonalityForm({ onSave }: Props) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="mt-2">
-          Save Preferences
+        <Button type="submit" className="mt-2" disabled={isLoading}>
+          {isLoading ? 'Saving...' : 'Save Preferences'}
         </Button>
       </form>
     </Form>
