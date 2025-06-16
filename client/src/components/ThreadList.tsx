@@ -3,81 +3,123 @@
 // See CHANGELOG.md for 2025-06-11 [Changed]
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import ThreadRow from './ThreadRow';
-import { Search } from 'lucide-react';
-import { ThreadType } from '@shared/schema';
-import { sampleConversations } from '@/sampleConversations';
-import { apiRequest } from '@/lib/queryClient';
+// See CHANGELOG.md for 2025-06-15 [Added]
+import React, { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import ThreadRow from './ThreadRow'
+import { Search } from 'lucide-react'
+import { ThreadType } from '@shared/schema'
+import { sampleConversations } from '@/sampleConversations'
+import { apiRequest } from '@/lib/queryClient'
+import { useToast } from '@/hooks/use-toast'
 
 interface ThreadListProps {
-  activeThreadId?: number | null;
-  onSelectThread: (threadId: number, threadData?: any) => void;
-  source?: 'all' | 'instagram' | 'youtube' | 'high-intent';
+  activeThreadId?: number | null
+  onSelectThread: (threadId: number, threadData?: any) => void
+  source?: 'all' | 'instagram' | 'youtube' | 'high-intent'
 }
 
 const ThreadList: React.FC<ThreadListProps> = ({
   activeThreadId,
   onSelectThread,
-  source = 'all'
+  source = 'all',
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('')
+  const [openPopoverId, setOpenPopoverId] = useState<number | null>(null)
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const handleAutoReplyToggle = async (threadId: number, val: boolean) => {
-    queryClient.setQueryData<ThreadType[] | undefined>(['/api/threads'], old =>
-      old?.map(t => (t.id === threadId ? { ...t, autoReply: val } : t))
-    );
+    queryClient.setQueryData<ThreadType[] | undefined>(
+      ['/api/threads'],
+      (old) =>
+        old?.map((t) => (t.id === threadId ? { ...t, autoReply: val } : t)),
+    )
     try {
-      await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, { autoReply: val });
+      await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, {
+        autoReply: val,
+      })
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
     }
-  };
+  }
+
+  const handleDeleteThread = async (threadId: number) => {
+    queryClient.setQueryData<ThreadType[] | undefined>(
+      ['/api/threads'],
+      (old) => old?.filter((t) => t.id !== threadId),
+    )
+    setOpenPopoverId(null)
+    try {
+      const res = await fetch(`/api/threads/${threadId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        throw new Error('delete failed')
+      }
+      toast({ title: 'Thread deleted' })
+    } catch (err) {
+      toast({
+        title: 'Could not delete thread. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+    }
+  }
 
   // Fetch threads from API
   const { data: threads, isLoading } = useQuery({
     queryKey: ['/api/threads'],
     staleTime: 10000, // 10 seconds
-  });
+  })
 
   // Use sample conversations when the API returns an empty list
   const threadsData: ThreadType[] | undefined =
     threads && Array.isArray(threads) && threads.length > 0
       ? (threads as ThreadType[])
-      : sampleConversations;
+      : sampleConversations
 
   // Filter threads by source and search term
   const filteredThreads = React.useMemo(() => {
-    if (!threadsData) return [];
+    if (!threadsData) return []
 
-    return Array.isArray(threadsData) ? threadsData
-      .filter((thread: ThreadType) => {
-        // Filter by source or high intent
-        if (source === 'high-intent' && !thread?.isHighIntent) {
-          return false;
-        } else if (source !== 'all' && source !== 'high-intent' && thread?.source !== source) {
-          return false;
-        }
+    return Array.isArray(threadsData)
+      ? threadsData.filter((thread: ThreadType) => {
+          // Filter by source or high intent
+          if (source === 'high-intent' && !thread?.isHighIntent) {
+            return false
+          } else if (
+            source !== 'all' &&
+            source !== 'high-intent' &&
+            thread?.source !== source
+          ) {
+            return false
+          }
 
-        // Filter by search term
-        if (searchTerm && thread?.participantName) {
-          return thread.participantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                 (thread.lastMessageContent && 
-                  thread.lastMessageContent.toLowerCase().includes(searchTerm.toLowerCase()));
-        }
+          // Filter by search term
+          if (searchTerm && thread?.participantName) {
+            return (
+              thread.participantName
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+              (thread.lastMessageContent &&
+                thread.lastMessageContent
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()))
+            )
+          }
 
-        return true;
-      }) : []
-      .sort((a: ThreadType, b: ThreadType) => {
-        // Sort by last message date (newest first)
-        return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
-      });
-  }, [threadsData, source, searchTerm]);
-
+          return true
+        })
+      : [].sort((a: ThreadType, b: ThreadType) => {
+          // Sort by last message date (newest first)
+          return (
+            new Date(b.lastMessageAt).getTime() -
+            new Date(a.lastMessageAt).getTime()
+          )
+        })
+  }, [threadsData, source, searchTerm])
 
   return (
     <div className="flex flex-col h-full">
@@ -102,7 +144,9 @@ const ThreadList: React.FC<ThreadListProps> = ({
           </div>
         ) : filteredThreads.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
-            {searchTerm ? 'No matching conversations found' : 'No conversations yet'}
+            {searchTerm
+              ? 'No matching conversations found'
+              : 'No conversations yet'}
           </div>
         ) : (
           filteredThreads.map((thread: ThreadType) => (
@@ -112,12 +156,15 @@ const ThreadList: React.FC<ThreadListProps> = ({
               onClick={() => onSelectThread(thread.id, thread)}
               selected={thread.id === activeThreadId}
               handleAutoReplyToggle={handleAutoReplyToggle}
+              openPopoverId={openPopoverId}
+              setOpenPopoverId={setOpenPopoverId}
+              onDeleteThread={handleDeleteThread}
             />
           ))
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ThreadList;
+export default ThreadList

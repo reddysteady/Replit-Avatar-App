@@ -8,11 +8,18 @@
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-17 [Changed]
 
+// See CHANGELOG.md for 2025-06-15 [Added]
 import React from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import { ThreadType, MessageType } from '@shared/schema'
 import { Switch } from '@/components/ui/switch'
 import { BotIcon } from '@/components/ui/bot-icon'
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover'
+import { Trash2 } from 'lucide-react'
 
 interface ThreadRowProps {
   thread: ThreadType
@@ -20,6 +27,9 @@ interface ThreadRowProps {
   creatorId?: string
   selected?: boolean
   handleAutoReplyToggle?: (threadId: number, val: boolean) => void
+  openPopoverId?: number | null
+  setOpenPopoverId?: (id: number | null) => void
+  onDeleteThread?: (id: number) => void
 }
 
 const fallbackUrl = 'https://via.placeholder.com/40'
@@ -30,6 +40,9 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
   creatorId = 'creator-id',
   selected = false,
   handleAutoReplyToggle,
+  openPopoverId = null,
+  setOpenPopoverId = () => {},
+  onDeleteThread = () => {},
 }) => {
   const isSelected = Boolean(selected)
   const lastMsg: MessageType | undefined = thread.messages?.at(-1)
@@ -75,6 +88,48 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
           {thread.unreadCount > 0 && (
             <span className="ml-1 w-2 h-2 bg-red-500 rounded-full" />
           )}
+          <Popover
+            open={openPopoverId === thread.id}
+            onOpenChange={(isOpen) =>
+              setOpenPopoverId?.(isOpen ? thread.id : null)
+            }
+          >
+            <PopoverTrigger asChild>
+              <button
+                className="ml-1 text-gray-400 hover:text-[#FF4545] p-2"
+                aria-label="Delete Thread"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="bg-[#F7F7F8] rounded-2xl p-4 min-w-[200px] max-w-[90vw] shadow"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-sm text-gray-700 mb-3">Delete?</p>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteThread?.(thread.id)
+                  }}
+                  className="bg-[#FF4545] text-white text-sm px-4 py-2 min-h-[40px] min-w-[64px] rounded-2xl hover:bg-red-600"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setOpenPopoverId?.(null)
+                  }}
+                  className="text-gray-600 text-sm px-4 py-2 min-h-[40px] min-w-[64px] rounded-2xl hover:bg-gray-200"
+                >
+                  No
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="text-gray-700 text-sm truncate">
           {lastMsg && <span className="font-medium">{senderPrefix}</span>}{' '}
