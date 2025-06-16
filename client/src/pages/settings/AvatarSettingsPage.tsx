@@ -64,7 +64,7 @@ export default function AvatarSettingsPage() {
         setCurrentConfig(data.personaConfig)
         toast({
           title: 'Success',
-          description: 'Persona configuration saved successfully!',
+          description: 'Persona configuration saved and cache cleared!',
         })
       } else {
         const error = await response.json()
@@ -83,6 +83,37 @@ export default function AvatarSettingsPage() {
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleClearCache = async () => {
+    try {
+      const response = await fetch('/api/cache/clear', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: 1 }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: 'AI cache cleared successfully!',
+        })
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to clear cache',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to clear cache',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -106,13 +137,23 @@ export default function AvatarSettingsPage() {
                 readOnly
                 className="font-mono text-sm mb-2 max-h-60 overflow-y-auto"
               />
-              <Button
-                type="button"
-                onClick={() => navigator.clipboard.writeText(prompt)}
-                size="sm"
-              >
-                Copy to clipboard
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(prompt)}
+                  size="sm"
+                >
+                  Copy to clipboard
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleClearCache}
+                  size="sm"
+                  variant="outline"
+                >
+                  Clear AI Cache
+                </Button>
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>

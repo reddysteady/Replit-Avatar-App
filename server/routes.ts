@@ -1708,6 +1708,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updated = await storage.updateSettings(1, {
         personaConfig,
       })
+
+      // Clear the AI service cache when persona is updated
+      aiService.clearSystemPromptCache(1)
+      
       res.json({
         personaConfig: updated.personaConfig,
       })
@@ -1876,6 +1880,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Database status check error:', error)
       res.status(500).json({ error: error.message })
+    }
+  })
+
+  // Cache management endpoint
+  app.post('/api/cache/clear', async (req, res) => {
+    try {
+      const { userId } = req.body
+      aiService.clearSystemPromptCache(userId)
+      res.json({ success: true, message: 'Cache cleared successfully' })
+    } catch (error: any) {
+      res.status(500).json({ message: error.message })
     }
   })
 

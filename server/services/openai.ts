@@ -52,7 +52,27 @@ interface DetectSensitiveResult {
 }
 
 export class AIService {
+  private systemPromptCache: Map<number, { prompt: string; timestamp: number }> = new Map()
+  private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
   constructor() {}
+
+  /**
+   * Clears the system prompt cache for a specific user or all users
+   */
+  clearSystemPromptCache(userId?: number): void {
+    if (userId) {
+      this.systemPromptCache.delete(userId)
+      if (process.env.DEBUG_AI) {
+        console.debug(`[DEBUG-AI] Cleared system prompt cache for user ${userId}`)
+      }
+    } else {
+      this.systemPromptCache.clear()
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] Cleared all system prompt cache')
+      }
+    }
+  }
 
   /**
    * Retrieve an OpenAI client using either the environment variable or the
@@ -173,8 +193,19 @@ export class AIService {
         `
       }
 
-      let systemPrompt = settings.systemPrompt
-      if (!systemPrompt) {
+      // Check cache first
+      const userId = 1 // For MVP, assume user ID 1
+      const now = Date.now()
+      const cached = this.systemPromptCache.get(userId)
+      
+      let systemPrompt: string
+      if (cached && (now - cached.timestamp) < this.CACHE_TTL) {
+        systemPrompt = cached.prompt
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] Using cached system prompt')
+        }
+      } else {
+        // Force fresh reload by not using settings.systemPrompt
         const persona = personaConfig ?? settings.personaConfig
         if (persona) {
           if (process.env.DEBUG_AI) {
@@ -188,13 +219,16 @@ export class AIService {
           systemPrompt = DEFAULT_SYSTEM_PROMPT
         }
 
-        if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] Generated system prompt:', systemPrompt)
-        }
+        // Cache the generated prompt
+        this.systemPromptCache.set(userId, { prompt: systemPrompt, timestamp: now })
 
-        if (contextSection) {
-          systemPrompt += `\n\n${contextSection}`
+        if (process.env.DEBUG_AI) {
+          console.debug('[DEBUG-AI] Generated fresh system prompt:', systemPrompt)
         }
+      }
+
+      if (contextSection) {
+        systemPrompt += `\n\n${contextSection}`
       }
       
       /* ────────────────────────────────────────────────────────── */
