@@ -1,15 +1,13 @@
 // See CHANGELOG.md for 2025-06-09 [Added]
 // See CHANGELOG.md for 2025-06-10 [Added]
 import React from 'react'
-import { Link, useLocation } from 'wouter'
+import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import {
-  Mail,
   MessageSquare,
   Settings,
   BarChart2,
-  Calendar,
-  Code,
+  FlaskConical,
   Lock,
 } from 'lucide-react'
 
@@ -19,38 +17,39 @@ type SidebarProps = {
 
 type NavItemProps = {
   href: string
-  icon: React.ReactNode
+  icon?: React.ReactNode
   children: React.ReactNode
   active?: boolean
+  className?: string
 }
 
-const NavItem = ({ href, icon, children, active }: NavItemProps) => {
+const NavItem = ({ href, icon, children, active, className }: NavItemProps) => {
   return (
-    <Link href={href}>
-      <a
-        className={cn(
-          'flex items-center px-2 py-2 text-sm font-medium rounded-md',
-          active
-            ? 'bg-blue-600 text-white'
-            : 'text-neutral-700 hover:bg-neutral-100',
-        )}
-      >
+    <Link
+      to={href}
+      className={cn(
+        'flex items-center px-2 py-2 text-sm font-medium rounded-md',
+        active ? 'text-blue-500' : 'text-neutral-700 hover:text-neutral-900',
+        className,
+      )}
+    >
+      {icon && (
         <span
           className={cn(
             'h-5 w-5 mr-3',
-            active ? 'text-white' : 'text-neutral-500',
+            active ? 'text-[#FF7300]' : 'text-neutral-500',
           )}
         >
           {icon}
         </span>
-        {children}
-      </a>
+      )}
+      {children}
     </Link>
   )
 }
 
 const Sidebar = ({ className }: SidebarProps) => {
-  const [location] = useLocation()
+  const location = useLocation()
 
   return (
     <div className="hidden md:flex md:flex-shrink-0">
@@ -65,63 +64,83 @@ const Sidebar = ({ className }: SidebarProps) => {
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto bg-white">
             <nav className="mt-5 flex-1 px-2 space-y-1">
               <NavItem
-                href="/instagram"
+                href="/"
                 icon={<MessageSquare />}
                 active={
-                  location === '/' ||
-                  location === '/instagram' ||
-                  location === '/youtube'
+                  location.pathname === '/' ||
+                  location.pathname === '/instagram' ||
+                  location.pathname === '/youtube'
                 }
               >
-                Messages
-              </NavItem>
-              <NavItem
-                href="/connect/instagram"
-                icon={<Mail />}
-                active={location === '/connect/instagram'}
-              >
-                Connect Instagram
-              </NavItem>
-              <NavItem
-                href="/settings"
-                icon={<Settings />}
-                active={location === '/settings'}
-              >
-                Settings
-              </NavItem>
-              <NavItem
-                href="/settings/persona"
-                icon={<Settings />}
-                active={location === '/settings/persona'}
-              >
-                Persona
+                Conversations
               </NavItem>
               <NavItem
                 href="/analytics"
                 icon={<BarChart2 />}
-                active={location === '/analytics'}
+                active={location.pathname === '/analytics'}
               >
-                Analytics
+                Insights
               </NavItem>
               <NavItem
-                href="/automation"
-                icon={<Calendar />}
-                active={location === '/automation'}
+                href="/settings"
+                icon={<Settings />}
+                active={location.pathname === '/settings'}
               >
-                Automation Rules
+                Settings
               </NavItem>
-              {/* Testing tools page for generating sample data and debugging */}
               <NavItem
-                href="/testing"
-                icon={<Code />}
-                active={location === '/testing'}
+                href="/settings/sources"
+                active={location.pathname === '/settings/sources'}
+                className="pl-8"
+              >
+                Content Sources
+              </NavItem>
+              <NavItem
+                href="/settings/persona"
+                active={location.pathname === '/settings/persona'}
+                className="pl-8"
+              >
+                Persona
+              </NavItem>
+              <NavItem
+                href="/settings/ai"
+                active={location.pathname === '/settings/ai'}
+                className="pl-8"
+              >
+                AI Settings
+              </NavItem>
+              <NavItem
+                href="/settings/automation"
+                active={location.pathname === '/settings/automation'}
+                className="pl-8"
+              >
+                Automation
+              </NavItem>
+              <NavItem
+                href="/settings/notifications"
+                active={location.pathname === '/settings/notifications'}
+                className="pl-8"
+              >
+                Notifications
+              </NavItem>
+              <NavItem
+                href="/settings/api"
+                active={location.pathname === '/settings/api'}
+                className="pl-8"
+              >
+                API Keys
+              </NavItem>
+              <NavItem
+                href="/settings/testing-tools"
+                icon={<FlaskConical />}
+                active={location.pathname === '/settings/testing-tools'}
               >
                 Testing Tools
               </NavItem>
               <NavItem
-                href="/privacy"
+                href="/settings/privacy"
                 icon={<Lock />}
-                active={location === '/privacy'}
+                active={location.pathname === '/settings/privacy'}
               >
                 Privacy Policy
               </NavItem>
