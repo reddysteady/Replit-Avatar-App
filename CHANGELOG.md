@@ -214,9 +214,7 @@ CHANGLOG.md file.
 - [Codex][Added] PrivacyPersonalityForm and AvatarSettingsPage.
 - [Codex][Added] buildSystemPrompt utility and persona API storage.
 - [Codex][Changed] OpenAI service uses stored systemPrompt.
-
-## 2025-06-16
-
 - [Codex][Changed] Navigation updated to match docs/menu_architecture.md for
   desktop and mobile.
 - [Codex][Changed] Switched routing to react-router-dom.
+- [Codex][Fixed] Batch message senderId uses nanoid to avoid duplicates.
