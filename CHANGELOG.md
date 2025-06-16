@@ -220,3 +220,7 @@ CHANGLOG.md file.
   desktop and mobile.
 - [Codex][Changed] Switched routing to react-router-dom.
 - [Codex][Fixed] Batch message senderId uses nanoid to avoid duplicates.
+
+## 2025-06-16
+
+- [Codex][Changed] Tone & Style textarea height increased for easier editing.

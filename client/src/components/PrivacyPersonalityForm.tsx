@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
+// See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -26,7 +27,11 @@ const STYLE_OPTIONS = ['Friendly', 'Professional', 'Sarcastic', 'Humorous']
 const ALLOWED_PRESETS = ['My pets', 'Content creation', 'Travel tips']
 const RESTRICTED_PRESETS = ['Politics', 'Religion', 'Personal relationships']
 
-export default function PrivacyPersonalityForm({ onSave, initialConfig, isLoading }: Props) {
+export default function PrivacyPersonalityForm({
+  onSave,
+  initialConfig,
+  isLoading,
+}: Props) {
   const form = useForm<AvatarPersonaConfig>({
     defaultValues: {
       toneDescription: initialConfig?.toneDescription || '',
@@ -71,6 +76,7 @@ export default function PrivacyPersonalityForm({ onSave, initialConfig, isLoadin
                 <Textarea
                   {...field}
                   placeholder="How should your avatar speak?"
+                  className="min-h-[240px]"
                 />
               </FormControl>
               <FormMessage />
