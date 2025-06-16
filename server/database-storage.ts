@@ -221,13 +221,17 @@ export class DatabaseStorage implements IStorage {
       .values({ ...cleanMessageData, threadId })
       .returning();
 
-    // Update thread's last message information
-    await this.updateThread(threadId, {
-      lastMessageAt: new Date(),
-      lastMessageContent: messageData.content,
-      // Increment unread count if it's an inbound message
-      unreadCount: messageData.isOutbound ? thread.unreadCount : (thread.unreadCount || 0) + 1
-    });
+    // Get the thread first to properly update unread count
+    const thread = await this.getThread(threadId);
+    if (thread) {
+      // Update thread's last message information
+      await this.updateThread(threadId, {
+        lastMessageAt: new Date(),
+        lastMessageContent: messageData.content,
+        // Increment unread count if it's an inbound message
+        unreadCount: messageData.isOutbound ? thread.unreadCount : (thread.unreadCount || 0) + 1
+      });
+    }
 
     return newMessage;
   }
