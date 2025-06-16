@@ -677,6 +677,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const generatedReply = await aiService.generateReply({
         content: messages[messages.length - 1]?.content ?? '',
         senderName: thread.participantName,
+        creatorToneDescription:
+          (settings.aiSettings as any)?.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -816,7 +818,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
-
+        creatorToneDescription:
+          (settings.aiSettings as any)?.creatorToneDescription ||
+          'Friendly and professional',
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
@@ -1027,6 +1031,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiReply = await aiService.generateReply({
           content: message.content,
           senderName: message.senderName,
+          creatorToneDescription:
+            (settings.aiSettings as any)?.creatorToneDescription || '',
           temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
           maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
           contextSnippets: useContext ? contextSnippets : undefined,
@@ -1123,6 +1129,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const aiReply = await aiService.generateReply({
         content: message.content,
         senderName: message.senderName,
+        creatorToneDescription:
+          (settings.aiSettings as any)?.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 500,
         model: settings.aiSettings?.model || 'gpt-4o',
@@ -1193,6 +1201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const reply = await aiService.generateReply({
         content: data.content,
         senderName: data.senderName,
+        creatorToneDescription:
+          (settings.aiSettings as any)?.creatorToneDescription || '',
         temperature: (settings.aiTemperature || 70) / 100, // Default to 0.7 if null
         maxLength: settings.maxResponseLength || 500, // Default to 500 if null,
         contextSnippets:
@@ -1427,6 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: settings.aiTemperature
             ? settings.aiTemperature / 100
             : 0.7,
+          creatorToneDescription: '',
           maxResponseLength: settings.maxResponseLength || 500,
           model: settings.aiModel || 'gpt-4o',
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
