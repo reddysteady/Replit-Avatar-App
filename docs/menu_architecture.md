@@ -37,7 +37,7 @@
 
 ### UX Conventions
 
-- Icons: 20–24px, greyscale default, accent on active (`#FF7300`)
+- Icons: 20–24px, greyscale default, accent on active use existing blue (`text-blue-500`)
 - Route names: kebab-case and grouped by `/settings/*`
 - Subpages in `Settings.tsx` use tabs or nested navigation depending on viewport
 - Component location: All page-level components in `/client/src/pages` or `/components` as applicable
