@@ -82,63 +82,63 @@ const Sidebar = ({ className }: SidebarProps) => {
                 Insights
               </NavItem>
               <NavItem
-                href="/settings"
+                to="/settings"
                 icon={<Settings />}
                 active={location.pathname === '/settings'}
               >
                 Settings
               </NavItem>
               <NavItem
-                href="/settings/sources"
+                to="/settings/sources"
                 active={location.pathname === '/settings/sources'}
                 className="pl-8"
               >
                 Content Sources
               </NavItem>
               <NavItem
-                href="/settings/persona"
+                to="/settings/persona"
                 active={location.pathname === '/settings/persona'}
                 className="pl-8"
               >
                 Persona
               </NavItem>
               <NavItem
-                href="/settings/ai"
+                to="/settings/ai"
                 active={location.pathname === '/settings/ai'}
                 className="pl-8"
               >
                 AI Settings
               </NavItem>
               <NavItem
-                href="/settings/automation"
+                to="/settings/automation"
                 active={location.pathname === '/settings/automation'}
                 className="pl-8"
               >
                 Automation
               </NavItem>
               <NavItem
-                href="/settings/notifications"
+                to="/settings/notifications"
                 active={location.pathname === '/settings/notifications'}
                 className="pl-8"
               >
                 Notifications
               </NavItem>
               <NavItem
-                href="/settings/api"
+                to="/settings/api"
                 active={location.pathname === '/settings/api'}
                 className="pl-8"
               >
                 API Keys
               </NavItem>
               <NavItem
-                href="/settings/testing-tools"
+                to="/settings/testing-tools"
                 icon={<FlaskConical />}
                 active={location.pathname === '/settings/testing-tools'}
               >
                 Testing Tools
               </NavItem>
               <NavItem
-                href="/settings/privacy"
+                to="/settings/privacy"
                 icon={<Lock />}
                 active={location.pathname === '/settings/privacy'}
               >
