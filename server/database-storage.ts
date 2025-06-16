@@ -228,14 +228,14 @@ export class DatabaseStorage implements IStorage {
 
   async addMessageToThread(
     threadId: number,
-    messageData: Omit<InsertMessage, 'threadId' | 'id'>,
+    messageData: Omit<InsertMessage, 'id'>,
   ): Promise<Message> {
-    // Ensure we don't pass an 'id' field to let the database auto-generate it
-    const { id, ...cleanMessageData } = messageData as any
+    const payload: any = { ...messageData }
+    delete payload.id
 
     const [newMessage] = await db
       .insert(messages)
-      .values({ ...cleanMessageData, threadId })
+      .values({ ...payload, threadId })
       .returning()
 
     // Get the thread first to properly update unread count
@@ -412,13 +412,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async createMessage(message: InsertMessage): Promise<Message> {
+  async createMessage(message: Omit<InsertMessage, 'id'>): Promise<Message> {
     if (process.env.DEBUG_AI) {
       log(`[DEBUG-AI] inserting message ${JSON.stringify(message)}`)
     }
-
-    const [newMessage] = await db.insert(messages).values(message).returning()
-
+    const payload: any = { ...message }
+    delete payload.id
+    const [newMessage] = await db.insert(messages).values(payload).returning()
     if (process.env.DEBUG_AI) {
       log(`[DEBUG-AI] inserted message ${newMessage.id}`)
     }
@@ -480,6 +480,8 @@ export class DatabaseStorage implements IStorage {
       },
       aiSettings: {
         temperature: 0.7,
+        creatorToneDescription:
+          'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
         maxResponseLength: 500,
         model: 'gpt-4o',
         autoReplyInstagram: false,
@@ -502,6 +504,8 @@ export class DatabaseStorage implements IStorage {
       airtableToken: '',
       airtableBaseId: '',
       airtableTableName: 'Leads',
+      creatorToneDescription:
+        'Friendly, helpful, and professional. I use emojis occasionally and aim to provide valuable information in a conversational tone.',
       aiTemperature: 70, // 0.7
       aiModel: 'gpt-4o',
       maxResponseLength: 500,

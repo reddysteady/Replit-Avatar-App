@@ -232,3 +232,5 @@ CHANGLOG.md file.
 - [Codex][Changed] `creatorToneDescription` removed from settings API responses
   and validation.
 - [Codex][Added] AIService tests confirm personaConfig prompt handling.
+- - [Codex][Changed] `createMessage` and `addMessageToThread` now strip `id`
+  before insert.
