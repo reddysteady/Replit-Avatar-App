@@ -1437,7 +1437,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           temperature: settings.aiTemperature
             ? settings.aiTemperature / 100
             : 0.7,
-          creatorToneDescription: '',
           maxResponseLength: settings.maxResponseLength || 500,
           model: settings.aiModel || 'gpt-4o',
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,

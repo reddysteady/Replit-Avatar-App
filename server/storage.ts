@@ -160,7 +160,7 @@ export class MemStorage {
     this.users.set(1, defaultUser)
 
     // Create default settings
-    const defaultSettings: Settings = {
+    const defaultSettings = {
       id: 1,
       userId: 1,
       apiKeys: {},
@@ -188,7 +188,7 @@ export class MemStorage {
       notificationEmail: 'demo@example.com',
       notifyOnHighIntent: true,
       notifyOnSensitiveTopics: true,
-    }
+    } as Settings
     this.settingsMap.set(1, defaultSettings)
 
     // Create default analytics
@@ -702,7 +702,7 @@ export class MemStorage {
         aiModel: 'gpt-4o',
         notifyOnHighIntent: true,
         notifyOnSensitiveTopics: true,
-      }
+      } as Settings
 
       this.settingsMap.set(userId, settings)
     }
