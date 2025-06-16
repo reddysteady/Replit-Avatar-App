@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
+// See CHANGELOG.md for 2025-06-16 [Fixed]
 import { useState, useEffect } from 'react'
 import PrivacyPersonalityForm from '@/components/PrivacyPersonalityForm'
 import { buildSystemPrompt } from '@shared/prompt'
@@ -16,7 +17,8 @@ import { useToast } from '@/hooks/use-toast'
 export default function AvatarSettingsPage() {
   const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [currentConfig, setCurrentConfig] = useState<AvatarPersonaConfig | null>(null)
+  const [currentConfig, setCurrentConfig] =
+    useState<AvatarPersonaConfig | null>(null)
   const { toast } = useToast()
 
   // Load existing persona configuration on mount
@@ -85,12 +87,12 @@ export default function AvatarSettingsPage() {
   }
 
   return (
-    <main className="p-4">
+    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none md:pt-0 pt-16 p-4">
       <h2 className="text-2xl font-bold mb-4">
         Persona: Voice &amp; Boundaries
       </h2>
-      <PrivacyPersonalityForm 
-        onSave={handlePersonaConfig} 
+      <PrivacyPersonalityForm
+        onSave={handlePersonaConfig}
         initialConfig={currentConfig}
         isLoading={isLoading}
       />
@@ -102,7 +104,7 @@ export default function AvatarSettingsPage() {
               <Textarea
                 value={prompt}
                 readOnly
-                className="font-mono text-sm mb-2"
+                className="font-mono text-sm mb-2 max-h-60 overflow-y-auto"
               />
               <Button
                 type="button"
