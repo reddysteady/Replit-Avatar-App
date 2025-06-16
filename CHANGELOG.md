@@ -239,3 +239,5 @@ CHANGLOG.md file.
 
 - [Codex][Changed-2] Replaced creatorToneDescription with personaConfig across
   codebase.
+- [Codex][Fixed] AvatarSettings shows server error message on save failure.
+- [Codex][Fixed] Database status endpoint typings for type-check.
