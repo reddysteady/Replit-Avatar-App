@@ -326,7 +326,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           })
         }
 
-        const senderId = faker.internet.userName().toLowerCase()
+        // See CHANGELOG.md for 2025-06-16 [Fixed]
+        const senderId = `${faker.internet.userName().toLowerCase()}.${faker.string.nanoid(6)}`
         const senderName = faker.person.fullName()
         const senderAvatar = faker.image.avatar()
 
