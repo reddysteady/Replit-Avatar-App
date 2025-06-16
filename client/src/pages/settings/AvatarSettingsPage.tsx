@@ -97,9 +97,15 @@ export default function AvatarSettingsPage() {
       })
 
       if (response.ok) {
+        // Refresh the prompt display after clearing cache
+        if (currentConfig) {
+          const refreshedPrompt = buildSystemPrompt(currentConfig)
+          setPrompt(refreshedPrompt)
+        }
+        
         toast({
           title: 'Success',
-          description: 'AI cache cleared successfully!',
+          description: 'AI cache cleared and prompt refreshed!',
         })
       } else {
         toast({
