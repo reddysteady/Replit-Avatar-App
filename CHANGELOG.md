@@ -229,3 +229,5 @@ CHANGLOG.md file.
   constant.
 - [Codex][Changed] `creatorToneDescription` removed from settings API responses
   and validation.
+- [Codex][Added] AIService tests confirm personaConfig prompt handling.
+

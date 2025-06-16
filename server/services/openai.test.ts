@@ -4,6 +4,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AIService } from './openai'
 import { storage } from '../storage'
+// Persona logic covered per docs/stage_1_persona.md
+import { buildSystemPrompt } from '@shared/prompt'
 
 const openaiMock = {
   embeddings: { create: vi.fn() },
@@ -56,6 +58,7 @@ describe('AIService', () => {
     const reply = await service.generateReply({
       content: 'hi',
       senderName: 'Bob',
+      creatorToneDescription: '',
       temperature: 0.5,
       maxLength: 10,
       model: 'gpt-4',
@@ -72,6 +75,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'test',
       senderName: 'Bob',
+      creatorToneDescription: '',
       temperature: 0.5,
       maxLength: 10,
       flexProcessing: true,
@@ -93,6 +97,7 @@ describe('AIService', () => {
     await service.generateReply({
       content: 'test',
       senderName: 'Bob',
+      creatorToneDescription: '',
       temperature: 0.5,
       maxLength: 10,
       model: 'gpt-3.5-turbo',
@@ -102,6 +107,83 @@ describe('AIService', () => {
     )
     expect(openaiCtor).toHaveBeenCalledWith(
       expect.objectContaining({ apiKey: 'sk-valid-env-key-123456' }),
+    )
+  })
+
+  it('builds system prompt from persona config', async () => {
+    process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
+    const persona = {
+      toneDescription: 'zany',
+      styleTags: ['fun'],
+      allowedTopics: ['tech'],
+      restrictedTopics: ['politics'],
+      fallbackReply: 'nope',
+    }
+    ;(storage.getSettings as any).mockResolvedValueOnce({
+      openaiToken: '',
+      personaConfig: persona,
+      systemPrompt: '',
+    })
+    ;(storage.getSettings as any).mockResolvedValueOnce({
+      openaiToken: '',
+      personaConfig: persona,
+      systemPrompt: '',
+    })
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'ok' } }],
+    })
+    await service.generateReply({
+      content: 'hi',
+      senderName: 'Bob',
+      creatorToneDescription: '',
+      temperature: 0.5,
+      maxLength: 10,
+    })
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: 'system',
+            content: expect.stringContaining('zany'),
+          },
+          expect.any(Object),
+        ],
+      }),
+    )
+  })
+
+  it('falls back to default prompt when persona config missing', async () => {
+    process.env.OPENAI_API_KEY = 'sk-valid-env-key-123456'
+    ;(storage.getSettings as any).mockResolvedValueOnce({
+      openaiToken: '',
+      personaConfig: null,
+      systemPrompt: '',
+    })
+    ;(storage.getSettings as any).mockResolvedValueOnce({
+      openaiToken: '',
+      personaConfig: null,
+      systemPrompt: '',
+    })
+    mockCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'ok' } }],
+    })
+    await service.generateReply({
+      content: 'hi',
+      senderName: 'Bob',
+      creatorToneDescription: '',
+      temperature: 0.5,
+      maxLength: 10,
+    })
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          {
+            role: 'system',
+            content: expect.any(String),
+          },
+          expect.any(Object),
+        ],
+      }),
     )
   })
 
