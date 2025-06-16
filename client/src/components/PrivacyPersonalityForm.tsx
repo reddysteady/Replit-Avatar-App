@@ -56,33 +56,7 @@ export default function PrivacyPersonalityForm({
   }, [initialConfig, form])
 
   const submit = (data: AvatarPersonaConfig) => {
-    // Ensure we have valid data
-    const cleanedData = {
-      ...data,
-      toneDescription: data.toneDescription?.trim() || '',
-      styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
-      allowedTopics: Array.isArray(data.allowedTopics) ? data.allowedTopics.filter(Boolean) : [],
-      restrictedTopics: Array.isArray(data.restrictedTopics) ? data.restrictedTopics.filter(Boolean) : [],
-      fallbackReply: data.fallbackReply?.trim() || ''
-    }
-    
-    // Additional validation
-    if (!cleanedData.toneDescription) {
-      form.setError('toneDescription', { message: 'Tone description is required' })
-      return
-    }
-    
-    if (cleanedData.allowedTopics.length === 0) {
-      form.setError('allowedTopics', { message: 'Select at least one topic' })
-      return
-    }
-    
-    if (!cleanedData.fallbackReply) {
-      form.setError('fallbackReply', { message: 'Fallback reply is required' })
-      return
-    }
-    
-    onSave(cleanedData)
+    onSave(data)
   }
 
   return (
@@ -94,7 +68,7 @@ export default function PrivacyPersonalityForm({
         <FormField
           control={form.control}
           name="toneDescription"
-          rules={{ required: "Tone description is required" }}
+          rules={{ required: true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tone & Style</FormLabel>
@@ -152,7 +126,7 @@ export default function PrivacyPersonalityForm({
             control={form.control}
             name="allowedTopics"
             rules={{
-              validate: (v) => (v && v.length > 0) || 'Select at least one topic',
+              validate: (v) => v.length > 0 || 'Select at least one topic',
             }}
             render={() => (
               <FormItem className="mt-2">
@@ -228,37 +202,33 @@ export default function PrivacyPersonalityForm({
         <FormField
           control={form.control}
           name="fallbackReply"
-          rules={{ required: "Fallback reply is required" }}
+          rules={{ required: true }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Fallback Response</FormLabel>
               <FormControl>
                 <RadioGroup
-                  value={field.value || ""}
-                  onValueChange={(value) => field.onChange(value)}
-                  className="space-y-3"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  className="space-y-2"
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Sorry, I keep that private." id="polite" />
-                    <label htmlFor="polite" className="text-sm cursor-pointer">Politely decline</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Let's chat about something else!" id="redirect" />
-                    <label htmlFor="redirect" className="text-sm cursor-pointer">Redirect topic</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="custom" id="custom" />
+                  <label className="flex items-center space-x-2">
+                    <RadioGroupItem value="Sorry, I keep that private." />
+                    <span className="text-sm">Politely decline</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <RadioGroupItem value="Let's chat about something else!" />
+                    <span className="text-sm">Redirect topic</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <RadioGroupItem value={field.value} />
                     <Input
+                      className="ml-2"
                       placeholder="Custom response"
-                      value={field.value !== "Sorry, I keep that private." && field.value !== "Let's chat about something else!" ? field.value : ""}
-                      onChange={(e) => {
-                        const customValue = e.target.value;
-                        field.onChange(customValue);
-                      }}
-                      onFocus={() => field.onChange("custom")}
-                      className="flex-1 ml-2"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
                     />
-                  </div>
+                  </label>
                 </RadioGroup>
               </FormControl>
               <FormMessage />

@@ -69,17 +69,15 @@ export default function AvatarSettingsPage() {
       if (response.ok) {
         const data = await response.json()
         setCurrentConfig(data.personaConfig)
-        console.log('Successfully saved persona config:', data.personaConfig)
         toast({
           title: 'Success',
           description: 'Persona configuration saved and cache cleared!',
         })
       } else {
         const error = await response.json()
-        console.error('Failed to save persona config:', error)
         toast({
           title: 'Error',
-          description: error.message || 'Failed to save persona configuration',
+          description: `Failed to save: ${error.message}`,
           variant: 'destructive',
         })
       }
