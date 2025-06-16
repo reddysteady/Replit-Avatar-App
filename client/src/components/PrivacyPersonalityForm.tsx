@@ -56,7 +56,33 @@ export default function PrivacyPersonalityForm({
   }, [initialConfig, form])
 
   const submit = (data: AvatarPersonaConfig) => {
-    onSave(data)
+    // Ensure we have valid data
+    const cleanedData = {
+      ...data,
+      toneDescription: data.toneDescription?.trim() || '',
+      styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
+      allowedTopics: Array.isArray(data.allowedTopics) ? data.allowedTopics.filter(Boolean) : [],
+      restrictedTopics: Array.isArray(data.restrictedTopics) ? data.restrictedTopics.filter(Boolean) : [],
+      fallbackReply: data.fallbackReply?.trim() || ''
+    }
+    
+    // Additional validation
+    if (!cleanedData.toneDescription) {
+      form.setError('toneDescription', { message: 'Tone description is required' })
+      return
+    }
+    
+    if (cleanedData.allowedTopics.length === 0) {
+      form.setError('allowedTopics', { message: 'Select at least one topic' })
+      return
+    }
+    
+    if (!cleanedData.fallbackReply) {
+      form.setError('fallbackReply', { message: 'Fallback reply is required' })
+      return
+    }
+    
+    onSave(cleanedData)
   }
 
   return (
@@ -207,45 +233,33 @@ export default function PrivacyPersonalityForm({
             <FormItem>
               <FormLabel>Fallback Response</FormLabel>
               <FormControl>
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="fallbackReply"
-                      value="Sorry, I keep that private."
-                      checked={field.value === "Sorry, I keep that private."}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">Politely decline</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="fallbackReply"
-                      value="Let's chat about something else!"
-                      checked={field.value === "Let's chat about something else!"}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">Redirect topic</span>
-                  </label>
+                <RadioGroup
+                  value={field.value || ""}
+                  onValueChange={(value) => field.onChange(value)}
+                  className="space-y-3"
+                >
                   <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="fallbackReply"
-                      checked={field.value !== "Sorry, I keep that private." && field.value !== "Let's chat about something else!"}
-                      onChange={() => field.onChange("")}
-                      className="h-4 w-4"
-                    />
+                    <RadioGroupItem value="Sorry, I keep that private." id="polite" />
+                    <label htmlFor="polite" className="text-sm cursor-pointer">Politely decline</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Let's chat about something else!" id="redirect" />
+                    <label htmlFor="redirect" className="text-sm cursor-pointer">Redirect topic</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" id="custom" />
                     <Input
                       placeholder="Custom response"
                       value={field.value !== "Sorry, I keep that private." && field.value !== "Let's chat about something else!" ? field.value : ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      className="flex-1"
+                      onChange={(e) => {
+                        const customValue = e.target.value;
+                        field.onChange(customValue);
+                      }}
+                      onFocus={() => field.onChange("custom")}
+                      className="flex-1 ml-2"
                     />
                   </div>
-                </div>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>

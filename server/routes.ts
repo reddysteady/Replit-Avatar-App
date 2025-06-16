@@ -1700,7 +1700,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           styleTags: z.array(z.string()).default([]),
           allowedTopics: z.array(z.string()).min(1, "At least one allowed topic is required"),
           restrictedTopics: z.array(z.string()).default([]),
-          fallbackReply: z.string().min(1, "Fallback reply is required"),
+          fallbackReply: z.string().min(1, "Fallback reply is required").refine(
+            (val) => val !== "custom", 
+            "Please provide a custom fallback reply"
+          ),
         }),
         systemPrompt: z.string().optional(),
       })
