@@ -233,4 +233,5 @@ CHANGLOG.md file.
   and validation.
 - [Codex][Added] AIService tests confirm personaConfig prompt handling.
 - - [Codex][Changed] `createMessage` and `addMessageToThread` now strip `id`
-  before insert.
+    before insert.
+- [Codex][Added] DEBUG_AI log before custom message fetch in `ThreadedMessages`.

@@ -16,6 +16,7 @@
 // See CHANGELOG.md for 2025-06-14 [Added - header generate message]
 // See CHANGELOG.md for 2025-06-18 [Fixed - restore mobile burger menu]
 // See CHANGELOG.md for 2025-06-19 [Fixed - remove conversation top padding]
+// See CHANGELOG.md for 2025-06-16 [Added - debug log for custom message]
 import React, { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import ThreadList from '@/components/ThreadList'
@@ -410,10 +411,19 @@ const ThreadedMessages: React.FC = () => {
                       </Button>
                       <Select
                         onValueChange={(id) => setCustomThreadId(id)}
-                        value={customThreadId || (activeThreadId ? String(activeThreadId) : '')}
+                        value={
+                          customThreadId ||
+                          (activeThreadId ? String(activeThreadId) : '')
+                        }
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder={activeThreadId ? `Current Thread (${activeThreadData?.participantName || 'Unknown'})` : "Generate For Thread"} />
+                          <SelectValue
+                            placeholder={
+                              activeThreadId
+                                ? `Current Thread (${activeThreadData?.participantName || 'Unknown'})`
+                                : 'Generate For Thread'
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent className="max-h-60 overflow-y-auto">
                           {activeThreadId && activeThreadData && (
@@ -422,14 +432,18 @@ const ThreadedMessages: React.FC = () => {
                             </SelectItem>
                           )}
                           {Array.isArray(threads) &&
-                            (threads as any[]).filter((thread: any) => thread.id !== activeThreadId).map((thread: any) => (
-                              <SelectItem
-                                key={thread.id}
-                                value={String(thread.id)}
-                              >
-                                {thread.participantName}
-                              </SelectItem>
-                            ))}
+                            (threads as any[])
+                              .filter(
+                                (thread: any) => thread.id !== activeThreadId,
+                              )
+                              .map((thread: any) => (
+                                <SelectItem
+                                  key={thread.id}
+                                  value={String(thread.id)}
+                                >
+                                  {thread.participantName}
+                                </SelectItem>
+                              ))}
                         </SelectContent>
                       </Select>
                       <Input
@@ -441,16 +455,24 @@ const ThreadedMessages: React.FC = () => {
                       <Button
                         className="w-full mt-2"
                         onClick={() => {
-                          const threadId = customThreadId || (activeThreadId ? String(activeThreadId) : null)
+                          const threadId =
+                            customThreadId ||
+                            (activeThreadId ? String(activeThreadId) : null)
                           if (!threadId) return
-                          fetch(
-                            `/api/test/generate-for-user/${threadId}`,
-                            {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ content: customMessage }),
-                            },
-                          )
+                          if (
+                            typeof window !== 'undefined' &&
+                            (window as any).DEBUG_AI
+                          ) {
+                            console.debug(
+                              '[DEBUG-AI] generate message for thread',
+                              threadId,
+                            )
+                          }
+                          fetch(`/api/test/generate-for-user/${threadId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content: customMessage }),
+                          })
                             .then((res) => {
                               if (!res.ok) {
                                 return res.text().then((t) => {
@@ -460,7 +482,9 @@ const ThreadedMessages: React.FC = () => {
                               return res.json()
                             })
                             .then((newMsg) => {
-                              const threadId = customThreadId || (activeThreadId ? String(activeThreadId) : null)
+                              const threadId =
+                                customThreadId ||
+                                (activeThreadId ? String(activeThreadId) : null)
                               queryClient.invalidateQueries({
                                 queryKey: ['/api/threads'],
                               })
