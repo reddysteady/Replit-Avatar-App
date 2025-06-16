@@ -45,9 +45,12 @@ everyone.
 
 Open the **Testing Tools** page from the sidebar when running the dev server.
 Use **Generate Batch Messages** to create 10 demo messages (at least three
-flagged high intent). Use **Generate For Thread** to add a fake incoming message
-to a specific thread ID. The Tools dropdown has returned to the Messages page
-header for quick access, but the dedicated Testing Tools page remains available.
+flagged high intent). **Generate For Thread** injects a fake incoming message
+for an existing thread—threads must already exist before using it. Create
+threads with scripts like `scripts/create-thread-test.ts` or by using **Generate
+Batch Messages**. Check `/api/threads` to view existing thread IDs. The Tools
+dropdown has returned to the Messages page header for quick access, but the
+dedicated Testing Tools page remains available.
 
 ## Continuous Integration
 
