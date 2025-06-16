@@ -97,11 +97,8 @@ export default function AvatarSettingsPage() {
       })
 
       if (response.ok) {
-        // Refresh the prompt display after clearing cache
-        if (currentConfig) {
-          const refreshedPrompt = buildSystemPrompt(currentConfig)
-          setPrompt(refreshedPrompt)
-        }
+        // Fetch fresh persona config from database after clearing cache
+        await fetchPersonaConfig()
         
         toast({
           title: 'Success',
