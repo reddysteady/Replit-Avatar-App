@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-09 [Fixed]
 // See CHANGELOG.md for 2025-06-09 [Fixed-3]
 // See CHANGELOG.md for 2025-06-15 [Changed]
+// See CHANGELOG.md for 2025-06-17 [Changed]
 
 import React from 'react'
 import { formatDistanceToNow } from 'date-fns'
@@ -79,7 +80,7 @@ const ThreadRow: React.FC<ThreadRowProps> = ({
           {lastMsg && <span className="font-medium">{senderPrefix}</span>}{' '}
           {snippet}
         </div>
-        <div className="flex items-center gap-2 ml-10 mt-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 mt-1 ml-auto text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <BotIcon className="w-4 h-4" />
             <span>AI Replies</span>

@@ -199,14 +199,16 @@ CHANGLOG.md file.
   disabled when empty.
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
+
+
+## 2025-06-15
+
+- [Codex][Changed] Right-align AI Replies toggle in `ThreadRow`.
 - [Codex][Fixed-2] Batch messages now create threads and refresh the thread
   list.
 - [Codex][Added] Configurable response delay for automated AI replies.
-
-2025-06-18 [Codex][Added] AvatarPersonaConfig interface for persona setup
+- [Codex][Added] AvatarPersonaConfig interface for persona setup
 described in docs/stage_1_persona.md.
-
-2025-06-18 [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.
-
-2025-06-19 [Codex][Fixed] Removed extra top padding on mobile conversation
+- [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.
+- [Codex][Fixed] Removed extra top padding on mobile conversation
 screen.
