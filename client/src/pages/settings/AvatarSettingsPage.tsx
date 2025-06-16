@@ -36,9 +36,30 @@ export default function AvatarSettingsPage() {
           const generatedPrompt = buildSystemPrompt(data.personaConfig)
           setPrompt(generatedPrompt)
         }
+      } else {
+        try {
+          const errData = await response.json()
+          console.error(
+            'Error fetching persona config:',
+            errData.message || errData,
+          )
+          toast({
+            title: 'Error',
+            description: errData.message || 'Failed to load persona',
+            variant: 'destructive',
+          })
+        } catch (parseError) {
+          console.error(
+            'Error parsing persona fetch failure:',
+            parseError instanceof Error ? parseError.message : parseError,
+          )
+        }
       }
     } catch (error) {
-      console.error('Error fetching persona config:', error)
+      console.error(
+        'Error fetching persona config:',
+        error instanceof Error ? error.message : error,
+      )
     }
   }
 
@@ -67,15 +88,33 @@ export default function AvatarSettingsPage() {
           description: 'Persona configuration saved successfully!',
         })
       } else {
-        const error = await response.json()
-        toast({
-          title: 'Error',
-          description: `Failed to save: ${error.message}`,
-          variant: 'destructive',
-        })
+        try {
+          const errData = await response.json()
+          const message =
+            errData.message || 'Failed to save persona configuration'
+          toast({
+            title: 'Error',
+            description: message,
+            variant: 'destructive',
+          })
+          console.error('Error saving persona config:', message)
+        } catch (parseError) {
+          console.error(
+            'Error parsing persona save failure:',
+            parseError instanceof Error ? parseError.message : parseError,
+          )
+          toast({
+            title: 'Error',
+            description: 'Failed to save persona configuration',
+            variant: 'destructive',
+          })
+        }
       }
     } catch (error) {
-      console.error('Error saving persona config:', error)
+      console.error(
+        'Error saving persona config:',
+        error instanceof Error ? error.message : error,
+      )
       toast({
         title: 'Error',
         description: 'Failed to save persona configuration',
