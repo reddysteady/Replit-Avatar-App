@@ -697,9 +697,9 @@ export class MemStorage {
         airtableBaseId: '',
         airtableTableName: 'Leads',
         aiTemperature: 70, // 0.7
-        aiModel: 'gpt-4o',
         maxResponseLength: 500,
         notificationEmail: '',
+        aiModel: 'gpt-4o',
         notifyOnHighIntent: true,
         notifyOnSensitiveTopics: true,
       } as Settings

@@ -9,6 +9,7 @@
 // See CHANGELOG.md for 2025-06-11 [Fixed-3]
 // See CHANGELOG.md for 2025-06-12 [Changed]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
+// See CHANGELOG.md for 2025-06-16 [Changed]
 
 // dotenv/config is imported in server/index.ts before this service is
 // instantiated, so manual .env parsing is unnecessary.
@@ -22,10 +23,13 @@ import type { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const DEFAULT_MODEL = 'gpt-4o'
 
+/** Default fallback system prompt when no persona is configured. */
+const DEFAULT_SYSTEM_PROMPT =
+  "You are the creator's helpful digital twin. Respond in first person and never mention you are AI."
+
 interface GenerateReplyParams {
   content: string
   senderName: string
-  creatorToneDescription: string
   temperature: number
   maxLength: number
   model?: string
@@ -119,7 +123,6 @@ export class AIService {
       const {
         content,
         senderName,
-        creatorToneDescription,
         temperature,
         maxLength,
         contextSnippets,
@@ -169,25 +172,24 @@ export class AIService {
 
       let systemPrompt = settings.systemPrompt
       if (!systemPrompt) {
-        const personaConfig = (settings.personaConfig as any as AvatarPersonaConfig) || {
-          toneDescription: creatorToneDescription,
-          styleTags: [],
-          allowedTopics: [],
-          restrictedTopics: [],
-          fallbackReply: '',
+        if (settings.personaConfig) {
+          if (process.env.DEBUG_AI) {
+            console.debug(
+              '[DEBUG-AI] Persona config:',
+              JSON.stringify(settings.personaConfig, null, 2),
+            )
+          }
+          systemPrompt = buildSystemPrompt(
+            settings.personaConfig as AvatarPersonaConfig,
+          )
+        } else {
+          systemPrompt = DEFAULT_SYSTEM_PROMPT
         }
-        
-        if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] Persona config:', JSON.stringify(personaConfig, null, 2))
-          console.debug('[DEBUG-AI] CreatorToneDescription:', creatorToneDescription)
-        }
-        
-        systemPrompt = buildSystemPrompt(personaConfig)
-        
+
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Generated system prompt:', systemPrompt)
         }
-        
+
         if (contextSection) {
           systemPrompt += `\n\n${contextSection}`
         }

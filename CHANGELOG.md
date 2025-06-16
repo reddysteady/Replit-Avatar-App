@@ -227,3 +227,8 @@ CHANGLOG.md file.
 - [Codex][Changed] Tone & Style textarea height increased for easier editing.
 - [Codex][Changed] Default settings now omit legacy creatorToneDescription
   field.
+- [Codex][Changed] AIService builds system prompt from personaConfig or default
+  constant.
+- [Codex][Changed] `creatorToneDescription` removed from settings API responses
+  and validation.
+- [Codex][Added] AIService tests confirm personaConfig prompt handling.
