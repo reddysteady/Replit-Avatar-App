@@ -352,10 +352,10 @@ const ThreadedMessages: React.FC = () => {
   return (
     <div
       className={`h-full flex flex-col bg-gray-50 md:pt-0 ${
-        isMobile && showThreadList ? 'pt-16' : 'pt-0'
+        isMobile ? 'pt-16' : 'pt-0'
       }`}
     >
-      {isMobile && showThreadList && <MobileHeader />}
+      {isMobile && <MobileHeader />}
       <div className="hidden md:block p-4 border-b border-gray-200 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>

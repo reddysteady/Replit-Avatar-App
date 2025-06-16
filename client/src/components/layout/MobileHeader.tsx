@@ -1,9 +1,11 @@
 // See CHANGELOG.md for 2025-06-16 [Changed - mobile drawer navigation]
-import React from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Menu,
   MessageSquare,
@@ -11,12 +13,21 @@ import {
   Settings,
   FlaskConical,
   Lock,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
+import { useQueryClient } from '@tanstack/react-query'
 
 const MobileHeader = () => {
   const location = useLocation()
   const path = location.pathname
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [customMessage, setCustomMessage] = useState('')
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const { toast } = useToast()
+  const queryClient = useQueryClient()
 
   const NavItem = ({
     to,
@@ -35,6 +46,7 @@ const MobileHeader = () => {
     return (
       <Link
         to={to}
+        onClick={() => setIsSheetOpen(false)}
         className={cn(
           'flex items-center px-4 py-2 text-base font-medium',
           active ? 'text-blue-500' : 'text-neutral-700 hover:text-neutral-900',
@@ -58,8 +70,20 @@ const MobileHeader = () => {
 
   const showThreadActions = ['/', '/instagram', '/youtube'].includes(path)
 
+  const handleSendCustomMessage = () => {
+    if (!customMessage.trim()) return
+    
+    // For now, just show a toast - you'll need to implement the actual logic
+    toast({
+      title: 'Custom Message',
+      description: `Message: ${customMessage}`,
+    })
+    setCustomMessage('')
+    setIsSheetOpen(false)
+  }
+
   return (
-    <Sheet>
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-neutral-200 z-10">
         <div className="flex items-center justify-between h-16 px-4">
           <h1 className="text-lg font-semibold text-neutral-900">Avatar</h1>
@@ -73,7 +97,7 @@ const MobileHeader = () => {
           </SheetTrigger>
         </div>
       </div>
-      <SheetContent side="right" className="w-64 pt-8 overflow-y-auto">
+      <SheetContent side="right" className="w-80 pt-8 overflow-y-auto">
         <nav className="space-y-1">
           <NavItem
             to="/"
@@ -89,55 +113,66 @@ const MobileHeader = () => {
           >
             Insights
           </NavItem>
-          <NavItem
-            to="/settings"
-            icon={<Settings className="h-5 w-5" />}
-            activePaths={['/settings']}
-          >
-            Settings
-          </NavItem>
-          <NavItem
-            to="/settings/sources"
-            activePaths={['/settings/sources']}
-            className="pl-8"
-          >
-            Content Sources
-          </NavItem>
-          <NavItem
-            to="/settings/persona"
-            activePaths={['/settings/persona']}
-            className="pl-8"
-          >
-            Persona
-          </NavItem>
-          <NavItem
-            to="/settings/ai"
-            activePaths={['/settings/ai']}
-            className="pl-8"
-          >
-            AI Settings
-          </NavItem>
-          <NavItem
-            to="/settings/automation"
-            activePaths={['/settings/automation']}
-            className="pl-8"
-          >
-            Automation
-          </NavItem>
-          <NavItem
-            to="/settings/notifications"
-            activePaths={['/settings/notifications']}
-            className="pl-8"
-          >
-            Notifications
-          </NavItem>
-          <NavItem
-            to="/settings/api"
-            activePaths={['/settings/api']}
-            className="pl-8"
-          >
-            API Keys
-          </NavItem>
+          
+          {/* Collapsible Settings Section */}
+          <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-base font-medium text-neutral-700 hover:text-neutral-900">
+              <div className="flex items-center">
+                <Settings className="mr-3 h-5 w-5 text-neutral-500" />
+                Settings
+              </div>
+              {settingsOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-1">
+              <NavItem
+                to="/settings/sources"
+                activePaths={['/settings/sources']}
+                className="pl-8"
+              >
+                Content Sources
+              </NavItem>
+              <NavItem
+                to="/settings/persona"
+                activePaths={['/settings/persona']}
+                className="pl-8"
+              >
+                Persona
+              </NavItem>
+              <NavItem
+                to="/settings/ai"
+                activePaths={['/settings/ai']}
+                className="pl-8"
+              >
+                AI Settings
+              </NavItem>
+              <NavItem
+                to="/settings/automation"
+                activePaths={['/settings/automation']}
+                className="pl-8"
+              >
+                Automation
+              </NavItem>
+              <NavItem
+                to="/settings/notifications"
+                activePaths={['/settings/notifications']}
+                className="pl-8"
+              >
+                Notifications
+              </NavItem>
+              <NavItem
+                to="/settings/api"
+                activePaths={['/settings/api']}
+                className="pl-8"
+              >
+                API Keys
+              </NavItem>
+            </CollapsibleContent>
+          </Collapsible>
+
           <NavItem
             to="/settings/testing-tools"
             icon={<FlaskConical className="h-5 w-5" />}
@@ -153,18 +188,41 @@ const MobileHeader = () => {
             Privacy Policy
           </NavItem>
         </nav>
+        
+        {/* Custom Message Section */}
+        <div className="mt-6">
+          <Separator className="my-3" />
+          <div className="px-4">
+            <div className="text-sm font-medium text-neutral-900 mb-2">
+              Send Custom Message
+            </div>
+            <Input
+              placeholder="Enter your message..."
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              className="mb-2"
+            />
+            <Button
+              onClick={handleSendCustomMessage}
+              className="w-full"
+              disabled={!customMessage.trim()}
+            >
+              Send Message
+            </Button>
+          </div>
+        </div>
+
         {showThreadActions && (
           <div className="mt-4">
             <Separator className="my-3" />
-            <div className="text-xs text-neutral-500 uppercase px-4 mb-1">
-              Thread Actions
+            <div className="px-4">
+              <div className="text-xs text-neutral-500 uppercase mb-2">
+                Thread Actions
+              </div>
+              <button className="block w-full text-left px-0 py-2 text-sm text-neutral-700 hover:text-neutral-900">
+                Generate Batch Messages
+              </button>
             </div>
-            <button className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:text-neutral-900">
-              Generate Batch Messages
-            </button>
-            <button className="block w-full text-left px-4 py-2 text-sm text-neutral-700 hover:text-neutral-900">
-              Generate Custom Message
-            </button>
           </div>
         )}
       </SheetContent>

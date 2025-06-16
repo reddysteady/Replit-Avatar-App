@@ -43,7 +43,7 @@ const NavItem = ({ to, icon, children, active, className }: NavItemProps) => {
           {icon}
         </span>
       )}
-      {children}
+      <span>{children}</span>
     </Link>
   )
 }
