@@ -68,7 +68,7 @@ export default function PrivacyPersonalityForm({
         <FormField
           control={form.control}
           name="toneDescription"
-          rules={{ required: true }}
+          rules={{ required: "Tone description is required" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tone & Style</FormLabel>
@@ -126,7 +126,7 @@ export default function PrivacyPersonalityForm({
             control={form.control}
             name="allowedTopics"
             rules={{
-              validate: (v) => v.length > 0 || 'Select at least one topic',
+              validate: (v) => (v && v.length > 0) || 'Select at least one topic',
             }}
             render={() => (
               <FormItem className="mt-2">
@@ -202,34 +202,50 @@ export default function PrivacyPersonalityForm({
         <FormField
           control={form.control}
           name="fallbackReply"
-          rules={{ required: true }}
+          rules={{ required: "Fallback reply is required" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel>Fallback Response</FormLabel>
               <FormControl>
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="space-y-2"
-                >
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value="Sorry, I keep that private." />
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="fallbackReply"
+                      value="Sorry, I keep that private."
+                      checked={field.value === "Sorry, I keep that private."}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="h-4 w-4"
+                    />
                     <span className="text-sm">Politely decline</span>
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value="Let's chat about something else!" />
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="fallbackReply"
+                      value="Let's chat about something else!"
+                      checked={field.value === "Let's chat about something else!"}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="h-4 w-4"
+                    />
                     <span className="text-sm">Redirect topic</span>
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value={field.value} />
-                    <Input
-                      className="ml-2"
-                      placeholder="Custom response"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="fallbackReply"
+                      checked={field.value !== "Sorry, I keep that private." && field.value !== "Let's chat about something else!"}
+                      onChange={() => field.onChange("")}
+                      className="h-4 w-4"
                     />
-                  </label>
-                </RadioGroup>
+                    <Input
+                      placeholder="Custom response"
+                      value={field.value !== "Sorry, I keep that private." && field.value !== "Let's chat about something else!" ? field.value : ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

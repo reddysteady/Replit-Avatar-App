@@ -1697,9 +1697,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         personaConfig: z.object({
           toneDescription: z.string().min(1, "Tone description is required"),
-          styleTags: z.array(z.string()),
+          styleTags: z.array(z.string()).default([]),
           allowedTopics: z.array(z.string()).min(1, "At least one allowed topic is required"),
-          restrictedTopics: z.array(z.string()),
+          restrictedTopics: z.array(z.string()).default([]),
           fallbackReply: z.string().min(1, "Fallback reply is required"),
         }),
         systemPrompt: z.string().optional(),
