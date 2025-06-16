@@ -207,7 +207,7 @@ export class AIService {
       } else {
         // Force fresh reload by not using settings.systemPrompt
         const persona = personaConfig ?? settings.personaConfig
-        if (persona) {
+        if (persona && persona.toneDescription && (persona.allowedTopics?.length > 0 || persona.restrictedTopics?.length > 0)) {
           if (process.env.DEBUG_AI) {
             console.debug(
               '[DEBUG-AI] Persona config:',
@@ -216,6 +216,9 @@ export class AIService {
           }
           systemPrompt = buildSystemPrompt(persona as AvatarPersonaConfig)
         } else {
+          if (process.env.DEBUG_AI) {
+            console.debug('[DEBUG-AI] No valid persona config found, using default prompt')
+          }
           systemPrompt = DEFAULT_SYSTEM_PROMPT
         }
 

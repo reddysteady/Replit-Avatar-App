@@ -35,6 +35,10 @@ export default function AvatarSettingsPage() {
           setCurrentConfig(data.personaConfig)
           const generatedPrompt = buildSystemPrompt(data.personaConfig)
           setPrompt(generatedPrompt)
+        } else {
+          // Clear the prompt when no persona config exists
+          setCurrentConfig(null)
+          setPrompt('')
         }
       }
     } catch (error) {
