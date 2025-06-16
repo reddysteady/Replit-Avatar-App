@@ -59,9 +59,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM messages
           WHERE thread_id = ${conversationId}::integer
             AND (parent_message_id IS NULL OR parent_message_id = 0)
-          
+
           UNION ALL
-          
+
           -- Recursive case: child messages
           SELECT 
             m.id::text,
@@ -826,6 +826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderName: message.senderName,
         personaConfig:
           settings.personaConfig as unknown as AvatarPersonaConfig | null,
+```text
         temperature: (settings.aiTemperature || 70) / 100,
         maxLength: settings.maxResponseLength || 300,
         contextSnippets,
@@ -1711,7 +1712,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Clear the AI service cache when persona is updated
       aiService.clearSystemPromptCache(1)
-      
+
       res.json({
         personaConfig: updated.personaConfig,
       })
@@ -1834,18 +1835,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const threads = await storage.getThreads(1)
       const instagramMessages = await storage.getInstagramMessages()
       const youtubeMessages = await storage.getYoutubeMessages()
-      
+
       const status = {
         threadsCount: threads.length,
         instagramMessagesCount: instagramMessages.length,
         youtubeMessagesCount: youtubeMessages.length,
         threads: threads.map(t => ({ id: t.id, name: t.participantName, messageCount: 0 }))
       }
-      
+
       // If no threads exist, create some test data
       if (threads.length === 0) {
         console.log('No threads found, creating test data...')
-        
+
         // Create a few test threads with messages
         for (let i = 0; i < 3; i++) {
           const thread = await storage.findOrCreateThreadByParticipant(
@@ -1855,7 +1856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             'instagram',
             `https://images.unsplash.com/photo-${1500000000000 + i}?w=64&h=64`
           )
-          
+
           await storage.addMessageToThread(thread.id, {
             source: 'instagram',
             content: `Hello, this is test message ${i + 1}`,
@@ -1869,13 +1870,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             metadata: {}
           })
         }
-        
+
         status.message = 'Created test data'
         const updatedThreads = await storage.getThreads(1)
         status.threadsCount = updatedThreads.length
         status.threads = updatedThreads.map(t => ({ id: t.id, name: t.participantName }))
       }
-      
+
       res.json(status)
     } catch (error) {
       console.error('Database status check error:', error)
@@ -1888,7 +1889,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.body
       aiService.clearSystemPromptCache(userId)
-      res.json({ success: true, message: 'Cache cleared successfully' })
+
+      // Also force clear the persona config from database
+      await storage.updateSettings(1, {
+        personaConfig: null,
+        systemPrompt: null
+      })
+
+      res.json({
+        success: true,
+        message: 'Cache cleared successfully'
+      })
     } catch (error: any) {
       res.status(500).json({ message: error.message })
     }

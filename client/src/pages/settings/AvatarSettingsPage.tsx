@@ -31,14 +31,17 @@ export default function AvatarSettingsPage() {
       const response = await fetch('/api/persona')
       if (response.ok) {
         const data = await response.json()
-        if (data.personaConfig) {
+        console.log('Fetched persona config:', data.personaConfig)
+        
+        if (data.personaConfig && data.personaConfig.toneDescription) {
           setCurrentConfig(data.personaConfig)
           const generatedPrompt = buildSystemPrompt(data.personaConfig)
           setPrompt(generatedPrompt)
         } else {
-          // Clear the prompt when no persona config exists
+          // Clear everything when no valid persona config exists
           setCurrentConfig(null)
           setPrompt('')
+          console.log('No valid persona config found, cleared display')
         }
       }
     } catch (error) {
