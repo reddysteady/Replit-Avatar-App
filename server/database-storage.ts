@@ -230,12 +230,12 @@ export class DatabaseStorage implements IStorage {
     threadId: number,
     messageData: Omit<InsertMessage, 'id'>,
   ): Promise<Message> {
-    const payload: any = { ...messageData }
-    delete payload.id
+    // Clean the data to ensure no id field exists
+    const { id, ...cleanMessageData } = messageData as any
 
     const [newMessage] = await db
       .insert(messages)
-      .values({ ...payload, threadId })
+      .values({ ...cleanMessageData, threadId })
       .returning()
 
     // Get the thread first to properly update unread count
