@@ -1828,6 +1828,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
+  // Database status endpoint
+  app.get('/api/debug/database-status', async (req, res) => {
+    try {
+      const threads = await storage.getThreads(1)
+      const instagramMessages = await storage.getInstagramMessages()
+      const youtubeMessages = await storage.getYoutubeMessages()
+      
+      const status = {
+        threadsCount: threads.length,
+        instagramMessagesCount: instagramMessages.length,
+        youtubeMessagesCount: youtubeMessages.length,
+        threads: threads.map(t => ({ id: t.id, name: t.participantName, messageCount: 0 }))
+      }
+      
+      // If no threads exist, create some test data
+      if (threads.length === 0) {
+        console.log('No threads found, creating test data...')
+        
+        // Create a few test threads with messages
+        for (let i = 0; i < 3; i++) {
+          const thread = await storage.findOrCreateThreadByParticipant(
+            1,
+            `test-user-${i}`,
+            `Test User ${i + 1}`,
+            'instagram',
+            `https://images.unsplash.com/photo-${1500000000000 + i}?w=64&h=64`
+          )
+          
+          await storage.addMessageToThread(thread.id, {
+            source: 'instagram',
+            content: `Hello, this is test message ${i + 1}`,
+            externalId: `test-${Date.now()}-${i}`,
+            senderId: `test-user-${i}`,
+            senderName: `Test User ${i + 1}`,
+            timestamp: new Date(),
+            status: 'new',
+            isHighIntent: i === 1, // Make one high intent
+            userId: 1,
+            metadata: {}
+          })
+        }
+        
+        status.message = 'Created test data'
+        const updatedThreads = await storage.getThreads(1)
+        status.threadsCount = updatedThreads.length
+        status.threads = updatedThreads.map(t => ({ id: t.id, name: t.participantName }))
+      }
+      
+      res.json(status)
+    } catch (error) {
+      console.error('Database status check error:', error)
+      res.status(500).json({ error: error.message })
+    }
+  })
+
   // Analytics endpoint
   app.get('/api/analytics', async (req, res) => {
     try {
