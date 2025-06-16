@@ -105,9 +105,9 @@ export class ContentService {
         id: `post_${Date.now()}_1`,
         type: 'post',
         url: 'https://instagram.com/p/sample1',
-        title: 'My latest travel adventure',
+        title: 'Amazing encounter with sea turtles today!',
         content:
-          "Just had the most amazing experience in Bali! The beaches were pristine and the sunsets were breathtaking. If you're planning a trip, make sure to visit Uluwatu Temple and Ubud's Monkey Forest. I'd recommend staying at least 10 days to fully experience the island. Let me know if you need specific recommendations!",
+          "Had the most incredible dive today and encountered a family of green sea turtles! These magnificent creatures can live over 80 years and travel thousands of miles across oceans. Did you know that sea turtles use Earth's magnetic field to navigate? They return to the exact beach where they were born to lay their eggs. It's absolutely mind-blowing how they remember their birthplace after decades in the ocean. Conservation efforts are crucial - always maintain distance and never touch marine wildlife!",
         publishedAt: new Date(),
         engagement: {
           likes: 1200,
@@ -119,9 +119,9 @@ export class ContentService {
         id: `video_${Date.now()}_1`,
         type: 'video',
         url: 'https://youtube.com/watch?v=sample1',
-        title: 'How I edit my travel videos - Full Tutorial',
+        title: 'The Secret Lives of Octopuses - Intelligence Underwater',
         content:
-          "In this video, I'm showing you my complete workflow for editing travel videos that capture the essence of a location. I start with organizing footage by location, then create a storyboard before diving into the timeline. Color grading is crucial - I prefer a warm, vibrant look for tropical destinations and cooler tones for urban environments. Sound design makes a huge difference, so I spend extra time finding the perfect music and ambient sounds. For beginners, focus on storytelling first, technical skills will come with practice!",
+          "Octopuses are among the most intelligent invertebrates on Earth! In today's video, I explore their incredible problem-solving abilities and camouflage skills. These eight-armed wonders have three hearts, blue blood, and can change both color and texture in milliseconds. I've observed them using tools, solving mazes, and even showing what appears to be playful behavior. The mimic octopus can imitate over 15 different species! Their intelligence rivals that of many vertebrates, yet they live only 1-2 years. It's a reminder of how diverse and fascinating ocean life truly is.",
         publishedAt: new Date(),
         engagement: {
           likes: 3500,
@@ -133,9 +133,9 @@ export class ContentService {
         id: `blog_${Date.now()}_1`,
         type: 'blog',
         url: 'https://myblog.com/sample1',
-        title: 'Essential Camera Gear for Content Creators in 2025',
+        title: 'The Mysterious World of Deep Sea Creatures',
         content:
-          "After testing dozens of cameras and accessories over the past five years, I've narrowed down my essential gear to these key items. For most creators, a good mirrorless camera with a versatile zoom lens is all you need to start. I recommend the Sony A7IV with the 24-70mm f/2.8 lens as the perfect all-around setup. If budget is a concern, the Fujifilm X-T4 offers exceptional value. Don't overlook audio - the Rode VideoMic Pro+ has been my reliable companion for years. Remember, the best gear is what works for YOUR specific needs and content style!",
+          "The deep ocean is Earth's final frontier, home to creatures that seem like they're from another planet. Bioluminescent jellyfish create living light shows in the darkness, while giant tube worms thrive around volcanic vents without sunlight. The vampire squid isn't actually a squid or vampire - it's a unique cephalopod that can turn itself inside out when threatened! Anglerfish use their glowing lure to attract prey in the pitch-black depths. These adaptations showcase millions of years of evolution in extreme conditions. Every deep-sea expedition reveals new species, reminding us how much we still don't know about our own planet.",
         publishedAt: new Date(),
         engagement: {
           likes: 890,
