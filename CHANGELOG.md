@@ -239,3 +239,8 @@ CHANGLOG.md file.
 
 - [Codex][Changed-2] Replaced creatorToneDescription with personaConfig across
   codebase.
+
+## 2025-06-17
+
+- [Codex][Changed] Persona API schema enforces non-empty strings and arrays.
+- [Codex][Fixed] Database status check typing errors.
