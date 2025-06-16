@@ -9,7 +9,7 @@ React.
 
 Create a `.env` file with the following variables:
 
-- `DATABASE_URL` – PostgreSQL connection string for the server database
+- `SUPABASE_DATABASE_URL` – PostgreSQL connection string for the server database
 - `OPENAI_API_KEY` – API key used when generating AI replies
 - `INSTAGRAM_APP_ID` – Facebook App ID for Instagram OAuth
 - `INSTAGRAM_APP_SECRET` – Facebook App Secret for Instagram OAuth

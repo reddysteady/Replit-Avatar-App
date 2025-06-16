@@ -163,7 +163,7 @@ CHANGLOG.md file.
   lookup.
 - [Codex][Added] Migration adds PGVector extension and `content_items` table.
 - [Codex][Fixed] ChatHeader now shows on mobile when selecting a thread.
-- [Codex][Added] Documented DATABASE_URL, OPENAI_API_KEY, and other server
+- [Codex][Added] Documented SUPABASE_DATABASE_URL, OPENAI_API_KEY, and other server
   environment variables in README.
 - [Codex][Added] /api/content/search endpoint and ranking tests.
 - [Codex][Added] Content item storage and vector search. [Codex][Added] Thread

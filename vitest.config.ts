@@ -5,7 +5,7 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.test.ts', '**/*.test.tsx'],
     env: {
-      DATABASE_URL: 'postgres://test'
+      SUPABASE_DATABASE_URL: 'postgres://test'
     }
   },
   resolve: {

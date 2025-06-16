@@ -51,7 +51,7 @@ _Schema lives in `shared/schema.ts`._
 | Concern      | Current state                                      |
 | ------------ | -------------------------------------------------- |
 | **Runtime**  | Replit Nix for dev → Node 18 containers in prod    |
-| **Database** | Neon Postgres (env `DATABASE_URL`)                 |
+| **Database** | Neon Postgres (env `SUPABASE_DATABASE_URL`)                 |
 | **Secrets**  | GitHub → Actions secrets & environment variables   |
 | **Logging**  | Basic timestamped `logger.ts` (upgrade path: Pino) |
 
@@ -69,7 +69,7 @@ _Key highlights:_ matrix jobs for Node 18 & 20, cached installs, least‑privile
 
 | Env var          | Required | Description                    |
 | ---------------- | -------- | ------------------------------ |
-| `DATABASE_URL`   | ✅       | Neon connection string         |
+| `SUPABASE_DATABASE_URL`   | ✅       | Neon connection string         |
 | `OPENAI_API_KEY` | ✅       | Used by `services/openai.ts`   |
 | `WEBHOOK_SECRET` | ⚠️       | Instagram signature validation |
 |`INSTAGRAM_APP_ID`|

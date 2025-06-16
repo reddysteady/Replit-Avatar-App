@@ -1,8 +1,7 @@
-// See CHANGELOG.md for 2025-06-12 [Added]
 import { defineConfig } from "drizzle-kit";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+if (!process.env.SUPABASE_DATABASE_URL) {
+  throw new Error("Missing SUPABASE_DATABASE_URL");
 }
 
 export default defineConfig({
@@ -10,6 +9,7 @@ export default defineConfig({
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.SUPABASE_DATABASE_URL,
   },
 });
+

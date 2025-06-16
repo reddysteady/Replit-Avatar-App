@@ -6,15 +6,15 @@ import * as schema from "@shared/schema";
 // Configure Neon for serverless environments
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
+if (!process.env.SUPABASE_DATABASE_URL) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "SUPABASE_DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
 // Create pool with proper configuration for Neon
 export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.SUPABASE_DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
