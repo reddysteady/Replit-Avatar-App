@@ -416,12 +416,9 @@ export class DatabaseStorage implements IStorage {
     if (process.env.DEBUG_AI) {
       log(`[DEBUG-AI] inserting message ${JSON.stringify(message)}`)
     }
-
     const payload: any = { ...message }
     delete payload.id
-
     const [newMessage] = await db.insert(messages).values(payload).returning()
-
     if (process.env.DEBUG_AI) {
       log(`[DEBUG-AI] inserted message ${newMessage.id}`)
     }
