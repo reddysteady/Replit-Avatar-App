@@ -402,19 +402,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const messageContent =
         content ?? `Hi ${thread.participantName}, this is a test message.`
 
-      const rawMsg = await storage.addMessageToThread(threadId, {
+      // Ensure no id field is present in the message data
+      const messageData = {
         source: thread.source || 'instagram',
         content: messageContent,
-        externalId: `faker-${Date.now()}`,
+        externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         senderId: thread.externalParticipantId,
         senderName: thread.participantName,
         senderAvatar: thread.participantAvatar || faker.image.avatar(),
         timestamp: new Date(),
         status: 'new',
         isHighIntent: false,
+        isOutbound: false,
         userId: thread.userId,
         metadata: {},
-      })
+      }
+
+      const rawMsg = await storage.addMessageToThread(threadId, messageData)
 
       const mapped = {
         id: rawMsg.id,

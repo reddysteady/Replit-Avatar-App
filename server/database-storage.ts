@@ -230,13 +230,19 @@ export class DatabaseStorage implements IStorage {
     threadId: number,
     messageData: Omit<InsertMessage, 'id'>,
   ): Promise<Message> {
-    // Clean the data to ensure no id field exists
-    const { id, ...cleanMessageData } = messageData as any
+    try {
+      // Clean the data to ensure no id field exists
+      const { id, ...cleanMessageData } = messageData as any
 
-    const [newMessage] = await db
-      .insert(messages)
-      .values({ ...cleanMessageData, threadId })
-      .returning()
+      // Log the data being inserted for debugging
+      if (process.env.DEBUG_AI) {
+        log(`[DEBUG-AI] Adding message to thread ${threadId}: ${JSON.stringify(cleanMessageData)}`)
+      }
+
+      const [newMessage] = await db
+        .insert(messages)
+        .values({ ...cleanMessageData, threadId })
+        .returning()
 
     // Get the thread first to properly update unread count
     const thread = await this.getThread(threadId)
