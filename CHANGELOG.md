@@ -225,4 +225,4 @@ CHANGLOG.md file.
 
 - [Codex][Fixed] System prompt preview textarea no longer stretches past page.
 - [Codex][Changed] Tone & Style textarea height increased for easier editing.
-
+- [Codex][Added] AIService tests confirm personaConfig prompt handling.
