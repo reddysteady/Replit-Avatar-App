@@ -92,7 +92,6 @@ export const settings = pgTable('settings', {
   airtableToken: text('airtable_token'),
   airtableBaseId: text('airtable_base_id'),
   airtableTableName: text('airtable_table_name'),
-  creatorToneDescription: text('creator_tone_description'),
   aiTemperature: integer('ai_temperature').default(70), // stored as int (0.7 * 100)
   aiModel: text('ai_model').default('gpt-4o'),
   maxResponseLength: integer('max_response_length').default(500),

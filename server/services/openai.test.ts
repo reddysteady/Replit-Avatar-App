@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-11 [Added]
 // See CHANGELOG.md for 2025-06-11 [Fixed-3]
+// See CHANGELOG.md for 2025-06-16 [Changed]
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AIService } from './openai'
 import { storage } from '../storage'
