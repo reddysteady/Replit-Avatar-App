@@ -111,14 +111,16 @@ Solution:
 
 ---
 
-## 7 · Code Style References 🧩
+## 7 · Code Style References 🧩
 
 - All Markdown/YAML/JSON files must be formatted with Prettier.
-  - Run `npm run format` before every commit.
-  - CI will fail if formatting does not match.
-- Linted by ESLint—**do not** override configs.
-- React components in PascalCase; custom hooks start with `use…`.
-- Remove stray `console.log`; keep `[DEBUG‑AI]` or `[AGENT‑PRECHECK]` only when gated behind env flags.
+  - **Run:** `npm run format` before every commit.
+  - Alternatively, use:  
+    `npx prettier --write "**/*.{md,mdx,yml,json}"`
+  - **CI will fail if formatting does not match.**
+- All code is linted by ESLint—**do not** override configs.
+- React components: PascalCase; custom hooks start with `use…`.
+- Remove stray `console.log` statements; keep `[DEBUG‑AI]` or `[AGENT‑PRECHECK]` **only when gated behind env flags.**
 
 ---
 
