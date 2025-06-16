@@ -44,7 +44,7 @@ export interface IStorage {
   getMessage(id: number): Promise<Message | undefined>
   getInstagramMessages(): Promise<MessageType[]>
   getYoutubeMessages(): Promise<MessageType[]>
-  createMessage(message: InsertMessage): Promise<Message>
+  createMessage(message: Omit<InsertMessage, 'id'>): Promise<Message>
   updateMessageStatus(
     id: number,
     status: string,
@@ -103,7 +103,10 @@ export interface IStorage {
     source: string,
     participantAvatar?: string,
   ): Promise<MessageThread>
-  addMessageToThread(threadId: number, message: InsertMessage): Promise<Message>
+  addMessageToThread(
+    threadId: number,
+    message: Omit<InsertMessage, 'id'>,
+  ): Promise<Message>
   markThreadAsRead(threadId: number): Promise<boolean>
 }
 
@@ -500,9 +503,11 @@ export class MemStorage {
     }
   }
 
-  async createMessage(message: InsertMessage): Promise<Message> {
+  async createMessage(message: Omit<InsertMessage, 'id'>): Promise<Message> {
+    const payload: any = { ...message }
+    delete payload.id
     const id = this.messageId++
-    const newMessage: Message = { ...message, id } as Message
+    const newMessage: Message = { ...payload, id } as Message
     this.msgs.set(id, newMessage)
     return newMessage
   }
@@ -619,16 +624,18 @@ export class MemStorage {
 
   async addMessageToThread(
     threadId: number,
-    message: InsertMessage,
+    message: Omit<InsertMessage, 'id'>,
   ): Promise<Message> {
     const thread = this.threads.get(threadId)
     if (!thread) {
       throw new Error(`Thread with ID ${threadId} not found`)
     }
+    const payload: any = { ...message }
+    delete payload.id
     const id = this.messageId++
-    const now = message.timestamp ?? new Date()
+    const now = payload.timestamp ?? new Date()
     const newMessage: Message = {
-      ...message,
+      ...payload,
       id,
       threadId,
       timestamp: now,
