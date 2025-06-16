@@ -1696,17 +1696,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const schema = z.object({
         personaConfig: z.object({
-          toneDescription: z.string(),
+          toneDescription: z.string().min(1, "Tone description is required"),
           styleTags: z.array(z.string()),
-          allowedTopics: z.array(z.string()),
+          allowedTopics: z.array(z.string()).min(1, "At least one allowed topic is required"),
           restrictedTopics: z.array(z.string()),
-          fallbackReply: z.string(),
+          fallbackReply: z.string().min(1, "Fallback reply is required"),
         }),
+        systemPrompt: z.string().optional(),
       })
 
-      const { personaConfig} = schema.parse(req.body)
+      const { personaConfig, systemPrompt } = schema.parse(req.body)
+      
+      // Save both the config and the generated system prompt
       const updated = await storage.updateSettings(1, {
         personaConfig,
+        systemPrompt: systemPrompt || null,
       })
 
       // Clear the AI service cache when persona is updated
@@ -1714,8 +1718,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         personaConfig: updated.personaConfig,
+        systemPrompt: updated.systemPrompt,
       })
     } catch (error: any) {
+      console.error('Error saving persona config:', error)
+      if (error.issues && Array.isArray(error.issues)) {
+        // This is a Zod validation error
+        const zodError = error.issues
+          .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+          .join(', ')
+        return res.status(400).json({ message: `Validation error: ${zodError}` })
+      }
       res.status(400).json({ message: error.message })
     }
   })
