@@ -214,6 +214,8 @@ CHANGLOG.md file.
 - [Codex][Added] PrivacyPersonalityForm and AvatarSettingsPage.
 - [Codex][Added] buildSystemPrompt utility and persona API storage.
 - [Codex][Changed] OpenAI service uses stored systemPrompt.
+- [Codex][Added] Thread delete popover with confirmation in `ThreadRow` and
+  state handling in `ThreadList`.
 
 ## 2025-06-16
 
