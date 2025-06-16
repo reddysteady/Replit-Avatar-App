@@ -1,3 +1,4 @@
+// See CHANGELOG.md for 2025-06-13 [Added-2]
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,7 @@ interface SettingsData {
     autoReplyInstagram: boolean;
     autoReplyYoutube: boolean;
     flexProcessing: boolean;
+    responseDelay: number;
   };
   notificationSettings: {
     email: string;
@@ -67,6 +69,7 @@ const Settings = () => {
       autoReplyInstagram: false,
       autoReplyYoutube: false,
       flexProcessing: false,
+      responseDelay: 0,
     },
     notificationSettings: {
       email: "",
@@ -441,6 +444,20 @@ const Settings = () => {
                           aiSettings: { ...settings.aiSettings, flexProcessing: checked }
                         })}
                       />
+                    </div>
+                    <div className="space-y-2 mt-3">
+                      <Label htmlFor="response-delay">Automated AI Response Delay (seconds)</Label>
+                      <Input
+                        id="response-delay"
+                        type="number"
+                        min={0}
+                        value={settings.aiSettings.responseDelay}
+                        onChange={(e) => setSettings({
+                          ...settings,
+                          aiSettings: { ...settings.aiSettings, responseDelay: Number(e.target.value) }
+                        })}
+                      />
+                      <p className="text-xs text-neutral-500">Set to 0 for instant replies.</p>
                     </div>
                   </div>
                 </CardContent>

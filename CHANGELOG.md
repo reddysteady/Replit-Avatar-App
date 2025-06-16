@@ -194,16 +194,21 @@ CHANGLOG.md file.
 - [Codex][Added] Coverage for auto-reply in generate-for-user route.
 - [Codex][Fixed] Mobile ChatHeader menu shows actions even without callbacks.
 - [Codex][Added] Unit test for custom message auto-reply.
-
-## 2025-06-14
-
 - [Codex][Added] ChatHeader menu generates custom message for active thread.
-
-## 2025-06-16
-
+- [Codex][Changed] Burger menu includes textbox to send custom message; button
+  disabled when empty.
 - [Codex][Changed] Adjust AI Replies row layout in `ThreadRow` for a tighter
   grouping.
 
-## 2025-06-17
+
+## 2025-06-15
 
 - [Codex][Changed] Right-align AI Replies toggle in `ThreadRow`.
+- [Codex][Fixed-2] Batch messages now create threads and refresh the thread
+  list.
+- [Codex][Added] Configurable response delay for automated AI replies.
+- [Codex][Added] AvatarPersonaConfig interface for persona setup
+described in docs/stage_1_persona.md.
+- [Codex][Fixed] Restored mobile burger menu in ThreadedMessages.
+- [Codex][Fixed] Removed extra top padding on mobile conversation
+screen.

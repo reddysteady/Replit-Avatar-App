@@ -26,7 +26,7 @@ integration), link out to a dedicated doc instead of bloating this file.
   - Annotated at the top of each new/edited file with the reason for change.
   - Validated by npm run type-check, npm run lint, and npm test before commit.
 
-
+- **All UI components and styling** must adhere to the project’s STYLEGUIDE.md; agents should reference this guide when generating or reviewing code and UI elements.
 - **Agents may not** merge to protected branches or deploy; humans must review.
 - **Conflict detection:** Agents must pull latest, run `git diff`, and
   regenerate if merge conflicts appear.
@@ -49,6 +49,8 @@ Log each step with `[AGENT‑PRECHECK]`. Abort if any item fails.
 5. .npm test passes (Vitest suite).
 6. If the task touches an **external service** (API, DB, queue, etc.) run its
    health‑check script under `scripts/health/` and ensure success.
+7. Run `npm outdated` and fail if critical packages are >1 major behind.
+8. Ensure `docs/stage_1_persona.md` is referenced whenever the task involves persona logic.
 
 ---
 

@@ -6,6 +6,7 @@
 // See CHANGELOG.md for 2025-06-09 [Changed - thread dropdown]
 // See CHANGELOG.md for 2025-06-10 [Fixed - batch invalidation keys]
 // See CHANGELOG.md for 2025-06-10 [Added]
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import MessageItem from "@/components/MessageItem";
@@ -213,6 +214,7 @@ const Messages = () => {
                             .then(() => {
                               queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
                               queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
+                              queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
                               toast({ title: 'Batch generated', description: '10 messages created' });
                             })
                             .catch(err => {

@@ -13,12 +13,14 @@
 // See CHANGELOG.md for 2025-06-13 [Fixed]
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-14 [Added]
+// See CHANGELOG.md for 2025-06-13 [Added-2]
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Changed]
 import type { Express } from "express";
 import { faker } from "@faker-js/faker";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+// See CHANGELOG.md for 2025-06-13 [Fixed-2]
 import { db } from "./db";
 import { z } from "zod";
 import { messages } from "@shared/schema";
@@ -284,20 +286,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       for (let i = 0; i < 10; i++) {
-        const isHighIntent = highIntentIndexes.has(i);
-        const source = Math.random() > 0.5 ? 'instagram' : 'youtube';
+        const isHighIntent = highIntentIndexes.has(i)
+        const source = Math.random() > 0.5 ? 'instagram' : 'youtube'
 
         if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] creating message', { index: i, isHighIntent, source });
+          console.debug('[DEBUG-AI] creating message', { index: i, isHighIntent, source })
         }
 
-        const message = await storage.createMessage({
+        const senderId = faker.internet.userName().toLowerCase()
+        const senderName = faker.person.fullName()
+        const senderAvatar = faker.image.avatar()
+
+        const thread = await storage.findOrCreateThreadByParticipant(
+          1,
+          senderId,
+          senderName,
+          source,
+          senderAvatar
+        )
+
+        const message = await storage.addMessageToThread(thread.id, {
           source,
           content: faker.lorem.sentence(),
           externalId: `faker-${Date.now()}-${i}`,
-          senderId: faker.internet.userName().toLowerCase(),
-          senderName: faker.person.fullName(),
-          senderAvatar: faker.image.avatar(),
+          senderId,
+          senderName,
+          senderAvatar,
           timestamp: new Date(),
           status: 'new',
           isHighIntent,
@@ -306,13 +320,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ? faker.number.int({ min: 80, max: 100 })
             : undefined,
           userId: 1,
-        });
+          metadata: {},
+        })
 
         if (process.env.DEBUG_AI) {
-          console.debug('[DEBUG-AI] created message', { id: message.id });
+          console.debug('[DEBUG-AI] created message', { id: message.id, threadId: thread.id })
         }
 
-        messages.push(message);
+        messages.push(message)
       }
 
       if (process.env.DEBUG_AI) {
@@ -850,6 +865,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
                   });
                   
                   // Send reply to Instagram
+                  const delaySec = aiSettings.responseDelay || 0;
+                  if (delaySec > 0) {
+                    await new Promise((r) => setTimeout(r, delaySec * 1000));
+                  }
                   await instagramService.sendReply(instagramMessage.id, aiReply);
                   
                   // Update message status
@@ -974,6 +993,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
       
       // Send reply to Instagram (in a real app, this would use the actual Instagram API)
       try {
+        const delaySec = settings.aiSettings?.responseDelay || 0;
+        if (delaySec > 0) {
+          await new Promise((r) => setTimeout(r, delaySec * 1000));
+        }
         await instagramService.sendReply(message.externalId, aiReply);
       } catch (instagramError) {
         log("Note: Instagram reply simulation - would fail in production app");
@@ -1058,6 +1081,10 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
       });
       
       // Send reply to YouTube
+      const delaySec = settings.aiSettings?.responseDelay || 0;
+      if (delaySec > 0) {
+        await new Promise((r) => setTimeout(r, delaySec * 1000));
+      }
       await youtubeService.sendReply(message.externalId, aiReply);
       
       // Update message status
@@ -1346,7 +1373,8 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
           model: settings.aiModel || "gpt-4o",
           autoReplyInstagram: settings.aiAutoRepliesInstagram || false,
           autoReplyYoutube: settings.aiAutoRepliesYoutube || false,
-          flexProcessing: false
+          flexProcessing: false,
+          responseDelay: 0
         };
       }
       
@@ -1388,6 +1416,7 @@ app.patch('/api/threads/:id/auto-reply', async (req, res) => {
           autoReplyInstagram: z.boolean().optional(),
           autoReplyYoutube: z.boolean().optional(),
           flexProcessing: z.boolean().optional(),
+          responseDelay: z.number().min(0).optional(),
         }).optional(),
         notificationSettings: z.object({
           email: z.string().email().optional(),
