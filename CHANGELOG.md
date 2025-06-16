@@ -224,3 +224,5 @@ CHANGLOG.md file.
 ## 2025-06-16
 
 - [Codex][Fixed] System prompt preview textarea no longer stretches past page.
+- [Codex][Changed] Tone & Style textarea height increased for easier editing.
+
