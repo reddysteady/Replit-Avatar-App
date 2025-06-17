@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from 'react-router-dom'
 import { queryClient } from './lib/queryClient'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
@@ -28,41 +34,60 @@ import Sidebar from '@/components/layout/Sidebar'
 
 function AppLayout() {
   const isMobile = useIsMobile()
-  const location = useLocation();
+  const location = useLocation()
   const [conversationData, setConversationData] = useState<{
-    participantName?: string;
-    participantAvatar?: string;
-    platform?: string;
-    onBack?: () => void;
-  } | null>(null);
-  const [lastConversationRoute, setLastConversationRoute] = useState('/');
+    participantName?: string
+    participantAvatar?: string
+    platform?: string
+    threadId?: number
+    onBack?: () => void
+  } | null>(null)
+  const [lastConversationRoute, setLastConversationRoute] = useState('/')
 
   // Track the last conversation route when on conversation pages
   useEffect(() => {
     if (['/', '/instagram', '/youtube'].includes(location.pathname)) {
-      setLastConversationRoute(location.pathname);
+      setLastConversationRoute(location.pathname)
     }
-  }, [location.pathname]);
+  }, [location.pathname])
 
   // Determine if we're on a conversation route and have active conversation
-  const isConversationRoute = ['/', '/instagram', '/youtube'].includes(location.pathname)
+  const isConversationRoute = ['/', '/instagram', '/youtube'].includes(
+    location.pathname,
+  )
   const shouldShowConversationData = isConversationRoute && conversationData
 
   return (
     <div className="h-screen flex overflow-hidden">
       {isMobile && (
-        <MobileHeader 
-          conversationData={shouldShowConversationData ? conversationData : null}
+        <MobileHeader
+          conversationData={
+            shouldShowConversationData ? conversationData : undefined
+          }
           onBack={conversationData?.onBack}
           lastConversationRoute={lastConversationRoute}
-          key={location.pathname} 
+          key={location.pathname}
         />
       )}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         <Routes>
-          <Route path="/" element={<ThreadedMessages onConversationDataChange={setConversationData} />} />
-          <Route path="/instagram" element={<ThreadedMessages onConversationDataChange={setConversationData} />} />
+          <Route
+            path="/"
+            element={
+              <ThreadedMessages
+                onConversationDataChange={setConversationData}
+              />
+            }
+          />
+          <Route
+            path="/instagram"
+            element={
+              <ThreadedMessages
+                onConversationDataChange={setConversationData}
+              />
+            }
+          />
           <Route
             path="/youtube"
             element={<Navigate to="/instagram" replace />}

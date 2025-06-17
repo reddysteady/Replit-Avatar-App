@@ -258,3 +258,4 @@ CHANGLOG.md file.
 - [Codex][Added] Tests check rendering of new chips.
 [Codex][Changed] MobileHeader moved to App layout with optional back button.
 [Codex][Removed] ThreadedMessages no longer renders its own header.
+[Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
