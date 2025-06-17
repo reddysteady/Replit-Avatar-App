@@ -369,7 +369,7 @@ const DesktopHeader = ({
                     onClick={handleSendCustomMessage}
                     size="sm"
                     className="w-full"
-                    disabled={!customMessage.trim() || !conversationData?.threadId}
+                    disabled={!customMessage.trim()}
                   >
                     Generate
                   </Button>
