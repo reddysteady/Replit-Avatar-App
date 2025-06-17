@@ -36,6 +36,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable'
 import { Loader2, SearchX, ChevronDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -306,21 +311,23 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       )
     }
 
-    // Desktop view - always show split view
+    // Desktop view - always show split view with resizable panels
     if (activeThreadId) {
       return (
-        <div className="h-full flex">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Thread list */}
-          <div className="md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white">
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={50} className="bg-white">
             <ThreadList
               activeThreadId={activeThreadId}
               onSelectThread={handleThreadSelect}
               source={activeTab}
             />
-          </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
 
           {/* Conversation thread */}
-          <div className="md:w-2/3 lg:w-3/4 h-full">
+          <ResizablePanel defaultSize={75} minSize={50}>
             <ConversationThread
               threadId={activeThreadId}
               threadData={activeThreadData}
@@ -330,27 +337,32 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                 setActiveThreadData(null)
               }}
             />
-          </div>
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )
     }
 
     return (
-      <div className="flex h-full">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Thread list */}
-        <div
-          className={`${activeThreadId ? 'hidden md:block' : 'w-full'} md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white`}
+        <ResizablePanel 
+          defaultSize={activeThreadId ? 25 : 100} 
+          minSize={20} 
+          maxSize={activeThreadId ? 50 : 100}
+          className="bg-white"
         >
           <ThreadList
             activeThreadId={activeThreadId}
             onSelectThread={handleThreadSelect}
             source={activeTab}
           />
-        </div>
+        </ResizablePanel>
+
+        {activeThreadId && <ResizableHandle withHandle />}
 
         {/* Conversation thread */}
-        <div className="hidden md:block md:w-2/3 lg:w-3/4 h-full">
-          {activeThreadId ? (
+        {activeThreadId && (
+          <ResizablePanel defaultSize={75} minSize={50}>
             <ConversationThread
               threadId={activeThreadId}
               onDeleted={() => {
@@ -358,20 +370,22 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                 setActiveThreadData(null)
               }}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full text-center p-4">
-              <div>
-                <h3 className="text-lg font-medium mb-2">
-                  No conversation selected
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Select a conversation from the list to view messages
-                </p>
-              </div>
+          </ResizablePanel>
+        )}
+
+        {!activeThreadId && (
+          <ResizablePanel defaultSize={0} minSize={0} maxSize={0} className="hidden md:flex items-center justify-center text-center p-4">
+            <div>
+              <h3 className="text-lg font-medium mb-2">
+                No conversation selected
+              </h3>
+              <p className="text-sm text-gray-500">
+                Select a conversation from the list to view messages
+              </p>
             </div>
-          )}
-        </div>
-      </div>
+          </ResizablePanel>
+        )}
+      </ResizablePanelGroup>
     )
   }
 
