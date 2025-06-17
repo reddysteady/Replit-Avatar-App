@@ -17,7 +17,7 @@
 // See CHANGELOG.md for 2025-06-18 [Fixed - restore mobile burger menu]
 // See CHANGELOG.md for 2025-06-19 [Fixed - remove conversation top padding]
 // See CHANGELOG.md for 2025-06-16 [Added - debug log for custom message]
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import ThreadList from '@/components/ThreadList'
 import ConversationThread from '@/components/ConversationThread'
@@ -82,7 +82,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     null,
   )
 
-  const handleGenerateCustomMessage = (msg: string) => {
+  const handleGenerateCustomMessage = useCallback((msg: string) => {
     if (!activeThreadId) return
     fetch(`/api/test/generate-for-user/${activeThreadId}`, {
       method: 'POST',
@@ -112,7 +112,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
           variant: 'destructive',
         })
       })
-  }
+  }, [activeThreadId, queryClient, toast])
 
   // Check for mobile view on mount and on resize
   useEffect(() => {
@@ -160,7 +160,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
   }, [isMobile, activeThreadId, activeThreadData, onConversationDataChange])
 
   // Handle thread selection
-  const handleThreadSelect = (threadId: number, threadData: any = null) => {
+  const handleThreadSelect = useCallback((threadId: number, threadData: any = null) => {
     setActiveThreadId(threadId)
     setHasSelectedThread(true)
 
@@ -195,10 +195,10 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     if (isMobile) {
       setShowThreadList(false)
     }
-  }
+  }, [threads, isMobile])
 
   // Handle back navigation to thread list
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (onBack) {
       onBack()
     } else {
@@ -211,7 +211,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         onConversationDataChange(null)
       }
     }
-  }
+  }, [onBack, onConversationDataChange])
 
   // No explicit back/delete actions when headers hidden
 
@@ -222,7 +222,8 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     error,
   } = useQuery({
     queryKey: ['/api/threads'],
-    staleTime: 10000,
+    staleTime: 30000, // Increase stale time to 30 seconds
+    refetchInterval: 60000, // Refetch every minute instead of more frequently
   })
 
   const { data: settings } = useQuery<Settings>({
