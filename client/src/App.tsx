@@ -30,7 +30,7 @@ import AutomationPage from '@/pages/settings/AutomationPage'
 import NotificationSettings from '@/pages/settings/NotificationSettings'
 import APIKeysPage from '@/pages/settings/APIKeysPage'
 
-import Sidebar from '@/components/layout/Sidebar'
+import DesktopHeader from '@/components/layout/DesktopHeader'
 
 function AppLayout() {
   const isMobile = useIsMobile()
@@ -59,7 +59,7 @@ function AppLayout() {
 
   return (
     <div className="h-screen flex overflow-hidden">
-      {isMobile && (
+      {isMobile ? (
         <MobileHeader
           conversationData={
             shouldShowConversationData ? conversationData : undefined
@@ -68,8 +68,14 @@ function AppLayout() {
           lastConversationRoute={lastConversationRoute}
           key={location.pathname}
         />
+      ) : (
+        <DesktopHeader
+          conversationData={
+            shouldShowConversationData ? conversationData : undefined
+          }
+          key={location.pathname}
+        />
       )}
-      <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         <Routes>
           <Route

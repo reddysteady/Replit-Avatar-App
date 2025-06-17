@@ -259,3 +259,5 @@ CHANGLOG.md file.
 [Codex][Changed] MobileHeader moved to App layout with optional back button.
 [Codex][Removed] ThreadedMessages no longer renders its own header.
 [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
+[Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
+[Codex][Removed] Deprecated refresh tools from ThreadedMessages.
