@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-14 [Added]
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-13 [Fixed-2]
+// See CHANGELOG.md for 2025-06-17 [Added-2]
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import express from 'express'
 import type { Server } from 'http'
@@ -218,5 +219,26 @@ describe('test routes', () => {
     expect(data.systemPrompt).toBe('p')
     const settings = await mem.getSettings(1)
     expect(settings.systemPrompt).toBe('p')
+  })
+
+  it('rejects invalid persona config', async () => {
+    const payload = {
+      personaConfig: {
+        toneDescription: '',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: '',
+      },
+      systemPrompt: '',
+    }
+    const res = await fetch(`${baseUrl}/api/persona`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    expect(res.status).toBe(400)
+    const data = await res.json()
+    expect(data.message).toBeTruthy()
   })
 })

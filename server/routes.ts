@@ -16,6 +16,7 @@
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Changed-2]
+// See CHANGELOG.md for 2025-06-17 [Fixed-2]
 import type { Express } from 'express'
 import { faker } from '@faker-js/faker'
 import { createServer, type Server } from 'http'
@@ -1697,13 +1698,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const schema = z.object({
         personaConfig: z.object({
-          toneDescription: z.string(),
-          styleTags: z.array(z.string()),
-          allowedTopics: z.array(z.string()),
-          restrictedTopics: z.array(z.string()),
-          fallbackReply: z.string(),
+          toneDescription: z.string().min(1),
+          styleTags: z.array(z.string().min(1)).min(1),
+          allowedTopics: z.array(z.string().min(1)),
+          restrictedTopics: z.array(z.string().min(1)),
+          fallbackReply: z.string().min(1),
         }),
-        systemPrompt: z.string(),
+        systemPrompt: z.string().min(1),
       })
 
       const { personaConfig, systemPrompt } = schema.parse(req.body)
@@ -1835,13 +1836,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const instagramMessages = await storage.getInstagramMessages()
       const youtubeMessages = await storage.getYoutubeMessages()
 
-      const status: {
-        threadsCount: number
-        instagramMessagesCount: number
-        youtubeMessagesCount: number
-        threads: { id: number; name: string; messageCount: number }[]
-        message?: string
-      } = {
+
+      const status = {
         threadsCount: threads.length,
         instagramMessagesCount: instagramMessages.length,
         youtubeMessagesCount: youtubeMessages.length,
@@ -1850,6 +1846,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           name: t.participantName,
           messageCount: 0,
         })),
+        message: '',
+
       }
 
       // If no threads exist, create some test data
@@ -1892,13 +1890,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(status)
     } catch (error) {
-      console.error(
-        'Database status check error:',
-        error instanceof Error ? error.message : error,
-      )
-      res.status(500).json({
-        error: error instanceof Error ? error.message : 'Unknown error',
-      })
+      const err = error as Error
+      console.error('Database status check error:', err)
+      res.status(500).json({ error: err.message })
     }
   })
 
