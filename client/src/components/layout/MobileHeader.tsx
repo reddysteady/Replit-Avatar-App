@@ -112,12 +112,23 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
 
       // Find the active thread ID from the current route
       const pathParts = location.pathname.split('/')
-      const threadId = pathParts[pathParts.length - 1]
+      let threadId = null
+      
+      // Check if we're on a conversation route with a thread ID
+      if (pathParts.includes('conversation')) {
+        const conversationIndex = pathParts.indexOf('conversation')
+        if (conversationIndex < pathParts.length - 1) {
+          threadId = pathParts[conversationIndex + 1]
+        }
+      } else if (pathParts.length > 1 && !isNaN(Number(pathParts[pathParts.length - 1]))) {
+        // Fallback: check if the last segment is a number
+        threadId = pathParts[pathParts.length - 1]
+      }
 
       if (!threadId || isNaN(Number(threadId))) {
         toast({
           title: 'Invalid conversation',
-          description: 'Could not determine active conversation',
+          description: 'Could not determine active conversation. Please make sure you are viewing a conversation.',
           variant: 'destructive'
         })
         return
