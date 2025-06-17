@@ -249,3 +249,9 @@ CHANGLOG.md file.
   style tags and topics display after reloading.
 - [Codex][Fixed] Clearing persona resets form fields to defaults in
   PrivacyPersonalityForm.
+
+## 2025-06-17
+
+- [Codex][Changed] Persona tags use chip-based UI with electric blue selection.
+- [Codex][Changed] Allowed and restricted topics combined into tri-state chips.
+- [Codex][Added] Tests check rendering of new chips.

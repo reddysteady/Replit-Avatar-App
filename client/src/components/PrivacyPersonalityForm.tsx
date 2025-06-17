@@ -2,6 +2,7 @@
 // See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
 // Persona logic reference: docs/stage_1_persona.md
 // See CHANGELOG.md for 2025-06-16 [Changed - presets now stored in state]
+// See CHANGELOG.md for 2025-06-17 [Changed - chip based UI]
 
 import React from 'react'
 import { useForm } from 'react-hook-form'
@@ -15,15 +16,27 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 
 interface Props {
   onSave: (config: AvatarPersonaConfig) => void
   initialConfig?: AvatarPersonaConfig | null
   isLoading?: boolean
+}
+
+/**
+ * Topic chip state for allowed/restricted selection.
+ * - neutral: not categorized
+ * - allowed: user explicitly allows topic
+ * - restricted: user explicitly restricts topic
+ */
+interface TopicItem {
+  label: string
+  state: 'neutral' | 'allowed' | 'restricted'
 }
 
 const INITIAL_STYLE_OPTIONS = [
@@ -47,12 +60,16 @@ export default function PrivacyPersonalityForm({
   const [styleOptions, setStyleOptions] = React.useState<string[]>(
     INITIAL_STYLE_OPTIONS,
   )
-  const [allowedPresets, setAllowedPresets] = React.useState<string[]>(
-    INITIAL_ALLOWED_PRESETS,
-  )
-  const [restrictedPresets, setRestrictedPresets] = React.useState<string[]>(
-    INITIAL_RESTRICTED_PRESETS,
-  )
+  const [topics, setTopics] = React.useState<TopicItem[]>([
+    ...INITIAL_ALLOWED_PRESETS.map((t) => ({
+      label: t,
+      state: 'allowed' as const,
+    })),
+    ...INITIAL_RESTRICTED_PRESETS.map((t) => ({
+      label: t,
+      state: 'restricted' as const,
+    })),
+  ])
   const form = useForm<AvatarPersonaConfig>({
     defaultValues: {
       toneDescription: initialConfig?.toneDescription || '',
@@ -69,14 +86,16 @@ export default function PrivacyPersonalityForm({
       setStyleOptions((prev) =>
         Array.from(new Set([...prev, ...(initialConfig.styleTags || [])])),
       )
-      setAllowedPresets((prev) =>
-        Array.from(new Set([...prev, ...(initialConfig.allowedTopics || [])])),
-      )
-      setRestrictedPresets((prev) =>
-        Array.from(
-          new Set([...prev, ...(initialConfig.restrictedTopics || [])]),
-        ),
-      )
+      setTopics((prev) => {
+        const map = new Map(prev.map((t) => [t.label, t]))
+        ;(initialConfig.allowedTopics || []).forEach((l) => {
+          map.set(l, { label: l, state: 'allowed' })
+        })
+        ;(initialConfig.restrictedTopics || []).forEach((l) => {
+          map.set(l, { label: l, state: 'restricted' })
+        })
+        return Array.from(map.values())
+      })
       form.reset({
         toneDescription: initialConfig.toneDescription || '',
         styleTags: initialConfig.styleTags || [],
@@ -86,6 +105,16 @@ export default function PrivacyPersonalityForm({
       })
     } else {
       // Reset to empty defaults when persona is cleared
+      setTopics([
+        ...INITIAL_ALLOWED_PRESETS.map((t) => ({
+          label: t,
+          state: 'allowed' as const,
+        })),
+        ...INITIAL_RESTRICTED_PRESETS.map((t) => ({
+          label: t,
+          state: 'restricted' as const,
+        })),
+      ])
       form.reset({
         toneDescription: '',
         styleTags: [],
@@ -97,17 +126,21 @@ export default function PrivacyPersonalityForm({
   }, [initialConfig, form])
 
   const submit = (data: AvatarPersonaConfig) => {
+    // Derive topics arrays from topic chips
+    const allowedTopics = topics
+      .filter((t) => t.state === 'allowed')
+      .map((t) => t.label)
+    const restrictedTopics = topics
+      .filter((t) => t.state === 'restricted')
+      .map((t) => t.label)
+
     // Ensure we have valid data
     const cleanedData = {
       ...data,
       toneDescription: data.toneDescription?.trim() || '',
       styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
-      allowedTopics: Array.isArray(data.allowedTopics)
-        ? data.allowedTopics.filter(Boolean)
-        : [],
-      restrictedTopics: Array.isArray(data.restrictedTopics)
-        ? data.restrictedTopics.filter(Boolean)
-        : [],
+      allowedTopics,
+      restrictedTopics,
       fallbackReply: data.fallbackReply?.trim() || '',
     }
 
@@ -168,24 +201,68 @@ export default function PrivacyPersonalityForm({
           render={() => (
             <FormItem>
               <FormLabel>Style Tags</FormLabel>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {styleOptions.map((opt) => (
-                  <label key={opt} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={form.watch('styleTags').includes(opt)}
-                      onCheckedChange={(checked) => {
+              <div className="flex flex-wrap gap-2 mt-2">
+                {styleOptions.map((opt) => {
+                  const selected = form.watch('styleTags').includes(opt)
+                  return (
+                    <Badge
+                      key={opt}
+                      variant={selected ? 'default' : 'outline'}
+                      onClick={() => {
                         const cur = form.getValues('styleTags')
                         form.setValue(
                           'styleTags',
-                          checked
-                            ? [...cur, opt]
-                            : cur.filter((v) => v !== opt),
+                          selected
+                            ? cur.filter((v) => v !== opt)
+                            : [...cur, opt],
                         )
                       }}
-                    />
-                    <span className="text-sm">{opt}</span>
-                  </label>
-                ))}
+                      className={cn(
+                        'cursor-pointer',
+                        selected && 'bg-[#3A8DFF]',
+                      )}
+                    >
+                      {opt}
+                      {selected && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            form.setValue(
+                              'styleTags',
+                              form
+                                .getValues('styleTags')
+                                .filter((v) => v !== opt),
+                            )
+                          }}
+                          className="ml-1 text-xs"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </Badge>
+                  )
+                })}
+                <Input
+                  placeholder="Add tag"
+                  className="h-8 w-32"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const value = e.currentTarget.value.trim()
+                      if (value) {
+                        setStyleOptions((prev) =>
+                          Array.from(new Set([...prev, value])),
+                        )
+                        form.setValue('styleTags', [
+                          ...form.getValues('styleTags'),
+                          value,
+                        ])
+                        e.currentTarget.value = ''
+                      }
+                    }
+                  }}
+                />
               </div>
               <FormMessage />
             </FormItem>
@@ -195,93 +272,74 @@ export default function PrivacyPersonalityForm({
           control={form.control}
           name="allowedTopics"
           rules={{
-            validate: (v) => v.length > 0 || 'Select at least one topic',
+            validate: () =>
+              topics.some((t) => t.state !== 'neutral') ||
+              'Select at least one topic',
           }}
           render={() => (
             <FormItem>
-              <FormLabel>Allowed Topics</FormLabel>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {allowedPresets.map((topic) => (
-                  <label key={topic} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={form.watch('allowedTopics').includes(topic)}
-                      onCheckedChange={(c) => {
-                        const cur = form.getValues('allowedTopics')
-                        form.setValue(
-                          'allowedTopics',
-                          c ? [...cur, topic] : cur.filter((t) => t !== topic),
-                        )
-                      }}
-                    />
-                    <span className="text-sm">{topic}</span>
-                  </label>
+              <FormLabel>Topics</FormLabel>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {topics.map((topic, idx) => (
+                  <Badge
+                    key={topic.label}
+                    variant={
+                      topic.state === 'allowed'
+                        ? 'secondary'
+                        : topic.state === 'restricted'
+                          ? 'destructive'
+                          : 'outline'
+                    }
+                    onClick={() => {
+                      setTopics((prev) => {
+                        const next = [...prev]
+                        const current = next[idx]
+                        const nextState =
+                          current.state === 'neutral'
+                            ? 'allowed'
+                            : current.state === 'allowed'
+                              ? 'restricted'
+                              : 'neutral'
+                        next[idx] = { ...current, state: nextState }
+                        return next
+                      })
+                    }}
+                    className={cn('cursor-pointer select-none', {
+                      'border-green-600 text-green-600 bg-green-50':
+                        topic.state === 'allowed',
+                      'border-red-600 text-red-600 bg-red-50':
+                        topic.state === 'restricted',
+                    })}
+                  >
+                    {topic.label}
+                  </Badge>
                 ))}
-              </div>
-              <FormControl>
                 <Input
-                  placeholder="Add more, comma separated"
-                  className="mt-2"
-                  onBlur={(e) => {
-                    const extras = e.target.value
-                      .split(',')
-                      .map((t) => t.trim())
-                      .filter(Boolean)
-                    if (extras.length > 0) {
-                      form.setValue('allowedTopics', [
-                        ...form.getValues('allowedTopics'),
-                        ...extras,
-                      ])
-                      e.target.value = ''
+                  placeholder="Add topics"
+                  className="h-8 w-36"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      const values = e.currentTarget.value
+                        .split(',')
+                        .map((t) => t.trim())
+                        .filter(Boolean)
+                      if (values.length > 0) {
+                        setTopics((prev) => {
+                          const map = new Map(prev.map((t) => [t.label, t]))
+                          values.forEach((v) => {
+                            if (!map.has(v)) {
+                              map.set(v, { label: v, state: 'neutral' })
+                            }
+                          })
+                          return Array.from(map.values())
+                        })
+                        e.currentTarget.value = ''
+                      }
                     }
                   }}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="restrictedTopics"
-          render={() => (
-            <FormItem>
-              <FormLabel>Restricted Topics</FormLabel>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {restrictedPresets.map((topic) => (
-                  <label key={topic} className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={form.watch('restrictedTopics').includes(topic)}
-                      onCheckedChange={(c) => {
-                        const cur = form.getValues('restrictedTopics')
-                        form.setValue(
-                          'restrictedTopics',
-                          c ? [...cur, topic] : cur.filter((t) => t !== topic),
-                        )
-                      }}
-                    />
-                    <span className="text-sm">{topic}</span>
-                  </label>
-                ))}
               </div>
-              <FormControl>
-                <Input
-                  placeholder="Add more, comma separated"
-                  className="mt-2"
-                  onBlur={(e) => {
-                    const extras = e.target.value
-                      .split(',')
-                      .map((t) => t.trim())
-                      .filter(Boolean)
-                    if (extras.length > 0) {
-                      form.setValue('restrictedTopics', [
-                        ...form.getValues('restrictedTopics'),
-                        ...extras,
-                      ])
-                      e.target.value = ''
-                    }
-                  }}
-                />
-              </FormControl>
               <FormMessage />
             </FormItem>
           )}
