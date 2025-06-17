@@ -328,55 +328,60 @@ const DesktopHeader = ({
           </NavItem>
         </nav>
 
-        {isConversationView && conversationData?.threadId && (
+        {isConversationView && (
           <div className="mt-4">
             <Separator className="my-3" />
             <div className="px-4">
               <div className="text-xs text-neutral-500 uppercase tracking-wider mb-3">
-                Thread Actions
+                Actions
               </div>
 
-              {/* Delete Thread */}
-              {onDeleteThread && (
-                <button
-                  onClick={handleDeleteThread}
-                  className="flex items-center w-full px-0 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md -mx-2 px-2 mb-3"
-                >
-                  <Trash2 className="h-4 w-4 mr-3" />
-                  Delete Thread
-                </button>
+              {/* Thread-specific actions only show when a thread is selected */}
+              {conversationData?.threadId && (
+                <>
+                  {/* Delete Thread */}
+                  {onDeleteThread && (
+                    <button
+                      onClick={handleDeleteThread}
+                      className="flex items-center w-full px-0 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md -mx-2 px-2 mb-3"
+                    >
+                      <Trash2 className="h-4 w-4 mr-3" />
+                      Delete Thread
+                    </button>
+                  )}
+
+                  {/* Generate Custom Message */}
+                  <div className="mb-4">
+                    <div className="flex items-center py-2 text-sm text-neutral-600">
+                      <MessageCircle className="h-4 w-4 mr-3" />
+                      Generate Custom Message
+                    </div>
+                    <div className="ml-7 mt-2">
+                      <Input
+                        placeholder="Enter your custom message..."
+                        value={customMessage}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                        className="mb-2 text-sm"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && customMessage.trim() && conversationData?.threadId) {
+                            handleSendCustomMessage()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={handleSendCustomMessage}
+                        size="sm"
+                        className="w-full"
+                        disabled={!customMessage.trim()}
+                      >
+                        Generate
+                      </Button>
+                    </div>
+                  </div>
+                </>
               )}
 
-              {/* Generate Custom Message */}
-              <div className="mb-4">
-                <div className="flex items-center py-2 text-sm text-neutral-600">
-                  <MessageCircle className="h-4 w-4 mr-3" />
-                  Generate Custom Message
-                </div>
-                <div className="ml-7 mt-2">
-                  <Input
-                    placeholder="Enter your custom message..."
-                    value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    className="mb-2 text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && customMessage.trim() && conversationData?.threadId) {
-                        handleSendCustomMessage()
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleSendCustomMessage}
-                    size="sm"
-                    className="w-full"
-                    disabled={!customMessage.trim()}
-                  >
-                    Generate
-                  </Button>
-                </div>
-              </div>
-
-              {/* Generate Batch Messages */}
+              {/* Generate Batch Messages - always show on conversation views */}
               <div>
                 <Button
                   onClick={handleGenerateBatch}
