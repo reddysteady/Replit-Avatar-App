@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-import { NavItem } from '@/components/nav/nav-item'
+import { NavItem } from '@/components/ui/nav-item'
 import {
   Collapsible,
   CollapsibleContent,
