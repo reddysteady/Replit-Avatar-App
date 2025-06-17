@@ -328,4 +328,3 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
 }
 
 export default MobileHeader
-`
