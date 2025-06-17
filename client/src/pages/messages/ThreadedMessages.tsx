@@ -453,20 +453,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
             </TabsList>
           </Tabs>
         </div>
-
-        {/* Mobile Generate Batch Messages */}
-        {showThreadList && (
-          <div className="md:hidden mt-4 mb-2">
-            <Button
-              onClick={handleGenerateBatch}
-              size="sm"
-              variant="outline" 
-              className="w-full bg-gray-900 text-white hover:bg-gray-800"
-            >
-              Generate Batch Messages
-            </Button>
-          </div>
-        )}
+     
         {/* Mobile filter dropdown */}
         {showThreadList && (
           <div className="md:hidden mt-4">
