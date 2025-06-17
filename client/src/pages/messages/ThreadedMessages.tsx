@@ -59,11 +59,22 @@ import ChatHeader from '@/components/layout/ChatHeader'
 import { ThreadType, Settings } from '@shared/schema'
 
 interface ThreadedMessagesProps {
-  onConversationDataChange?: (data: { participantName?: string; participantAvatar?: string; platform?: string; onBack?: () => void } | null) => void
+  onConversationDataChange?: (
+    data: {
+      participantName?: string
+      participantAvatar?: string
+      platform?: string
+      threadId?: number
+      onBack?: () => void
+    } | null,
+  ) => void
   onBack?: () => void
 }
 
-const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataChange, onBack }) => {
+const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
+  onConversationDataChange,
+  onBack,
+}) => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null)
   const [hasSelectedThread, setHasSelectedThread] = useState(false)
   const [activeTab, setActiveTab] = useState<
@@ -134,9 +145,10 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataC
         if (onConversationDataChange) {
           onConversationDataChange({
             participantName: activeThreadData.participantName,
-            participantAvatar: activeThreadData.participantAvatar,  
+            participantAvatar: activeThreadData.participantAvatar,
             platform: activeThreadData.source,
-            onBack: handleBack
+            threadId: activeThreadId,
+            onBack: handleBack,
           })
         }
       } else {

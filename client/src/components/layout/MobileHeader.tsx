@@ -32,13 +32,19 @@ interface MobileHeaderProps {
     participantName?: string
     participantAvatar?: string
     platform?: string
+    threadId?: number
   }
   onBack?: () => void
   onDeleteThread?: () => void
   lastConversationRoute?: string
 }
 
-const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversationRoute }: MobileHeaderProps) => {
+const MobileHeader = ({
+  conversationData,
+  onBack,
+  onDeleteThread,
+  lastConversationRoute,
+}: MobileHeaderProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -48,12 +54,15 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const currentPath = location.pathname
-  const isConversationView = ['/', '/instagram', '/youtube'].includes(currentPath)
-  const showBack = onBack || (
-    typeof window !== 'undefined' &&
-    window.history.length > 1 &&
-    !isConversationView
-  ) || (isConversationView && conversationData)
+  const isConversationView = ['/', '/instagram', '/youtube'].includes(
+    currentPath,
+  )
+  const showBack =
+    onBack ||
+    (typeof window !== 'undefined' &&
+      window.history.length > 1 &&
+      !isConversationView) ||
+    (isConversationView && conversationData)
 
   const NavItem = ({
     to,
@@ -105,31 +114,23 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
         toast({
           title: 'No conversation selected',
           description: 'Please select a conversation first',
-          variant: 'destructive'
+          variant: 'destructive',
         })
         return
       }
 
-      // Find the active thread ID from the current route
-      const pathParts = currentPath.split('/')
-      let threadId = null
-      
-      // Check if we're on a conversation route with a thread ID
-      if (pathParts.includes('conversation')) {
-        const conversationIndex = pathParts.indexOf('conversation')
-        if (conversationIndex < pathParts.length - 1) {
-          threadId = pathParts[conversationIndex + 1]
-        }
-      } else if (pathParts.length > 1 && !isNaN(Number(pathParts[pathParts.length - 1]))) {
-        // Fallback: check if the last segment is a number
-        threadId = pathParts[pathParts.length - 1]
+      if (typeof window !== 'undefined' && (window as any).DEBUG_AI) {
+        console.debug('[DEBUG-AI] handleSendCustomMessage path', currentPath)
       }
+
+      const threadId = conversationData.threadId
 
       if (!threadId || isNaN(Number(threadId))) {
         toast({
           title: 'Invalid conversation',
-          description: 'Could not determine active conversation. Please make sure you are viewing a conversation.',
-          variant: 'destructive'
+          description:
+            'Could not determine active conversation. Please make sure you are viewing a conversation.',
+          variant: 'destructive',
         })
         return
       }
@@ -137,7 +138,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
       const response = await fetch(`/api/test/generate-for-user/${threadId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: customMessage })
+        body: JSON.stringify({ content: customMessage }),
       })
 
       if (!response.ok) {
@@ -146,7 +147,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
 
       toast({
         title: 'Message sent',
-        description: 'Custom message has been generated'
+        description: 'Custom message has been generated',
       })
 
       setCustomMessage('')
@@ -154,14 +155,15 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
 
       // Invalidate queries to refresh the conversation
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
-      queryClient.invalidateQueries({ queryKey: ['thread-messages', Number(threadId)] })
-
+      queryClient.invalidateQueries({
+        queryKey: ['thread-messages', Number(threadId)],
+      })
     } catch (error) {
       console.error('Error sending custom message:', error)
       toast({
         title: 'Error',
         description: 'Failed to send custom message',
-        variant: 'destructive'
+        variant: 'destructive',
       })
     }
   }
@@ -345,7 +347,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
               </div>
 
               {/* Delete Thread */}
-              <button 
+              <button
                 onClick={handleDeleteThread}
                 className="flex items-center w-full px-0 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md -mx-2 px-2"
               >
