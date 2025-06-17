@@ -246,3 +246,7 @@ CHANGLOG.md file.
 - [Codex][Fixed] AvatarSettings shows server error message on save failure.
 - [Codex][Fixed] Database status endpoint typings for type-check.
 
+## 2025-06-17
+
+- [Codex][Changed] PrivacyPersonalityForm now stores presets in state so saved
+  style tags and topics display after reloading.

@@ -1705,7 +1705,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }),
       })
 
-      const { personaConfig} = schema.parse(req.body)
+      const { personaConfig } = schema.parse(req.body)
       const updated = await storage.updateSettings(1, {
         personaConfig,
       })
@@ -1901,13 +1901,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Also force clear the persona config from database
       await storage.updateSettings(1, {
-        personaConfig: null,
-        systemPrompt: null
+        personaConfig: {},
+        systemPrompt: undefined,
       })
 
       res.json({
         success: true,
-        message: 'Cache cleared successfully'
+        message: 'Cache cleared successfully',
       })
     } catch (error: any) {
       res.status(500).json({ message: error.message })
