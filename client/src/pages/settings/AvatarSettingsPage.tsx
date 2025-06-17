@@ -155,9 +155,9 @@ export default function AvatarSettingsPage() {
         </div>
 
         {prompt && (
-          <div>
+          <div className="border rounded-lg p-6 bg-card">
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="preview">
+              <AccordionItem value="preview" className="border-0">
                 <AccordionTrigger>Generated Prompt</AccordionTrigger>
                 <AccordionContent>
                   <Textarea
