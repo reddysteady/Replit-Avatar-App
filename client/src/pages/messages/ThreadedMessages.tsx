@@ -159,6 +159,17 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     }
   }, [isMobile, activeThreadId, activeThreadData, onConversationDataChange])
 
+  // Check for empty threads
+  const {
+    data: threads,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['/api/threads'],
+    staleTime: 30000, // Increase stale time to 30 seconds
+    refetchInterval: 60000, // Refetch every minute instead of more frequently
+  })
+
   // Handle thread selection
   const handleThreadSelect = useCallback((threadId: number, threadData: any = null) => {
     setActiveThreadId(threadId)
@@ -214,17 +225,6 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
   }, [onBack, onConversationDataChange])
 
   // No explicit back/delete actions when headers hidden
-
-  // Check for empty threads
-  const {
-    data: threads,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['/api/threads'],
-    staleTime: 30000, // Increase stale time to 30 seconds
-    refetchInterval: 60000, // Refetch every minute instead of more frequently
-  })
 
   const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
@@ -350,9 +350,9 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Thread list */}
         <ResizablePanel 
-          defaultSize={activeThreadId ? 25 : 100} 
+          defaultSize={25} 
           minSize={20} 
-          maxSize={activeThreadId ? 50 : 100}
+          maxSize={50}
           className="bg-white"
         >
           <ThreadList
@@ -365,17 +365,19 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         <ResizableHandle withHandle />
 
         {/* Conversation thread or placeholder */}
-        <ResizablePanel defaultSize={activeThreadId ? 75 : 0} minSize={activeThreadId ? 50 : 0}>
+        <ResizablePanel defaultSize={75} minSize={50}>
           {activeThreadId ? (
             <ConversationThread
               threadId={activeThreadId}
+              threadData={activeThreadData}
+              showBackButton={false}
               onDeleted={() => {
                 setActiveThreadId(null)
                 setActiveThreadData(null)
               }}
             />
           ) : (
-            <div className="hidden md:flex items-center justify-center text-center p-4 h-full">
+            <div className="flex items-center justify-center text-center p-4 h-full">
               <div>
                 <h3 className="text-lg font-medium mb-2">
                   No conversation selected
