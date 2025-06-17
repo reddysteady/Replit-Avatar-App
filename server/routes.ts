@@ -1901,8 +1901,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Also force clear the persona config from database
       await storage.updateSettings(1, {
-        personaConfig: {},
-        systemPrompt: undefined,
+        personaConfig: null as any,
+        systemPrompt: null as any,
       })
 
       res.json({

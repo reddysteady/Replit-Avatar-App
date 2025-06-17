@@ -1,6 +1,8 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
-// See CHANGELOG.md for 2025-06-17 [Changed - presets now stored in state]
+// Persona logic reference: docs/stage_1_persona.md
+// See CHANGELOG.md for 2025-06-16 [Changed - presets now stored in state]
+
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -81,6 +83,15 @@ export default function PrivacyPersonalityForm({
         allowedTopics: initialConfig.allowedTopics || [],
         restrictedTopics: initialConfig.restrictedTopics || [],
         fallbackReply: initialConfig.fallbackReply || '',
+      })
+    } else {
+      // Reset to empty defaults when persona is cleared
+      form.reset({
+        toneDescription: '',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: '',
       })
     }
   }, [initialConfig, form])
