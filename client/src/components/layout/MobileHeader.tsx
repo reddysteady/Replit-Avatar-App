@@ -47,8 +47,8 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
   const [customMessage, setCustomMessage] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
-  const path = location.pathname
-  const isConversationView = ['/', '/instagram', '/youtube'].includes(path)
+  const currentPath = location.pathname
+  const isConversationView = ['/', '/instagram', '/youtube'].includes(currentPath)
   const showBack = onBack || (
     typeof window !== 'undefined' &&
     window.history.length > 1 &&
@@ -68,7 +68,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
     activePaths: string[]
     className?: string
   }) => {
-    const active = activePaths.includes(path)
+    const active = activePaths.includes(currentPath)
     return (
       <Link
         to={to}
