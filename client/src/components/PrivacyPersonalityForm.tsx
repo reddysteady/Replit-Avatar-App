@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import Chip from '@/components/ui/chip'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -61,14 +62,20 @@ export default function PrivacyPersonalityForm({
       ...data,
       toneDescription: data.toneDescription?.trim() || '',
       styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
-      allowedTopics: Array.isArray(data.allowedTopics) ? data.allowedTopics.filter(Boolean) : [],
-      restrictedTopics: Array.isArray(data.restrictedTopics) ? data.restrictedTopics.filter(Boolean) : [],
-      fallbackReply: data.fallbackReply?.trim() || ''
+      allowedTopics: Array.isArray(data.allowedTopics)
+        ? data.allowedTopics.filter(Boolean)
+        : [],
+      restrictedTopics: Array.isArray(data.restrictedTopics)
+        ? data.restrictedTopics.filter(Boolean)
+        : [],
+      fallbackReply: data.fallbackReply?.trim() || '',
     }
 
     // Additional validation
     if (!cleanedData.toneDescription) {
-      form.setError('toneDescription', { message: 'Tone description is required' })
+      form.setError('toneDescription', {
+        message: 'Tone description is required',
+      })
       return
     }
 
@@ -77,8 +84,14 @@ export default function PrivacyPersonalityForm({
       return
     }
 
-    if (!cleanedData.fallbackReply || cleanedData.fallbackReply.trim() === '' || cleanedData.fallbackReply === 'custom') {
-      form.setError('fallbackReply', { message: 'Please provide a fallback reply' })
+    if (
+      !cleanedData.fallbackReply ||
+      cleanedData.fallbackReply.trim() === '' ||
+      cleanedData.fallbackReply === 'custom'
+    ) {
+      form.setError('fallbackReply', {
+        message: 'Please provide a fallback reply',
+      })
       return
     }
 
@@ -124,7 +137,9 @@ export default function PrivacyPersonalityForm({
                         const cur = form.getValues('styleTags')
                         form.setValue(
                           'styleTags',
-                          checked ? [...cur, opt] : cur.filter((v) => v !== opt),
+                          checked
+                            ? [...cur, opt]
+                            : cur.filter((v) => v !== opt),
                         )
                       }}
                     />
@@ -181,6 +196,22 @@ export default function PrivacyPersonalityForm({
                   }}
                 />
               </FormControl>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {form.watch('allowedTopics').map((topic) => (
+                  <Chip
+                    key={topic}
+                    onRemove={() => {
+                      const cur = form.getValues('allowedTopics')
+                      form.setValue(
+                        'allowedTopics',
+                        cur.filter((t) => t !== topic),
+                      )
+                    }}
+                  >
+                    {topic}
+                  </Chip>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -227,6 +258,22 @@ export default function PrivacyPersonalityForm({
                   }}
                 />
               </FormControl>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {form.watch('restrictedTopics').map((topic) => (
+                  <Chip
+                    key={topic}
+                    onRemove={() => {
+                      const cur = form.getValues('restrictedTopics')
+                      form.setValue(
+                        'restrictedTopics',
+                        cur.filter((t) => t !== topic),
+                      )
+                    }}
+                  >
+                    {topic}
+                  </Chip>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -256,18 +303,26 @@ export default function PrivacyPersonalityForm({
                     <RadioGroupItem value="custom" />
                     <Input
                       placeholder="Custom response"
-                      value={field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!" ? "" : field.value}
+                      value={
+                        field.value === 'Sorry, I keep that private.' ||
+                        field.value === "Let's chat about something else!"
+                          ? ''
+                          : field.value
+                      }
                       onChange={(e) => {
                         const customValue = e.target.value
                         if (customValue.trim()) {
                           field.onChange(customValue)
                         } else {
-                          field.onChange("custom")
+                          field.onChange('custom')
                         }
                       }}
                       onFocus={() => {
-                        if (field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!") {
-                          field.onChange("")
+                        if (
+                          field.value === 'Sorry, I keep that private.' ||
+                          field.value === "Let's chat about something else!"
+                        ) {
+                          field.onChange('')
                         }
                       }}
                     />
