@@ -1,11 +1,15 @@
-// See CHANGELOG.md for 2025-06-16 [Changed - mobile drawer navigation]
+// See CHANGELOG.md for 2025-06-17 [Changed - back button]
 import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
   Menu,
   MessageSquare,
@@ -15,6 +19,7 @@ import {
   Lock,
   ChevronDown,
   ChevronRight,
+  ArrowLeft,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -22,12 +27,17 @@ import { useQueryClient } from '@tanstack/react-query'
 
 const MobileHeader = () => {
   const location = useLocation()
+  const navigate = useNavigate()
   const path = location.pathname
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [customMessage, setCustomMessage] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
+  const showBack =
+    typeof window !== 'undefined' &&
+    window.history.length > 1 &&
+    !['/', '/instagram', '/youtube'].includes(path)
 
   const NavItem = ({
     to,
@@ -72,7 +82,7 @@ const MobileHeader = () => {
 
   const handleSendCustomMessage = () => {
     if (!customMessage.trim()) return
-    
+
     // For now, just show a toast - you'll need to implement the actual logic
     toast({
       title: 'Custom Message',
@@ -86,7 +96,18 @@ const MobileHeader = () => {
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-neutral-200 z-10">
         <div className="flex items-center justify-between h-16 px-4">
-          <h1 className="text-lg font-semibold text-neutral-900">Avatar</h1>
+          <div className="flex items-center">
+            {showBack && (
+              <button
+                aria-label="Back"
+                onClick={() => navigate(-1)}
+                className="mr-3 p-2 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 focus:outline-none"
+              >
+                <ArrowLeft className="h-6 w-6" />
+              </button>
+            )}
+            <h1 className="text-lg font-semibold text-neutral-900">Avatar</h1>
+          </div>
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -113,7 +134,7 @@ const MobileHeader = () => {
           >
             Insights
           </NavItem>
-          
+
           {/* Collapsible Settings Section */}
           <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-base font-medium text-neutral-700 hover:text-neutral-900">
@@ -188,7 +209,7 @@ const MobileHeader = () => {
             Privacy Policy
           </NavItem>
         </nav>
-        
+
         {/* Custom Message Section */}
         <div className="mt-6">
           <Separator className="my-3" />
