@@ -229,6 +229,25 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
   const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
   })
+  const handleGenerateBatch = useCallback(() => {
+    fetch('/api/test/generate-batch', { method: 'POST' })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+        }
+        return res.json();
+      })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+        toast({ title: 'Batch generated', description: '10 messages created' });
+      })
+      .catch(err => {
+        console.error('Batch error:', err);
+        toast({ title: 'Error', description: String(err), variant: 'destructive' });
+      });
+  }, [queryClient, toast])
 
   // Keep active thread data in sync when thread list updates
   useEffect(() => {
@@ -403,6 +422,17 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center space-x-2" />
+          <div className="flex items-center space-x-2">
+            {/* Generate Batch Messages Button */}
+            <Button
+              onClick={handleGenerateBatch}
+              size="sm"
+              variant="outline"
+              className="bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Generate Batch Messages
+            </Button>
+          </div>
         </div>
         {/* Desktop tabs */}
         <div className="hidden md:block">
@@ -424,6 +454,19 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
           </Tabs>
         </div>
 
+        {/* Mobile Generate Batch Messages */}
+        {showThreadList && (
+          <div className="md:hidden mt-4 mb-2">
+            <Button
+              onClick={handleGenerateBatch}
+              size="sm"
+              variant="outline" 
+              className="w-full bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Generate Batch Messages
+            </Button>
+          </div>
+        )}
         {/* Mobile filter dropdown */}
         {showThreadList && (
           <div className="md:hidden mt-4">
