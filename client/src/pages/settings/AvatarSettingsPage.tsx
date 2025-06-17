@@ -47,32 +47,13 @@ export default function AvatarSettingsPage() {
           // Clear UI when no valid persona exists
           setCurrentConfig(null)
           setPrompt('')
-          console.log('No valid persona config found, cleared display')
         }
       } else {
-        try {
-          const errData = await response.json()
-          console.error(
-            'Error fetching persona config:',
-            errData.message || errData,
-          )
-          toast({
-            title: 'Error',
-            description: errData.message || 'Failed to load persona',
-            variant: 'destructive',
-          })
-        } catch (parseError) {
-          console.error(
-            'Error parsing persona fetch failure:',
-            parseError instanceof Error ? parseError.message : parseError,
-          )
-        }
+        const errData = await response.json().catch(() => ({}))
+        console.error('Error fetching persona config:', errData.message || 'Unknown error')
       }
     } catch (error) {
-      console.error(
-        'Error fetching persona config:',
-        error instanceof Error ? error.message : error,
-      )
+      console.error('Error fetching persona config:', error)
     }
   }
 
@@ -88,7 +69,7 @@ export default function AvatarSettingsPage() {
       const response = await fetch('/api/persona', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ personaConfig: config, systemPrompt }),
+        body: JSON.stringify({ personaConfig: config }),
       })
 
       if (response.ok) {
@@ -96,36 +77,18 @@ export default function AvatarSettingsPage() {
         setCurrentConfig(data.personaConfig)
         toast({
           title: 'Success',
-          description: 'Persona configuration saved and cache cleared!',
+          description: 'Persona configuration saved successfully!',
         })
       } else {
-        try {
-          const errData = await response.json()
-          const message =
-            errData.message || 'Failed to save persona configuration'
-          toast({
-            title: 'Error',
-            description: message,
-            variant: 'destructive',
-          })
-          console.error('Error saving persona config:', message)
-        } catch (parseError) {
-          console.error(
-            'Error parsing persona save failure:',
-            parseError instanceof Error ? parseError.message : parseError,
-          )
-          toast({
-            title: 'Error',
-            description: 'Failed to save persona configuration',
-            variant: 'destructive',
-          })
-        }
+        const errData = await response.json().catch(() => ({}))
+        const message = errData.message || 'Failed to save persona configuration'
+        toast({
+          title: 'Error',
+          description: message,
+          variant: 'destructive',
+        })
       }
     } catch (error) {
-      console.error(
-        'Error saving persona config:',
-        error instanceof Error ? error.message : error,
-      )
       toast({
         title: 'Error',
         description: 'Failed to save persona configuration',

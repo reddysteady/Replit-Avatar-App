@@ -3,35 +3,25 @@ import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 
 /** Build a system prompt string from the given persona config. */
 export function buildSystemPrompt(config: AvatarPersonaConfig): string {
-  if (process.env.DEBUG_AI) {
-    console.debug('[DEBUG-AI] buildSystemPrompt called with config:', JSON.stringify(config, null, 2))
+  // Basic validation
+  if (!config?.toneDescription?.trim()) {
+    throw new Error('Tone description is required')
   }
-  
-  const {
-    toneDescription,
-    styleTags,
-    allowedTopics,
-    restrictedTopics,
-    fallbackReply,
-  } = config
-  
-  if (process.env.DEBUG_AI) {
-    console.debug('[DEBUG-AI] Extracted allowedTopics:', allowedTopics)
-    console.debug('[DEBUG-AI] Extracted restrictedTopics:', restrictedTopics)
-  }
-  
-  const sanitize = (v: string) => v.replace(/\n/g, ' ').trim()
-  const tone = sanitize(toneDescription)
-  const tags = styleTags.map(sanitize).join(', ')
-  const allowed = allowedTopics.map((t) => `- ${sanitize(t)}`).join('\n')
-  const restricted = restrictedTopics.map((t) => `- ${sanitize(t)}`).join('\n')
-  const fallback = sanitize(fallbackReply)
-  
-  const prompt = `You are the creator's digital twin. Speak in this tone:\n> "${tone}"\nTags: ${tags}\n\nYou may discuss:\n${allowed}\n\nNever discuss:\n${restricted}\n\nIf asked about a restricted topic reply with:\n> "${fallback}"\n\nAlways respond in the creator's voice in first person. Never reveal you are an AI.`
-  
-  if (process.env.DEBUG_AI) {
-    console.debug('[DEBUG-AI] Generated prompt:', prompt)
-  }
-  
+
+  const prompt = `You are the creator's AI avatar. You speak with this tone and style:
+> "${config.toneDescription.trim()}"
+
+${config.styleTags?.length > 0 ? `Style tags: ${config.styleTags.join(', ')}` : ''}
+
+${config.allowedTopics?.length > 0 ? `You are encouraged to discuss these topics:
+${config.allowedTopics.map(topic => `- ${topic}`).join('\n')}` : ''}
+
+${config.restrictedTopics?.length > 0 ? `You must NEVER discuss these restricted topics:
+${config.restrictedTopics.map(topic => `- ${topic}`).join('\n')}` : ''}
+
+${config.fallbackReply?.trim() ? `If asked about restricted topics, respond with: "${config.fallbackReply.trim()}"` : ''}
+
+Always speak in first person as if you are the creator. Be authentic and engaging. Never reveal that you are an AI assistant.`
+
   return prompt
 }
