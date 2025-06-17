@@ -109,122 +109,128 @@ export default function PrivacyPersonalityForm({
             </FormItem>
           )}
         />
-        <div>
-          <p className="text-sm font-medium mb-2">Style Tags</p>
-          <div className="grid grid-cols-2 gap-2">
-            {STYLE_OPTIONS.map((opt) => (
-              <label key={opt} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={form.watch('styleTags').includes(opt)}
-                  onCheckedChange={(checked) => {
-                    const cur = form.getValues('styleTags')
-                    form.setValue(
-                      'styleTags',
-                      checked ? [...cur, opt] : cur.filter((v) => v !== opt),
-                    )
+        <FormField
+          control={form.control}
+          name="styleTags"
+          render={() => (
+            <FormItem>
+              <FormLabel>Style Tags</FormLabel>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {STYLE_OPTIONS.map((opt) => (
+                  <label key={opt} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={form.watch('styleTags').includes(opt)}
+                      onCheckedChange={(checked) => {
+                        const cur = form.getValues('styleTags')
+                        form.setValue(
+                          'styleTags',
+                          checked ? [...cur, opt] : cur.filter((v) => v !== opt),
+                        )
+                      }}
+                    />
+                    <span className="text-sm">{opt}</span>
+                  </label>
+                ))}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="allowedTopics"
+          rules={{
+            validate: (v) => v.length > 0 || 'Select at least one topic',
+          }}
+          render={() => (
+            <FormItem>
+              <FormLabel>Allowed Topics</FormLabel>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {ALLOWED_PRESETS.map((topic) => (
+                  <label key={topic} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={form.watch('allowedTopics').includes(topic)}
+                      onCheckedChange={(c) => {
+                        const cur = form.getValues('allowedTopics')
+                        form.setValue(
+                          'allowedTopics',
+                          c ? [...cur, topic] : cur.filter((t) => t !== topic),
+                        )
+                      }}
+                    />
+                    <span className="text-sm">{topic}</span>
+                  </label>
+                ))}
+              </div>
+              <FormControl>
+                <Input
+                  placeholder="Add more, comma separated"
+                  className="mt-2"
+                  onBlur={(e) => {
+                    const extras = e.target.value
+                      .split(',')
+                      .map((t) => t.trim())
+                      .filter(Boolean)
+                    if (extras.length > 0) {
+                      form.setValue('allowedTopics', [
+                        ...form.getValues('allowedTopics'),
+                        ...extras,
+                      ])
+                      e.target.value = ''
+                    }
                   }}
                 />
-                <span className="text-sm">{opt}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-        <div>
-          <FormLabel>Allowed Topics</FormLabel>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {ALLOWED_PRESETS.map((topic) => (
-              <label key={topic} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={form.watch('allowedTopics').includes(topic)}
-                  onCheckedChange={(c) => {
-                    const cur = form.getValues('allowedTopics')
-                    form.setValue(
-                      'allowedTopics',
-                      c ? [...cur, topic] : cur.filter((t) => t !== topic),
-                    )
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="restrictedTopics"
+          render={() => (
+            <FormItem>
+              <FormLabel>Restricted Topics</FormLabel>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {RESTRICTED_PRESETS.map((topic) => (
+                  <label key={topic} className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={form.watch('restrictedTopics').includes(topic)}
+                      onCheckedChange={(c) => {
+                        const cur = form.getValues('restrictedTopics')
+                        form.setValue(
+                          'restrictedTopics',
+                          c ? [...cur, topic] : cur.filter((t) => t !== topic),
+                        )
+                      }}
+                    />
+                    <span className="text-sm">{topic}</span>
+                  </label>
+                ))}
+              </div>
+              <FormControl>
+                <Input
+                  placeholder="Add more, comma separated"
+                  className="mt-2"
+                  onBlur={(e) => {
+                    const extras = e.target.value
+                      .split(',')
+                      .map((t) => t.trim())
+                      .filter(Boolean)
+                    if (extras.length > 0) {
+                      form.setValue('restrictedTopics', [
+                        ...form.getValues('restrictedTopics'),
+                        ...extras,
+                      ])
+                      e.target.value = ''
+                    }
                   }}
                 />
-                <span className="text-sm">{topic}</span>
-              </label>
-            ))}
-          </div>
-          <FormField
-            control={form.control}
-            name="allowedTopics"
-            rules={{
-              validate: (v) => v.length > 0 || 'Select at least one topic',
-            }}
-            render={() => (
-              <FormItem className="mt-2">
-                <FormControl>
-                  <Input
-                    placeholder="Add more, comma separated"
-                    onBlur={(e) => {
-                      const extras = e.target.value
-                        .split(',')
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                      if (extras.length > 0) {
-                        form.setValue('allowedTopics', [
-                          ...form.getValues('allowedTopics'),
-                          ...extras,
-                        ])
-                        e.target.value = ''
-                      }
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div>
-          <FormLabel>Restricted Topics</FormLabel>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {RESTRICTED_PRESETS.map((topic) => (
-              <label key={topic} className="flex items-center space-x-2">
-                <Checkbox
-                  checked={form.watch('restrictedTopics').includes(topic)}
-                  onCheckedChange={(c) => {
-                    const cur = form.getValues('restrictedTopics')
-                    form.setValue(
-                      'restrictedTopics',
-                      c ? [...cur, topic] : cur.filter((t) => t !== topic),
-                    )
-                  }}
-                />
-                <span className="text-sm">{topic}</span>
-              </label>
-            ))}
-          </div>
-          <FormField
-            control={form.control}
-            name="restrictedTopics"
-            render={() => (
-              <FormItem className="mt-2">
-                <FormControl>
-                  <Input
-                    placeholder="Add more, comma separated"
-                    onBlur={(e) => {
-                      const extras = e.target.value
-                        .split(',')
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                      if (extras.length > 0) {
-                        form.setValue('restrictedTopics', [
-                          ...form.getValues('restrictedTopics'),
-                          ...extras,
-                        ])
-                        e.target.value = ''
-                      }
-                    }}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="fallbackReply"
