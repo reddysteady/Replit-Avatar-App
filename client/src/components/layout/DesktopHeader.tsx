@@ -1,3 +1,4 @@
+
 // See CHANGELOG.md for 2025-06-17 [Added]
 import React, { useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -20,7 +21,8 @@ import {
 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useToast } from '@/hooks/use-toast'
-import { NavItem } from '@/components/ui/nav-item'
+import { Link } from 'react-router-dom'
+import { cn } from '@/lib/utils'
 import {
   Collapsible,
   CollapsibleContent,
@@ -36,14 +38,14 @@ interface DesktopHeaderProps {
   }
   showBack?: boolean
   handleBack?: () => void
-  showThreadActions?: boolean
+  onDeleteThread?: () => void
 }
 
 const DesktopHeader = ({
   conversationData,
   showBack,
   handleBack,
-  showThreadActions,
+  onDeleteThread,
 }: DesktopHeaderProps) => {
   const location = useLocation()
   const queryClient = useQueryClient()
@@ -52,34 +54,84 @@ const DesktopHeader = ({
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  const isConversationView = ['/', '/instagram', '/youtube'].includes(
-    location.pathname,
-  )
+  const currentPath = location.pathname
+  const isConversationView = ['/', '/instagram', '/youtube'].includes(currentPath)
+
+  const NavItem = ({
+    to,
+    children,
+    icon,
+    activePaths,
+    className,
+  }: {
+    to: string
+    children: React.ReactNode
+    icon?: React.ReactNode
+    activePaths: string[]
+    className?: string
+  }) => {
+    const active = activePaths.includes(currentPath)
+    return (
+      <Link
+        to={to}
+        onClick={() => setIsSheetOpen(false)}
+        className={cn(
+          'flex items-center px-4 py-2 text-base font-medium',
+          active ? 'text-blue-500' : 'text-neutral-700 hover:text-neutral-900',
+          className,
+        )}
+      >
+        {icon && (
+          <span
+            className={cn(
+              'mr-3 h-5 w-5',
+              active ? 'text-[#FF7300]' : 'text-neutral-500',
+            )}
+          >
+            {icon}
+          </span>
+        )}
+        {children}
+      </Link>
+    )
+  }
 
   const handleSendCustomMessage = async () => {
-    if (!customMessage.trim() || !conversationData?.threadId) return
+    if (!customMessage.trim() || !conversationData?.threadId) {
+      toast({
+        title: 'Invalid input',
+        description: 'Please enter a message and ensure a conversation is selected',
+        variant: 'destructive',
+      })
+      return
+    }
+
     try {
-      const res = await fetch(
-        `/api/test/generate-for-user/${conversationData.threadId}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: customMessage }),
-        },
-      )
-      if (!res.ok) throw new Error('Failed to send message')
+      const response = await fetch(`/api/test/generate-for-user/${conversationData.threadId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: customMessage }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to send message')
+      }
+
       toast({
         title: 'Message sent',
         description: 'Custom message has been generated',
       })
+
       setCustomMessage('')
       setIsSheetOpen(false)
+
+      // Invalidate queries to refresh the conversation
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
       queryClient.invalidateQueries({
         queryKey: ['thread-messages', Number(conversationData.threadId)],
       })
-    } catch (err) {
-      console.error('Error sending custom message:', err)
+    } catch (error) {
+      console.error('Error sending custom message:', error)
       toast({
         title: 'Error',
         description: 'Failed to send custom message',
@@ -90,13 +142,23 @@ const DesktopHeader = ({
 
   const handleGenerateBatch = async () => {
     try {
-      const res = await fetch('/api/test/generate-batch', { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to generate batch')
-      toast({ title: 'Batch generated', description: '10 messages created' })
+      const response = await fetch('/api/test/generate-batch', { 
+        method: 'POST' 
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate batch')
+      }
+
+      toast({ 
+        title: 'Batch generated', 
+        description: '10 messages created' 
+      })
+      
       setIsSheetOpen(false)
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
-    } catch (err) {
-      console.error('Batch error:', err)
+    } catch (error) {
+      console.error('Batch error:', error)
       toast({
         title: 'Error',
         description: 'Batch generation failed',
@@ -105,14 +167,11 @@ const DesktopHeader = ({
     }
   }
 
-  if (!isConversationView) {
-    return (
-      <div className="hidden md:block fixed top-0 left-0 right-0 bg-white border-b border-neutral-200 z-10">
-        <div className="flex items-center h-16 px-4">
-          <h1 className="text-lg font-semibold text-neutral-900">Avatar</h1>
-        </div>
-      </div>
-    )
+  const handleDeleteThread = () => {
+    if (onDeleteThread) {
+      onDeleteThread()
+    }
+    setIsSheetOpen(false)
   }
 
   return (
@@ -259,19 +318,32 @@ const DesktopHeader = ({
           </NavItem>
         </nav>
 
-        {showThreadActions && (
+        {isConversationView && (
           <div className="mt-4">
             <Separator className="my-3" />
             <div className="px-4">
               <div className="text-xs text-neutral-500 uppercase tracking-wider mb-3">
                 Thread Actions
               </div>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center text-sm text-neutral-600 mb-2">
-                    <MessageCircle className="h-4 w-4 mr-3" />
-                    Generate Custom Message
-                  </div>
+
+              {/* Delete Thread */}
+              {onDeleteThread && (
+                <button
+                  onClick={handleDeleteThread}
+                  className="flex items-center w-full px-0 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md -mx-2 px-2 mb-3"
+                >
+                  <Trash2 className="h-4 w-4 mr-3" />
+                  Delete Thread
+                </button>
+              )}
+
+              {/* Generate Custom Message */}
+              <div className="mb-4">
+                <div className="flex items-center py-2 text-sm text-neutral-600">
+                  <MessageCircle className="h-4 w-4 mr-3" />
+                  Generate Custom Message
+                </div>
+                <div className="ml-7 mt-2">
                   <Input
                     placeholder="Custom message"
                     value={customMessage}
@@ -287,7 +359,10 @@ const DesktopHeader = ({
                     Generate
                   </Button>
                 </div>
-                <Separator />
+              </div>
+
+              {/* Generate Batch Messages */}
+              <div>
                 <Button
                   onClick={handleGenerateBatch}
                   size="sm"
