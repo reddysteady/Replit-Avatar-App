@@ -77,7 +77,7 @@ export default function PrivacyPersonalityForm({
       return
     }
 
-    if (!cleanedData.fallbackReply || cleanedData.fallbackReply === 'custom') {
+    if (!cleanedData.fallbackReply || cleanedData.fallbackReply.trim() === '' || cleanedData.fallbackReply === 'custom') {
       form.setError('fallbackReply', { message: 'Please provide a fallback reply' })
       return
     }
@@ -246,15 +246,26 @@ export default function PrivacyPersonalityForm({
                     <RadioGroupItem value="Let's chat about something else!" />
                     <span className="text-sm">Redirect topic</span>
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value={field.value} />
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" />
                     <Input
-                      className="ml-2"
                       placeholder="Custom response"
-                      value={field.value}
-                      onChange={(e) => field.onChange(e.target.value)}
+                      value={field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!" ? "" : field.value}
+                      onChange={(e) => {
+                        const customValue = e.target.value
+                        if (customValue.trim()) {
+                          field.onChange(customValue)
+                        } else {
+                          field.onChange("custom")
+                        }
+                      }}
+                      onFocus={() => {
+                        if (field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!") {
+                          field.onChange("")
+                        }
+                      }}
                     />
-                  </label>
+                  </div>
                 </RadioGroup>
               </FormControl>
               <FormMessage />
