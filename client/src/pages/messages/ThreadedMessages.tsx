@@ -362,11 +362,11 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
           />
         </ResizablePanel>
 
-        {activeThreadId && <ResizableHandle withHandle />}
+        <ResizableHandle withHandle />
 
-        {/* Conversation thread */}
-        {activeThreadId && (
-          <ResizablePanel defaultSize={75} minSize={50}>
+        {/* Conversation thread or placeholder */}
+        <ResizablePanel defaultSize={activeThreadId ? 75 : 0} minSize={activeThreadId ? 50 : 0}>
+          {activeThreadId ? (
             <ConversationThread
               threadId={activeThreadId}
               onDeleted={() => {
@@ -374,21 +374,19 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                 setActiveThreadData(null)
               }}
             />
-          </ResizablePanel>
-        )}
-
-        {!activeThreadId && (
-          <ResizablePanel defaultSize={0} minSize={0} maxSize={0} className="hidden md:flex items-center justify-center text-center p-4">
-            <div>
-              <h3 className="text-lg font-medium mb-2">
-                No conversation selected
-              </h3>
-              <p className="text-sm text-gray-500">
-                Select a conversation from the list to view messages
-              </p>
+          ) : (
+            <div className="hidden md:flex items-center justify-center text-center p-4 h-full">
+              <div>
+                <h3 className="text-lg font-medium mb-2">
+                  No conversation selected
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Select a conversation from the list to view messages
+                </p>
+              </div>
             </div>
-          </ResizablePanel>
-        )}
+          )}
+        </ResizablePanel>
       </ResizablePanelGroup>
     )
   }
