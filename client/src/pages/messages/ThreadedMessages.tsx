@@ -59,10 +59,11 @@ import ChatHeader from '@/components/layout/ChatHeader'
 import { ThreadType, Settings } from '@shared/schema'
 
 interface ThreadedMessagesProps {
-  onConversationDataChange?: (data: { participantName?: string; participantAvatar?: string; platform?: string } | null) => void
+  onConversationDataChange?: (data: { participantName?: string; participantAvatar?: string; platform?: string; onBack?: () => void } | null) => void
+  onBack?: () => void
 }
 
-const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataChange }) => {
+const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataChange, onBack }) => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null)
   const [hasSelectedThread, setHasSelectedThread] = useState(false)
   const [activeTab, setActiveTab] = useState<
@@ -134,7 +135,8 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataC
           onConversationDataChange({
             participantName: activeThreadData.participantName,
             participantAvatar: activeThreadData.participantAvatar,  
-            platform: activeThreadData.source
+            platform: activeThreadData.source,
+            onBack: handleBack
           })
         }
       } else {
@@ -186,6 +188,22 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataC
     // On mobile, hide the thread list when a thread is selected
     if (isMobile) {
       setShowThreadList(false)
+    }
+  }
+
+  // Handle back navigation to thread list
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+    } else {
+      // Fallback behavior
+      setActiveThreadId(null)
+      setActiveThreadData(null)
+      setShowThreadList(true)
+      // Clear conversation data when returning to thread list
+      if (onConversationDataChange) {
+        onConversationDataChange(null)
+      }
     }
   }
 
