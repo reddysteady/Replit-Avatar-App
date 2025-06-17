@@ -1,11 +1,15 @@
-// See CHANGELOG.md for 2025-06-16 [Changed - mobile drawer navigation]
+// See CHANGELOG.md for 2025-06-17 [Changed - reorder MobileHeader sections]
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
   Menu,
   MessageSquare,
@@ -72,7 +76,7 @@ const MobileHeader = () => {
 
   const handleSendCustomMessage = () => {
     if (!customMessage.trim()) return
-    
+
     // For now, just show a toast - you'll need to implement the actual logic
     toast({
       title: 'Custom Message',
@@ -113,7 +117,7 @@ const MobileHeader = () => {
           >
             Insights
           </NavItem>
-          
+
           {/* Collapsible Settings Section */}
           <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-base font-medium text-neutral-700 hover:text-neutral-900">
@@ -188,7 +192,7 @@ const MobileHeader = () => {
             Privacy Policy
           </NavItem>
         </nav>
-        
+
         {/* Custom Message Section */}
         <div className="mt-6">
           <Separator className="my-3" />
