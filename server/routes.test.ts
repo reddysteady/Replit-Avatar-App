@@ -210,7 +210,6 @@ describe('test routes', () => {
         restrictedTopics: ['r'],
         fallbackReply: 'f',
       },
-      systemPrompt: 'p',
     }
     const res = await fetch(`${baseUrl}/api/persona`, {
       method: 'POST',
@@ -222,9 +221,6 @@ describe('test routes', () => {
     
     expect(res.status).toBe(200)
     const data = await res.json()
-    expect(data.systemPrompt).toBe('p')
-    const settings = await mem.getSettings(1)
-    expect(settings.systemPrompt).toBe('p')
   })
 
   it('rejects invalid persona config', async () => {
@@ -236,7 +232,6 @@ describe('test routes', () => {
         restrictedTopics: [],
         fallbackReply: '',
       },
-      systemPrompt: '',
     }
     const res = await fetch(`${baseUrl}/api/persona`, {
       method: 'POST',

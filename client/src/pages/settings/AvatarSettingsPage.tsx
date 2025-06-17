@@ -62,6 +62,24 @@ export default function AvatarSettingsPage() {
             parseError instanceof Error ? parseError.message : parseError,
           )
         }
+      } else {
+        try {
+          const errData = await response.json()
+          console.error(
+            'Error fetching persona config:',
+            errData.message || errData,
+          )
+          toast({
+            title: 'Error',
+            description: errData.message || 'Failed to load persona',
+            variant: 'destructive',
+          })
+        } catch (parseError) {
+          console.error(
+            'Error parsing persona fetch failure:',
+            parseError instanceof Error ? parseError.message : parseError,
+          )
+        }
       }
     } catch (error) {
       console.error(
