@@ -152,9 +152,19 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       }
     } else {
       setShowThreadList(true)
-      // Clear conversation data on desktop
+      // Pass conversation data for desktop header when thread is selected
       if (onConversationDataChange) {
-        onConversationDataChange(null)
+        if (activeThreadId && activeThreadData) {
+          onConversationDataChange({
+            participantName: activeThreadData.participantName,
+            participantAvatar: activeThreadData.participantAvatar,
+            platform: activeThreadData.source,
+            threadId: activeThreadId,
+            onBack: handleBack,
+          })
+        } else {
+          onConversationDataChange(null)
+        }
       }
     }
   }, [isMobile, activeThreadId, activeThreadData, onConversationDataChange])
