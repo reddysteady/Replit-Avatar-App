@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
+// See CHANGELOG.md for 2025-06-17 [Changed]
 import { useState, useEffect } from 'react'
 import PrivacyPersonalityForm from '@/components/PrivacyPersonalityForm'
 import { buildSystemPrompt } from '@shared/prompt'

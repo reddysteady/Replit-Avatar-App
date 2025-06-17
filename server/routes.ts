@@ -16,6 +16,7 @@
 // See CHANGELOG.md for 2025-06-12 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Changed-2]
+// See CHANGELOG.md for 2025-06-17 [Fixed-2]
 import type { Express } from 'express'
 import { faker } from '@faker-js/faker'
 import { createServer, type Server } from 'http'
@@ -1697,13 +1698,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const schema = z.object({
         personaConfig: z.object({
-          toneDescription: z.string(),
-          styleTags: z.array(z.string()),
-          allowedTopics: z.array(z.string()),
-          restrictedTopics: z.array(z.string()),
-          fallbackReply: z.string(),
+          toneDescription: z.string().min(1),
+          styleTags: z.array(z.string().min(1)).min(1),
+          allowedTopics: z.array(z.string().min(1)),
+          restrictedTopics: z.array(z.string().min(1)),
+          fallbackReply: z.string().min(1),
         }),
-        systemPrompt: z.string(),
+        systemPrompt: z.string().min(1),
       })
 
       const { personaConfig, systemPrompt } = schema.parse(req.body)
@@ -1834,18 +1835,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const threads = await storage.getThreads(1)
       const instagramMessages = await storage.getInstagramMessages()
       const youtubeMessages = await storage.getYoutubeMessages()
-      
+
       const status = {
         threadsCount: threads.length,
         instagramMessagesCount: instagramMessages.length,
         youtubeMessagesCount: youtubeMessages.length,
-        threads: threads.map(t => ({ id: t.id, name: t.participantName, messageCount: 0 }))
+        threads: threads.map((t) => ({
+          id: t.id,
+          name: t.participantName,
+          messageCount: 0,
+        })),
+        message: '',
       }
-      
+
       // If no threads exist, create some test data
       if (threads.length === 0) {
         console.log('No threads found, creating test data...')
-        
+
         // Create a few test threads with messages
         for (let i = 0; i < 3; i++) {
           const thread = await storage.findOrCreateThreadByParticipant(
@@ -1853,9 +1859,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `test-user-${i}`,
             `Test User ${i + 1}`,
             'instagram',
-            `https://images.unsplash.com/photo-${1500000000000 + i}?w=64&h=64`
+            `https://images.unsplash.com/photo-${1500000000000 + i}?w=64&h=64`,
           )
-          
+
           await storage.addMessageToThread(thread.id, {
             source: 'instagram',
             content: `Hello, this is test message ${i + 1}`,
@@ -1866,20 +1872,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'new',
             isHighIntent: i === 1, // Make one high intent
             userId: 1,
-            metadata: {}
+            metadata: {},
           })
         }
-        
+
         status.message = 'Created test data'
         const updatedThreads = await storage.getThreads(1)
         status.threadsCount = updatedThreads.length
-        status.threads = updatedThreads.map(t => ({ id: t.id, name: t.participantName }))
+        status.threads = updatedThreads.map((t) => ({
+          id: t.id,
+          name: t.participantName,
+          messageCount: 0,
+        }))
       }
-      
+
       res.json(status)
     } catch (error) {
-      console.error('Database status check error:', error)
-      res.status(500).json({ error: error.message })
+      const err = error as Error
+      console.error('Database status check error:', err)
+      res.status(500).json({ error: err.message })
     }
   })
 
