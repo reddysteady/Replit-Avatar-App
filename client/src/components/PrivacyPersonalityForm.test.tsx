@@ -18,4 +18,12 @@ describe('PrivacyPersonalityForm', () => {
     expect(html).toContain('textarea')
     expect(html).toContain('value=""')
   })
+
+  it('renders style tag and topic chips', () => {
+    const html = renderToStaticMarkup(
+      <PrivacyPersonalityForm onSave={() => {}} />,
+    )
+    expect(html).toContain('Friendly')
+    expect(html).toContain('Politics')
+  })
 })
