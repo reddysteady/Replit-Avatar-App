@@ -53,9 +53,8 @@ import {
 } from '@/components/ui/accordion'
 import { Input } from '@/components/ui/input'
 import ChatHeader from '@/components/layout/ChatHeader'
-import MobileHeader from '@/components/layout/MobileHeader'
 
-// Removed mobile headers so tools remain desktop-only
+// See CHANGELOG.md for 2025-06-17 [Removed - duplicate MobileHeader]
 
 import { ThreadType, Settings } from '@shared/schema'
 
@@ -356,12 +355,6 @@ const ThreadedMessages: React.FC = () => {
         isMobile ? 'pt-16' : 'pt-0'
       }`}
     >
-      {isMobile && (
-        <MobileHeader 
-          activeThreadId={activeThreadId} 
-          onGenerateCustomMessage={handleGenerateCustomMessage}
-        />
-      )}
       <div className="hidden md:block p-4 border-b border-gray-200 bg-white">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
