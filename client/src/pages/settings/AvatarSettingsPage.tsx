@@ -145,41 +145,43 @@ export default function AvatarSettingsPage() {
         Persona: Voice &amp; Boundaries
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <PrivacyPersonalityForm
-          onSave={handlePersonaConfig}
-          initialConfig={currentConfig}
-          isLoading={isLoading}
-        />
+      <PrivacyPersonalityForm
+        onSave={handlePersonaConfig}
+        initialConfig={currentConfig}
+        isLoading={isLoading}
+      />
 
-        {prompt && (
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Generated Prompt</h3>
-            <Textarea
-              value={prompt}
-              readOnly
-              className="font-mono text-sm mb-2 min-h-[240px] overflow-y-auto"
-            />
-            <div className="flex justify-between">
-              <Button
-                type="button"
-                onClick={() => navigator.clipboard.writeText(prompt)}
-                size="sm"
-              >
-                Copy to clipboard
-              </Button>
-              <Button
-                onClick={handleClearCache}
-                variant="outline"
-                size="sm"
-                className="mt-3"
-              >
-                Clear Cache
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      {prompt && (
+        <Accordion type="single" collapsible className="mt-6">
+          <AccordionItem value="preview">
+            <AccordionTrigger>Generated Prompt</AccordionTrigger>
+            <AccordionContent>
+              <Textarea
+                value={prompt}
+                readOnly
+                className="font-mono text-sm mb-2 max-h-60 overflow-y-auto"
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(prompt)}
+                  size="sm"
+                >
+                  Copy to clipboard
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleClearCache}
+                  size="sm"
+                  variant="outline"
+                >
+                  Clear AI Cache
+                </Button>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
     </main>
   )
 }
