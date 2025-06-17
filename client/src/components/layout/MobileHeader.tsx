@@ -41,12 +41,11 @@ interface MobileHeaderProps {
 const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversationRoute }: MobileHeaderProps) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const path = location.pathname
+  const queryClient = useQueryClient()
+  const { toast } = useToast()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [customMessage, setCustomMessage] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const { toast } = useToast()
-  const queryClient = useQueryClient()
 
   const isConversationView = ['/', '/instagram', '/youtube'].includes(path)
   const showBack = onBack || (
@@ -96,17 +95,63 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
 
   const showThreadActions = isConversationView
 
-  const handleSendCustomMessage = () => {
+  const handleSendCustomMessage = async () => {
     if (!customMessage.trim()) return
 
-    // Get the current active thread ID from the URL or context
-    // For now, we'll show a placeholder message
-    toast({
-      title: 'Custom Message',
-      description: `Message: ${customMessage}`,
-    })
-    setCustomMessage('')
-    setIsSheetOpen(false)
+    try {
+      // Get the currently active thread from conversation data
+      if (!conversationData) {
+        toast({
+          title: 'No conversation selected',
+          description: 'Please select a conversation first',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      // Find the active thread ID from the current route
+      const pathParts = location.pathname.split('/')
+      const threadId = pathParts[pathParts.length - 1]
+
+      if (!threadId || isNaN(Number(threadId))) {
+        toast({
+          title: 'Invalid conversation',
+          description: 'Could not determine active conversation',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      const response = await fetch(`/api/test/generate-for-user/${threadId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: customMessage })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to send message')
+      }
+
+      toast({
+        title: 'Message sent',
+        description: 'Custom message has been generated'
+      })
+
+      setCustomMessage('')
+      setIsSheetOpen(false)
+
+      // Invalidate queries to refresh the conversation
+      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+      queryClient.invalidateQueries({ queryKey: ['thread-messages', Number(threadId)] })
+
+    } catch (error) {
+      console.error('Error sending custom message:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to send custom message',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleDeleteThread = () => {
