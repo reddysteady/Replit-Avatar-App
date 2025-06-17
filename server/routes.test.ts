@@ -242,4 +242,25 @@ describe('test routes', () => {
     const data = await res.json()
     expect(data.message).toBeTruthy()
   })
+
+  it('rejects invalid persona config', async () => {
+    const payload = {
+      personaConfig: {
+        toneDescription: '',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: '',
+      },
+      systemPrompt: '',
+    }
+    const res = await fetch(`${baseUrl}/api/persona`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    expect(res.status).toBe(400)
+    const data = await res.json()
+    expect(data.message).toBeTruthy()
+  })
 })
