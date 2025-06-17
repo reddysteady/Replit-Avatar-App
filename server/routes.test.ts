@@ -8,9 +8,9 @@ import express from 'express'
 import type { Server } from 'http'
 import { MemStorage } from './storage'
 
-const mockAiService = { 
+const mockAiService = {
   generateReply: vi.fn(),
-  clearSystemPromptCache: vi.fn(),      // ← FIXED
+  clearSystemPromptCache: vi.fn(), // ← FIXED
 }
 const mockContentService = { retrieveRelevantContent: vi.fn() }
 
@@ -216,9 +216,9 @@ describe('test routes', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    const debugBody = await res.clone().json();
-    console.log('DEBUG persona →', res.status, debugBody);
-    
+    const debugBody = await res.clone().json()
+    console.log('DEBUG persona →', res.status, debugBody)
+
     expect(res.status).toBe(200)
     const data = await res.json()
   })
@@ -232,6 +232,27 @@ describe('test routes', () => {
         restrictedTopics: [],
         fallbackReply: '',
       },
+    }
+    const res = await fetch(`${baseUrl}/api/persona`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    expect(res.status).toBe(400)
+    const data = await res.json()
+    expect(data.message).toBeTruthy()
+  })
+
+  it('rejects invalid persona config', async () => {
+    const payload = {
+      personaConfig: {
+        toneDescription: '',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: '',
+      },
+      systemPrompt: '',
     }
     const res = await fetch(`${baseUrl}/api/persona`, {
       method: 'POST',

@@ -22,63 +22,32 @@ export default function AvatarSettingsPage() {
     useState<AvatarPersonaConfig | null>(null)
   const { toast } = useToast()
 
-  // Load existing persona configuration on mount
+  /* ────────────────────────────────
+     Load existing persona on mount
+  ────────────────────────────────── */
   useEffect(() => {
     fetchPersonaConfig()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* ────────────────────────────────
+     Fetch persona config
+  ────────────────────────────────── */
   const fetchPersonaConfig = async () => {
     try {
       const response = await fetch('/api/persona')
       if (response.ok) {
         const data = await response.json()
         console.log('Fetched persona config:', data.personaConfig)
-        
+
         if (data.personaConfig && data.personaConfig.toneDescription) {
           setCurrentConfig(data.personaConfig)
-          const generatedPrompt = buildSystemPrompt(data.personaConfig)
-          setPrompt(generatedPrompt)
+          setPrompt(buildSystemPrompt(data.personaConfig))
         } else {
-          // Clear everything when no valid persona config exists
+          // Clear UI when no valid persona exists
           setCurrentConfig(null)
           setPrompt('')
           console.log('No valid persona config found, cleared display')
-        }
-      } else {
-        try {
-          const errData = await response.json()
-          console.error(
-            'Error fetching persona config:',
-            errData.message || errData,
-          )
-          toast({
-            title: 'Error',
-            description: errData.message || 'Failed to load persona',
-            variant: 'destructive',
-          })
-        } catch (parseError) {
-          console.error(
-            'Error parsing persona fetch failure:',
-            parseError instanceof Error ? parseError.message : parseError,
-          )
-        }
-      } else {
-        try {
-          const errData = await response.json()
-          console.error(
-            'Error fetching persona config:',
-            errData.message || errData,
-          )
-          toast({
-            title: 'Error',
-            description: errData.message || 'Failed to load persona',
-            variant: 'destructive',
-          })
-        } catch (parseError) {
-          console.error(
-            'Error parsing persona fetch failure:',
-            parseError instanceof Error ? parseError.message : parseError,
-          )
         }
       } else {
         try {
@@ -107,6 +76,9 @@ export default function AvatarSettingsPage() {
     }
   }
 
+  /* ────────────────────────────────
+     Save persona config
+  ────────────────────────────────── */
   const handlePersonaConfig = async (config: AvatarPersonaConfig) => {
     setIsLoading(true)
     try {
@@ -115,13 +87,8 @@ export default function AvatarSettingsPage() {
 
       const response = await fetch('/api/persona', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personaConfig: config,
-          systemPrompt: systemPrompt,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ personaConfig: config, systemPrompt }),
       })
 
       if (response.ok) {
@@ -169,20 +136,20 @@ export default function AvatarSettingsPage() {
     }
   }
 
+  /* ────────────────────────────────
+     Clear AI Cache
+  ────────────────────────────────── */
   const handleClearCache = async () => {
     try {
       const response = await fetch('/api/cache/clear', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: 1 }),
       })
 
       if (response.ok) {
-        // Fetch fresh persona config from database after clearing cache
+        // Refresh persona after cache clear
         await fetchPersonaConfig()
-        
         toast({
           title: 'Success',
           description: 'AI cache cleared and prompt refreshed!',
@@ -203,16 +170,21 @@ export default function AvatarSettingsPage() {
     }
   }
 
+  /* ────────────────────────────────
+     UI
+  ────────────────────────────────── */
   return (
     <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none md:pt-0 pt-16 p-4">
       <h2 className="text-2xl font-bold mb-4">
         Persona: Voice &amp; Boundaries
       </h2>
+
       <PrivacyPersonalityForm
         onSave={handlePersonaConfig}
         initialConfig={currentConfig}
         isLoading={isLoading}
       />
+
       {prompt && (
         <Accordion type="single" collapsible className="mt-6">
           <AccordionItem value="preview">
