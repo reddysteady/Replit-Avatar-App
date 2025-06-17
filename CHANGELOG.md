@@ -241,5 +241,8 @@ CHANGLOG.md file.
   codebase.
 - [Codex][Changed] Persona API schema enforces non-empty strings and arrays.
 - [Codex][Fixed] Database status check typing errors.
+- [Codex][Changed] Persona API schema enforces non-empty strings and arrays.
+- [Codex][Fixed] Database status check typing errors.
 - [Codex][Fixed] AvatarSettings shows server error message on save failure.
 - [Codex][Fixed] Database status endpoint typings for type-check.
+

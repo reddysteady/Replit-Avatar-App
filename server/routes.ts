@@ -1835,8 +1835,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const threads = await storage.getThreads(1)
       const instagramMessages = await storage.getInstagramMessages()
       const youtubeMessages = await storage.getYoutubeMessages()
-
-
       const status = {
         threadsCount: threads.length,
         instagramMessagesCount: instagramMessages.length,
@@ -1847,7 +1845,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messageCount: 0,
         })),
         message: '',
-
       }
 
       // If no threads exist, create some test data
