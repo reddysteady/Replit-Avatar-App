@@ -111,7 +111,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
       }
 
       // Find the active thread ID from the current route
-      const pathParts = location.pathname.split('/')
+      const pathParts = currentPath.split('/')
       let threadId = null
       
       // Check if we're on a conversation route with a thread ID
