@@ -3,6 +3,7 @@
 // Persona logic reference: docs/stage_1_persona.md
 // See CHANGELOG.md for 2025-06-16 [Changed - presets now stored in state]
 // See CHANGELOG.md for 2025-06-17 [Changed - chip based UI]
+// See CHANGELOG.md for 2025-06-16 [Changed - removable style/topic chips]
 
 import React from 'react'
 import { useForm } from 'react-hook-form'
@@ -218,28 +219,29 @@ export default function PrivacyPersonalityForm({
                         )
                       }}
                       className={cn(
-                        'cursor-pointer',
+                        'cursor-pointer flex items-center',
                         selected && 'bg-[#3A8DFF]',
                       )}
                     >
                       {opt}
-                      {selected && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            form.setValue(
-                              'styleTags',
-                              form
-                                .getValues('styleTags')
-                                .filter((v) => v !== opt),
-                            )
-                          }}
-                          className="ml-1 text-xs"
-                        >
-                          ×
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setStyleOptions((prev) =>
+                            prev.filter((v) => v !== opt),
+                          )
+                          form.setValue(
+                            'styleTags',
+                            form
+                              .getValues('styleTags')
+                              .filter((v) => v !== opt),
+                          )
+                        }}
+                        className="ml-1 text-xs"
+                      >
+                        ×
+                      </button>
                     </Badge>
                   )
                 })}
@@ -304,14 +306,29 @@ export default function PrivacyPersonalityForm({
                         return next
                       })
                     }}
-                    className={cn('cursor-pointer select-none', {
-                      'border-green-600 text-green-600 bg-green-50':
-                        topic.state === 'allowed',
-                      'border-red-600 text-red-600 bg-red-50':
-                        topic.state === 'restricted',
-                    })}
+                    className={cn(
+                      'cursor-pointer select-none flex items-center',
+                      {
+                        'border-green-600 text-green-600 bg-green-50':
+                          topic.state === 'allowed',
+                        'border-red-600 text-red-600 bg-red-50':
+                          topic.state === 'restricted',
+                      },
+                    )}
                   >
                     {topic.label}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setTopics((prev) =>
+                          prev.filter((t) => t.label !== topic.label),
+                        )
+                      }}
+                      className="ml-1 text-xs"
+                    >
+                      ×
+                    </button>
                   </Badge>
                 ))}
                 <Input
