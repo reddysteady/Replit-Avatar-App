@@ -165,6 +165,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       setActiveThreadData({
         ...threadData,
         id: threadId,
+        threadId: threadId, // Explicitly include threadId for header actions
         // Ensure we have sensible defaults for required fields
         participantName: threadData.participantName || 'User',
         source: threadData.source || 'instagram',
@@ -177,6 +178,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       if (selectedThread) {
         setActiveThreadData({
           ...selectedThread,
+          threadId: threadId, // Explicitly include threadId for header actions
           // Ensure we have sensible defaults for required fields
           participantName: selectedThread.participantName || 'User',
           source: selectedThread.source || 'instagram',
