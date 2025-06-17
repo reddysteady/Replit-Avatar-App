@@ -175,7 +175,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         participantName: threadData.participantName || 'User',
         source: threadData.source || 'instagram',
       })
-    } else if (threads) {
+    } else if (threads && Array.isArray(threads)) {
       // Find thread data in the threads list
       const selectedThread = (threads as any[]).find(
         (t: any) => t.id === threadId,
@@ -232,7 +232,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
 
   // Keep active thread data in sync when thread list updates
   useEffect(() => {
-    if (!activeThreadId || !Array.isArray(threads)) return
+    if (!activeThreadId || !threads || !Array.isArray(threads)) return
     const t = (threads as any[]).find((thr: any) => thr.id === activeThreadId)
     if (t) {
       setActiveThreadData({
@@ -276,8 +276,11 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       threads.length > 0
     ) {
       setTimeout(() => {
-        setActiveThreadId(threads[0]?.id)
-        setHasSelectedThread(true)
+        const firstThread = threads[0]
+        if (firstThread?.id) {
+          setActiveThreadId(firstThread.id)
+          setHasSelectedThread(true)
+        }
       }, 0)
     }
 
