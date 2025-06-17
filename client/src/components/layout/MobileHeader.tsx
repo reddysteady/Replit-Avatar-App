@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { Input } from '@/components/ui/input'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import {
   Menu,
   MessageSquare,
@@ -72,7 +76,7 @@ const MobileHeader = () => {
 
   const handleSendCustomMessage = () => {
     if (!customMessage.trim()) return
-    
+
     // For now, just show a toast - you'll need to implement the actual logic
     toast({
       title: 'Custom Message',
@@ -113,7 +117,7 @@ const MobileHeader = () => {
           >
             Insights
           </NavItem>
-          
+
           {/* Collapsible Settings Section */}
           <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
             <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-base font-medium text-neutral-700 hover:text-neutral-900">
@@ -180,6 +184,29 @@ const MobileHeader = () => {
           >
             Testing Tools
           </NavItem>
+
+          {/* Custom Message Section */}
+          <div className="mt-6">
+            <Separator className="my-3" />
+            <div className="px-4">
+              <div className="text-sm font-medium text-neutral-900 mb-2">
+                Send Custom Message
+              </div>
+              <Input
+                placeholder="Enter your message..."
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="mb-2"
+              />
+              <Button
+                onClick={handleSendCustomMessage}
+                className="w-full"
+                disabled={!customMessage.trim()}
+              >
+                Send Message
+              </Button>
+            </div>
+          </div>
           <NavItem
             to="/settings/privacy"
             icon={<Lock className="h-5 w-5" />}
@@ -188,29 +215,6 @@ const MobileHeader = () => {
             Privacy Policy
           </NavItem>
         </nav>
-        
-        {/* Custom Message Section */}
-        <div className="mt-6">
-          <Separator className="my-3" />
-          <div className="px-4">
-            <div className="text-sm font-medium text-neutral-900 mb-2">
-              Send Custom Message
-            </div>
-            <Input
-              placeholder="Enter your message..."
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              className="mb-2"
-            />
-            <Button
-              onClick={handleSendCustomMessage}
-              className="w-full"
-              disabled={!customMessage.trim()}
-            >
-              Send Message
-            </Button>
-          </div>
-        </div>
 
         {showThreadActions && (
           <div className="mt-4">
