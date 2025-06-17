@@ -20,7 +20,12 @@ import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { useQueryClient } from '@tanstack/react-query'
 
-const MobileHeader = () => {
+interface MobileHeaderProps {
+  activeThreadId?: number | null
+  onGenerateCustomMessage?: (message: string) => void
+}
+
+const MobileHeader = ({ activeThreadId, onGenerateCustomMessage }: MobileHeaderProps) => {
   const location = useLocation()
   const path = location.pathname
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -73,13 +78,17 @@ const MobileHeader = () => {
   const handleSendCustomMessage = () => {
     if (!customMessage.trim()) return
     
-    // For now, just show a toast - you'll need to implement the actual logic
-    toast({
-      title: 'Custom Message',
-      description: `Message: ${customMessage}`,
-    })
-    setCustomMessage('')
-    setIsSheetOpen(false)
+    if (onGenerateCustomMessage) {
+      onGenerateCustomMessage(customMessage)
+      setCustomMessage('')
+      setIsSheetOpen(false)
+    } else {
+      toast({
+        title: 'No active conversation',
+        description: 'Please select a conversation first',
+        variant: 'destructive',
+      })
+    }
   }
 
   return (
@@ -189,37 +198,71 @@ const MobileHeader = () => {
           </NavItem>
         </nav>
         
-        {/* Custom Message Section */}
-        <div className="mt-6">
-          <Separator className="my-3" />
-          <div className="px-4">
-            <div className="text-sm font-medium text-neutral-900 mb-2">
-              Send Custom Message
+        {/* Only show custom message section when we have an active thread */}
+        {activeThreadId && (
+          <div className="mt-6">
+            <Separator className="my-3" />
+            <div className="px-4">
+              <div className="text-sm font-medium text-neutral-900 mb-2">
+                Send Custom Message
+              </div>
+              <Input
+                placeholder="Enter your message..."
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                className="mb-2"
+              />
+              <Button
+                onClick={handleSendCustomMessage}
+                className="w-full"
+                disabled={!customMessage.trim()}
+              >
+                Send Message
+              </Button>
             </div>
-            <Input
-              placeholder="Enter your message..."
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              className="mb-2"
-            />
-            <Button
-              onClick={handleSendCustomMessage}
-              className="w-full"
-              disabled={!customMessage.trim()}
-            >
-              Send Message
-            </Button>
           </div>
-        </div>
+        )}
 
-        {showThreadActions && (
+        {/* Only show testing tools when we have an active thread */}
+        {activeThreadId && (
           <div className="mt-4">
             <Separator className="my-3" />
             <div className="px-4">
               <div className="text-xs text-neutral-500 uppercase mb-2">
-                Thread Actions
+                Testing Tools
               </div>
-              <button className="block w-full text-left px-0 py-2 text-sm text-neutral-700 hover:text-neutral-900">
+              <button 
+                className="block w-full text-left px-0 py-2 text-sm text-neutral-700 hover:text-neutral-900"
+                onClick={() => {
+                  fetch('/api/test/generate-batch', { method: 'POST' })
+                    .then((res) => {
+                      if (!res.ok) {
+                        return res.text().then((t) => {
+                          throw new Error(`Server error: ${t}`)
+                        })
+                      }
+                      return res.json()
+                    })
+                    .then(() => {
+                      queryClient.invalidateQueries({
+                        queryKey: ['/api/threads'],
+                      })
+                      toast({
+                        title: 'Batch generated',
+                        description: '10 messages created',
+                      })
+                      setIsSheetOpen(false)
+                    })
+                    .catch((err) => {
+                      console.error('Batch error:', err)
+                      toast({
+                        title: 'Error',
+                        description: String(err),
+                        variant: 'destructive',
+                      })
+                    })
+                }}
+              >
                 Generate Batch Messages
               </button>
             </div>
