@@ -97,10 +97,19 @@ const DesktopHeader = ({
   }
 
   const handleSendCustomMessage = async () => {
-    if (!customMessage.trim() || !conversationData?.threadId) {
+    if (!customMessage.trim()) {
       toast({
         title: 'Invalid input',
-        description: 'Please enter a message and ensure a conversation is selected',
+        description: 'Please enter a message',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (!conversationData?.threadId) {
+      toast({
+        title: 'No conversation selected',
+        description: 'Please select a conversation first',
         variant: 'destructive',
       })
       return
@@ -114,7 +123,8 @@ const DesktopHeader = ({
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorText = await response.text()
+        throw new Error(`Failed to send message: ${response.status} ${errorText}`)
       }
 
       toast({
@@ -134,7 +144,7 @@ const DesktopHeader = ({
       console.error('Error sending custom message:', error)
       toast({
         title: 'Error',
-        description: 'Failed to send custom message',
+        description: error instanceof Error ? error.message : 'Failed to send custom message',
         variant: 'destructive',
       })
     }
@@ -345,16 +355,21 @@ const DesktopHeader = ({
                 </div>
                 <div className="ml-7 mt-2">
                   <Input
-                    placeholder="Custom message"
+                    placeholder="Enter your custom message..."
                     value={customMessage}
                     onChange={(e) => setCustomMessage(e.target.value)}
                     className="mb-2 text-sm"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && customMessage.trim() && conversationData?.threadId) {
+                        handleSendCustomMessage()
+                      }
+                    }}
                   />
                   <Button
                     onClick={handleSendCustomMessage}
                     size="sm"
                     className="w-full"
-                    disabled={!customMessage.trim()}
+                    disabled={!customMessage.trim() || !conversationData?.threadId}
                   >
                     Generate
                   </Button>
