@@ -29,7 +29,12 @@ import Sidebar from '@/components/layout/Sidebar'
 function AppLayout() {
   const isMobile = useIsMobile()
   const location = useLocation();
-  const [conversationData, setConversationData] = useState(null);
+  const [conversationData, setConversationData] = useState<{
+    participantName?: string;
+    participantAvatar?: string;
+    platform?: string;
+    onBack?: () => void;
+  } | null>(null);
   const [lastConversationRoute, setLastConversationRoute] = useState('/');
 
   // Track the last conversation route when on conversation pages
@@ -47,7 +52,8 @@ function AppLayout() {
     <div className="h-screen flex overflow-hidden">
       {isMobile && (
         <MobileHeader 
-          conversationData={shouldShowConversationData ? conversationData : null} 
+          conversationData={shouldShowConversationData ? conversationData : null}
+          onBack={conversationData?.onBack}
           lastConversationRoute={lastConversationRoute}
           key={location.pathname} 
         />
