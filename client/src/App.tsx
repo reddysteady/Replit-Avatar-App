@@ -37,13 +37,13 @@ function AppLayout() {
   return (
     <div className="h-screen flex overflow-hidden">
       {isMobile && (
-        <MobileHeader conversation={conversationData} key={location.pathname} />
+        <MobileHeader conversationData={conversationData} key={location.pathname} />
       )}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         <Routes>
-          <Route path="/" element={<ThreadedMessages setConversationData={setConversationData} />} />
-          <Route path="/instagram" element={<ThreadedMessages setConversationData={setConversationData} />} />
+          <Route path="/" element={<ThreadedMessages onConversationDataChange={setConversationData} />} />
+          <Route path="/instagram" element={<ThreadedMessages onConversationDataChange={setConversationData} />} />
           <Route
             path="/youtube"
             element={<Navigate to="/instagram" replace />}
