@@ -1,0 +1,82 @@
+Here’s a quick redesign concept that stays true to our Tailwind + ShadCN component set, the greyscale-with-accent style-guide, and the spec for PrivacyPersonalityForm.tsx, while making the three selector areas faster and less error-prone.
+
+1. “Style Tags” → Token Chips + Presets
+Current	Suggested
+Six individual check-boxes	Preset chip row + “Custom” text field
+
+Why it’s better
+
+At-a-glance state. Filled chips = selected, outlined = unselected. No hunting for scattered check-boxes.
+
+One-tap clear. Each chip has an “×” that appears on hover for quick removal.
+
+Extensible. If creators want an oddball tag (“Zen-like”), they type it, press Enter, and it converts to a chip.
+
+Implementation notes
+
+tsx
+Copy
+Edit
+import { Badge } from "@/components/ui/badge"
+{/* Preset tags */}
+{presetStyleTags.map(t => (
+  <Badge
+    key={t}
+    variant={selected.includes(t) ? "default" : "outline"}
+    onClick={() => toggleTag(t)}
+    className="cursor-pointer rounded-full px-3 py-1 text-sm"
+  >
+    {t}
+  </Badge>
+))}
+{/* Free-form input turns into chips on Enter */}
+<InputTagField placeholder="Add custom tone…" onAdd={addTag} />
+Use electric-blue accent (#3A8DFF) for filled chips, outline-grey by default.
+
+2. “Allowed” & “Restricted Topics” → Dual-column Drag-and-Drop List
+Current	Suggested
+Separate checkbox lists + free-form inputs	One component, two columns with pills you can drag (or click) between “Allowed” and “Restricted”. “Unclassified” items sit in a tray underneath.
+
+Why it’s better
+
+Single source of truth. A topic can’t be both allowed and restricted by accident.
+
+Faster triage. Users can paste/import a comma-separated list and then sort with drag-and-drop.
+
+Visual hierarchy. Accent-green border for Allowed pills; accent-red border for Restricted.
+
+Micro-interactions
+
+Hover → subtle shadow (Brand §5 hover state).
+
+Dragging pill shows ghost + heading highlight.
+
+Empty column gets a dashed outline prompt: “Drop topics here”.
+
+Implementation hints
+
+tsx
+Copy
+Edit
+<DragDropContext onDragEnd={handleMove}>
+  <Droppable droppableId="allowed">
+    {/* map allowedTopics into <Draggable> pills */}
+  </Droppable>
+  <Droppable droppableId="restricted">
+    {/* map restrictedTopics */}
+  </Droppable>
+</DragDropContext>
+Radix-based <DndContext> (or @dnd-kit) keeps bundle size low and is ShadCN-friendly.
+
+3. Bulk-Add & Suggestions
+Beneath the drag-and-drop columns:
+
+Type-ahead input with popular topic suggestions (“travel tips”, “crypto”, etc.).
+
+Paste a comma-delimited list → tokens appear in the “Unclassified” tray.
+
+Small helper text (“Drag each topic into Allowed or Restricted, or leave blank to ignore.”).
+
+4. “Fallback Response” → Inline Preview
+Radio buttons stay, but show the chosen response in a readonly text-area right below for immediate visual feedback.
+If the user selects “Custom”, auto-focus the input and show character count (max 150 chars).
