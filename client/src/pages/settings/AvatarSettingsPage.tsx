@@ -163,7 +163,23 @@ export default function AvatarSettingsPage() {
                   <Textarea
                     value={prompt}
                     readOnly
-                    className="font-mono text-sm mb-2 h-80 overflow-y-auto resize-none"
+                    className="font-mono text-sm mb-2 min-h-80 max-h-[calc(100vh-24rem)] overflow-y-auto resize-none"
+                    style={{
+                      height: 'auto',
+                      minHeight: '20rem',
+                      maxHeight: 'calc(100vh - 24rem)'
+                    }}
+                    ref={(textarea) => {
+                      if (textarea) {
+                        // Reset height to auto to get the scroll height
+                        textarea.style.height = 'auto';
+                        // Set height to scroll height, but respect min/max constraints
+                        const scrollHeight = textarea.scrollHeight;
+                        const minHeight = 320; // 20rem = 320px
+                        const maxHeight = window.innerHeight - 384; // 24rem = 384px
+                        textarea.style.height = `${Math.min(Math.max(scrollHeight, minHeight), maxHeight)}px`;
+                      }
+                    }}
                   />
                   <div className="flex gap-2">
                     <Button
