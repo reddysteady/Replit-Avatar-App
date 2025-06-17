@@ -31,13 +31,14 @@ function AppLayout() {
   const location = useLocation();
   const [conversationData, setConversationData] = useState(null);
 
-  // Determine if we're on a conversation route
-  const isConversationRoute = location.pathname.startsWith('/instagram')
+  // Determine if we're on a conversation route and have active conversation
+  const isConversationRoute = ['/', '/instagram', '/youtube'].includes(location.pathname)
+  const shouldShowConversationData = isConversationRoute && conversationData
 
   return (
     <div className="h-screen flex overflow-hidden">
       {isMobile && (
-        <MobileHeader conversationData={conversationData} key={location.pathname} />
+        <MobileHeader conversationData={shouldShowConversationData ? conversationData : null} key={location.pathname} />
       )}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
