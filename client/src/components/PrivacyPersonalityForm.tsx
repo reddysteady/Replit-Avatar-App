@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import Chip from '@/components/ui/chip'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -225,6 +226,22 @@ export default function PrivacyPersonalityForm({
                   }}
                 />
               </FormControl>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {form.watch('allowedTopics').map((topic) => (
+                  <Chip
+                    key={topic}
+                    onRemove={() => {
+                      const cur = form.getValues('allowedTopics')
+                      form.setValue(
+                        'allowedTopics',
+                        cur.filter((t) => t !== topic),
+                      )
+                    }}
+                  >
+                    {topic}
+                  </Chip>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -271,6 +288,22 @@ export default function PrivacyPersonalityForm({
                   }}
                 />
               </FormControl>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {form.watch('restrictedTopics').map((topic) => (
+                  <Chip
+                    key={topic}
+                    onRemove={() => {
+                      const cur = form.getValues('restrictedTopics')
+                      form.setValue(
+                        'restrictedTopics',
+                        cur.filter((t) => t !== topic),
+                      )
+                    }}
+                  >
+                    {topic}
+                  </Chip>
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
