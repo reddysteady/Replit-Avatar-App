@@ -256,5 +256,3 @@ CHANGLOG.md file.
 - [Codex][Changed] Persona tags use chip-based UI with electric blue selection.
 - [Codex][Changed] Allowed and restricted topics combined into tri-state chips.
 - [Codex][Added] Tests check rendering of new chips.
-[Codex][Changed] MobileHeader moved to App layout with optional back button.
-[Codex][Removed] ThreadedMessages no longer renders its own header.
