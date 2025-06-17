@@ -27,7 +27,6 @@ export default function AvatarSettingsPage() {
   ────────────────────────────────── */
   useEffect(() => {
     fetchPersonaConfig()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /* ────────────────────────────────
@@ -50,7 +49,10 @@ export default function AvatarSettingsPage() {
         }
       } else {
         const errData = await response.json().catch(() => ({}))
-        console.error('Error fetching persona config:', errData.message || 'Unknown error')
+        console.error(
+          'Error fetching persona config:',
+          errData.message || 'Unknown error',
+        )
       }
     } catch (error) {
       console.error('Error fetching persona config:', error)
@@ -81,7 +83,8 @@ export default function AvatarSettingsPage() {
         })
       } else {
         const errData = await response.json().catch(() => ({}))
-        const message = errData.message || 'Failed to save persona configuration'
+        const message =
+          errData.message || 'Failed to save persona configuration'
         toast({
           title: 'Error',
           description: message,

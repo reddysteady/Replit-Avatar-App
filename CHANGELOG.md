@@ -245,10 +245,9 @@ CHANGLOG.md file.
 - [Codex][Fixed] Database status check typing errors.
 - [Codex][Fixed] AvatarSettings shows server error message on save failure.
 - [Codex][Fixed] Database status endpoint typings for type-check.
-
-## 2025-06-17
-
-- [Codex][Added] Chip component displays selected topics in
-  PrivacyPersonalityForm.
 - [Codex][Changed] Allowed and restricted topics now show removable chips below
   inputs.
+- [Codex][Changed] PrivacyPersonalityForm now stores presets in state so saved
+  style tags and topics display after reloading.
+- [Codex][Added] Chip component displays selected topics in
+  PrivacyPersonalityForm.

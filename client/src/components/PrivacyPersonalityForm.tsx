@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
+// See CHANGELOG.md for 2025-06-17 [Changed - presets now stored in state]
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -24,15 +25,33 @@ interface Props {
   isLoading?: boolean
 }
 
-const STYLE_OPTIONS = ['Friendly', 'Professional', 'Sarcastic', 'Humorous']
-const ALLOWED_PRESETS = ['My pets', 'Content creation', 'Travel tips']
-const RESTRICTED_PRESETS = ['Politics', 'Religion', 'Personal relationships']
+const INITIAL_STYLE_OPTIONS = [
+  'Friendly',
+  'Professional',
+  'Sarcastic',
+  'Humorous',
+]
+const INITIAL_ALLOWED_PRESETS = ['My pets', 'Content creation', 'Travel tips']
+const INITIAL_RESTRICTED_PRESETS = [
+  'Politics',
+  'Religion',
+  'Personal relationships',
+]
 
 export default function PrivacyPersonalityForm({
   onSave,
   initialConfig,
   isLoading,
 }: Props) {
+  const [styleOptions, setStyleOptions] = React.useState<string[]>(
+    INITIAL_STYLE_OPTIONS,
+  )
+  const [allowedPresets, setAllowedPresets] = React.useState<string[]>(
+    INITIAL_ALLOWED_PRESETS,
+  )
+  const [restrictedPresets, setRestrictedPresets] = React.useState<string[]>(
+    INITIAL_RESTRICTED_PRESETS,
+  )
   const form = useForm<AvatarPersonaConfig>({
     defaultValues: {
       toneDescription: initialConfig?.toneDescription || '',
@@ -46,6 +65,17 @@ export default function PrivacyPersonalityForm({
   // Update form when initialConfig changes
   React.useEffect(() => {
     if (initialConfig) {
+      setStyleOptions((prev) =>
+        Array.from(new Set([...prev, ...(initialConfig.styleTags || [])])),
+      )
+      setAllowedPresets((prev) =>
+        Array.from(new Set([...prev, ...(initialConfig.allowedTopics || [])])),
+      )
+      setRestrictedPresets((prev) =>
+        Array.from(
+          new Set([...prev, ...(initialConfig.restrictedTopics || [])]),
+        ),
+      )
       form.reset({
         toneDescription: initialConfig.toneDescription || '',
         styleTags: initialConfig.styleTags || [],
@@ -129,7 +159,7 @@ export default function PrivacyPersonalityForm({
             <FormItem>
               <FormLabel>Style Tags</FormLabel>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {STYLE_OPTIONS.map((opt) => (
+                {styleOptions.map((opt) => (
                   <label key={opt} className="flex items-center space-x-2">
                     <Checkbox
                       checked={form.watch('styleTags').includes(opt)}
@@ -161,7 +191,7 @@ export default function PrivacyPersonalityForm({
             <FormItem>
               <FormLabel>Allowed Topics</FormLabel>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {ALLOWED_PRESETS.map((topic) => (
+                {allowedPresets.map((topic) => (
                   <label key={topic} className="flex items-center space-x-2">
                     <Checkbox
                       checked={form.watch('allowedTopics').includes(topic)}
@@ -223,7 +253,7 @@ export default function PrivacyPersonalityForm({
             <FormItem>
               <FormLabel>Restricted Topics</FormLabel>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {RESTRICTED_PRESETS.map((topic) => (
+                {restrictedPresets.map((topic) => (
                   <label key={topic} className="flex items-center space-x-2">
                     <Checkbox
                       checked={form.watch('restrictedTopics').includes(topic)}
