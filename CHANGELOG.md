@@ -249,6 +249,7 @@ CHANGLOG.md file.
   style tags and topics display after reloading.
 - [Codex][Fixed] Clearing persona resets form fields to defaults in
   PrivacyPersonalityForm.
+- [Codex][Changed] Allow removal of style and topic chips via × button.
 
 ## 2025-06-17
 
