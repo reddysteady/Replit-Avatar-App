@@ -30,6 +30,14 @@ function AppLayout() {
   const isMobile = useIsMobile()
   const location = useLocation();
   const [conversationData, setConversationData] = useState(null);
+  const [lastConversationRoute, setLastConversationRoute] = useState('/');
+
+  // Track the last conversation route when on conversation pages
+  useEffect(() => {
+    if (['/', '/instagram', '/youtube'].includes(location.pathname)) {
+      setLastConversationRoute(location.pathname);
+    }
+  }, [location.pathname]);
 
   // Determine if we're on a conversation route and have active conversation
   const isConversationRoute = ['/', '/instagram', '/youtube'].includes(location.pathname)
@@ -38,7 +46,11 @@ function AppLayout() {
   return (
     <div className="h-screen flex overflow-hidden">
       {isMobile && (
-        <MobileHeader conversationData={shouldShowConversationData ? conversationData : null} key={location.pathname} />
+        <MobileHeader 
+          conversationData={shouldShowConversationData ? conversationData : null} 
+          lastConversationRoute={lastConversationRoute}
+          key={location.pathname} 
+        />
       )}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">

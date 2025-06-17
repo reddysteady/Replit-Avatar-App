@@ -35,9 +35,10 @@ interface MobileHeaderProps {
   }
   onBack?: () => void
   onDeleteThread?: () => void
+  lastConversationRoute?: string
 }
 
-const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeaderProps) => {
+const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversationRoute }: MobileHeaderProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const path = location.pathname
@@ -46,7 +47,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  
+
   const isConversationView = ['/', '/instagram', '/youtube'].includes(path)
   const showBack = onBack || (
     typeof window !== 'undefined' &&
@@ -119,7 +120,18 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
     if (onBack) {
       onBack()
     } else {
-      navigate(-1)
+      // If we're on a conversation screen, go back to threads list
+      if (isConversationView) {
+        navigate('/')
+      } else {
+        // If we're on any other page, go back to the last conversation route if we have one and conversation data
+        // Otherwise go to threads list
+        if (conversationData && lastConversationRoute) {
+          navigate(lastConversationRoute)
+        } else {
+          navigate('/')
+        }
+      }
     }
   }
 
@@ -137,7 +149,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
                 <ArrowLeft className="h-6 w-6" />
               </button>
             )}
-            
+
             {conversationData ? (
               <div className="flex items-center min-w-0 flex-1">
                 {conversationData.participantAvatar && (
@@ -164,7 +176,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
               <h1 className="text-lg font-semibold text-neutral-900">Avatar</h1>
             )}
           </div>
-          
+
           <SheetTrigger asChild>
             <Button
               variant="ghost"
@@ -274,7 +286,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
               <div className="text-xs text-neutral-500 uppercase tracking-wider mb-3">
                 Thread Actions
               </div>
-              
+
               {/* Delete Thread */}
               <button 
                 onClick={handleDeleteThread}
@@ -283,7 +295,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
                 <Trash2 className="h-4 w-4 mr-3" />
                 Delete Thread
               </button>
-              
+
               {/* Generate Custom Message */}
               <div className="mt-3">
                 <div className="flex items-center py-2 text-sm text-neutral-600">
@@ -316,3 +328,4 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
 }
 
 export default MobileHeader
+`
