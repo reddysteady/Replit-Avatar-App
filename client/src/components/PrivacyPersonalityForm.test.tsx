@@ -10,4 +10,12 @@ describe('PrivacyPersonalityForm', () => {
     )
     expect(html).toContain('Save Preferences')
   })
+
+  it('shows empty fields when initialConfig is null', () => {
+    const html = renderToStaticMarkup(
+      <PrivacyPersonalityForm onSave={() => {}} initialConfig={null} />,
+    )
+    expect(html).toContain('textarea')
+    expect(html).toContain('value=""')
+  })
 })

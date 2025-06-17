@@ -246,3 +246,7 @@ CHANGLOG.md file.
 - [Codex][Fixed] AvatarSettings shows server error message on save failure.
 - [Codex][Fixed] Database status endpoint typings for type-check.
 
+## 2025-06-17
+
+- [Codex][Fixed] Clearing persona resets form fields to defaults in
+  PrivacyPersonalityForm.

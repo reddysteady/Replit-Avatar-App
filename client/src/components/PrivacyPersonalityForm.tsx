@@ -1,5 +1,6 @@
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
+// Persona logic reference: docs/stage_1_persona.md
 import React from 'react'
 import { useForm } from 'react-hook-form'
 import {
@@ -52,6 +53,15 @@ export default function PrivacyPersonalityForm({
         restrictedTopics: initialConfig.restrictedTopics || [],
         fallbackReply: initialConfig.fallbackReply || '',
       })
+    } else {
+      // Reset to empty defaults when persona is cleared
+      form.reset({
+        toneDescription: '',
+        styleTags: [],
+        allowedTopics: [],
+        restrictedTopics: [],
+        fallbackReply: '',
+      })
     }
   }, [initialConfig, form])
 
@@ -61,14 +71,20 @@ export default function PrivacyPersonalityForm({
       ...data,
       toneDescription: data.toneDescription?.trim() || '',
       styleTags: Array.isArray(data.styleTags) ? data.styleTags : [],
-      allowedTopics: Array.isArray(data.allowedTopics) ? data.allowedTopics.filter(Boolean) : [],
-      restrictedTopics: Array.isArray(data.restrictedTopics) ? data.restrictedTopics.filter(Boolean) : [],
-      fallbackReply: data.fallbackReply?.trim() || ''
+      allowedTopics: Array.isArray(data.allowedTopics)
+        ? data.allowedTopics.filter(Boolean)
+        : [],
+      restrictedTopics: Array.isArray(data.restrictedTopics)
+        ? data.restrictedTopics.filter(Boolean)
+        : [],
+      fallbackReply: data.fallbackReply?.trim() || '',
     }
 
     // Additional validation
     if (!cleanedData.toneDescription) {
-      form.setError('toneDescription', { message: 'Tone description is required' })
+      form.setError('toneDescription', {
+        message: 'Tone description is required',
+      })
       return
     }
 
@@ -77,8 +93,14 @@ export default function PrivacyPersonalityForm({
       return
     }
 
-    if (!cleanedData.fallbackReply || cleanedData.fallbackReply.trim() === '' || cleanedData.fallbackReply === 'custom') {
-      form.setError('fallbackReply', { message: 'Please provide a fallback reply' })
+    if (
+      !cleanedData.fallbackReply ||
+      cleanedData.fallbackReply.trim() === '' ||
+      cleanedData.fallbackReply === 'custom'
+    ) {
+      form.setError('fallbackReply', {
+        message: 'Please provide a fallback reply',
+      })
       return
     }
 
@@ -124,7 +146,9 @@ export default function PrivacyPersonalityForm({
                         const cur = form.getValues('styleTags')
                         form.setValue(
                           'styleTags',
-                          checked ? [...cur, opt] : cur.filter((v) => v !== opt),
+                          checked
+                            ? [...cur, opt]
+                            : cur.filter((v) => v !== opt),
                         )
                       }}
                     />
@@ -256,18 +280,26 @@ export default function PrivacyPersonalityForm({
                     <RadioGroupItem value="custom" />
                     <Input
                       placeholder="Custom response"
-                      value={field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!" ? "" : field.value}
+                      value={
+                        field.value === 'Sorry, I keep that private.' ||
+                        field.value === "Let's chat about something else!"
+                          ? ''
+                          : field.value
+                      }
                       onChange={(e) => {
                         const customValue = e.target.value
                         if (customValue.trim()) {
                           field.onChange(customValue)
                         } else {
-                          field.onChange("custom")
+                          field.onChange('custom')
                         }
                       }}
                       onFocus={() => {
-                        if (field.value === "Sorry, I keep that private." || field.value === "Let's chat about something else!") {
-                          field.onChange("")
+                        if (
+                          field.value === 'Sorry, I keep that private.' ||
+                          field.value === "Let's chat about something else!"
+                        ) {
+                          field.onChange('')
                         }
                       }}
                     />
