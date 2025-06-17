@@ -52,7 +52,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
     typeof window !== 'undefined' &&
     window.history.length > 1 &&
     !isConversationView
-  )
+  ) || (isConversationView && conversationData)
 
   const NavItem = ({
     to,
@@ -98,6 +98,8 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
   const handleSendCustomMessage = () => {
     if (!customMessage.trim()) return
 
+    // Get the current active thread ID from the URL or context
+    // For now, we'll show a placeholder message
     toast({
       title: 'Custom Message',
       description: `Message: ${customMessage}`,
@@ -136,7 +138,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
               </button>
             )}
             
-            {isConversationView && conversationData ? (
+            {conversationData ? (
               <div className="flex items-center min-w-0 flex-1">
                 {conversationData.participantAvatar && (
                   <img
@@ -146,14 +148,16 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread }: MobileHeader
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg font-semibold text-neutral-900 truncate">
-                    {conversationData.participantName || 'Conversation'}
-                  </h1>
-                  {conversationData.platform && (
-                    <p className="text-sm text-neutral-500 capitalize">
-                      {conversationData.platform}
-                    </p>
-                  )}
+                  <div className="flex items-center">
+                    <h1 className="text-lg font-semibold text-neutral-900 truncate mr-2">
+                      {conversationData.participantName || 'Conversation'}
+                    </h1>
+                    {conversationData.platform && (
+                      <span className="px-2 py-0.5 text-xs rounded bg-gray-200 text-gray-700 capitalize">
+                        {conversationData.platform}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (

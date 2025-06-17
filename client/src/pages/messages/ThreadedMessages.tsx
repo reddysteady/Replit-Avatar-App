@@ -58,7 +58,11 @@ import ChatHeader from '@/components/layout/ChatHeader'
 
 import { ThreadType, Settings } from '@shared/schema'
 
-const ThreadedMessages: React.FC = () => {
+interface ThreadedMessagesProps {
+  onConversationDataChange?: (data: { participantName?: string; participantAvatar?: string; platform?: string } | null) => void
+}
+
+const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({ onConversationDataChange }) => {
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null)
   const [hasSelectedThread, setHasSelectedThread] = useState(false)
   const [activeTab, setActiveTab] = useState<
@@ -125,13 +129,29 @@ const ThreadedMessages: React.FC = () => {
     if (isMobile) {
       if (activeThreadId && activeThreadData) {
         setShowThreadList(false)
+        // Pass conversation data to parent for MobileHeader
+        if (onConversationDataChange) {
+          onConversationDataChange({
+            participantName: activeThreadData.participantName,
+            participantAvatar: activeThreadData.participantAvatar,  
+            platform: activeThreadData.source
+          })
+        }
       } else {
         setShowThreadList(true)
+        // Clear conversation data when returning to thread list
+        if (onConversationDataChange) {
+          onConversationDataChange(null)
+        }
       }
     } else {
       setShowThreadList(true)
+      // Clear conversation data on desktop
+      if (onConversationDataChange) {
+        onConversationDataChange(null)
+      }
     }
-  }, [isMobile, activeThreadId, activeThreadData])
+  }, [isMobile, activeThreadId, activeThreadData, onConversationDataChange])
 
   // Handle thread selection
   const handleThreadSelect = (threadId: number, threadData: any = null) => {
@@ -249,32 +269,19 @@ const ThreadedMessages: React.FC = () => {
               />
             </div>
           ) : (
-            <>
-              {activeThreadData && (
-                <ChatHeader
-                  name={activeThreadData.participantName}
-                  avatarUrl={activeThreadData.participantAvatar}
-                  platform={activeThreadData.source}
-                  onBack={() => setShowThreadList(true)}
-                  onGenerateCustomMessage={(m) =>
-                    handleGenerateCustomMessage(m)
-                  }
+            <div className="flex-1 overflow-auto">
+              {activeThreadId && (
+                <ConversationThread
+                  threadId={activeThreadId}
+                  threadData={activeThreadData}
+                  showBackButton={false}
+                  onDeleted={() => {
+                    setActiveThreadId(null)
+                    setActiveThreadData(null)
+                  }}
                 />
               )}
-              <div className="flex-1 overflow-auto">
-                {activeThreadId && (
-                  <ConversationThread
-                    threadId={activeThreadId}
-                    threadData={activeThreadData}
-                    showBackButton={false}
-                    onDeleted={() => {
-                      setActiveThreadId(null)
-                      setActiveThreadData(null)
-                    }}
-                  />
-                )}
-              </div>
-            </>
+            </div>
           )}
         </div>
       )

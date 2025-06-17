@@ -1,10 +1,5 @@
-// See CHANGELOG.md for 2025-06-17 [Changed - global MobileHeader]
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { queryClient } from './lib/queryClient'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
@@ -33,14 +28,22 @@ import Sidebar from '@/components/layout/Sidebar'
 
 function AppLayout() {
   const isMobile = useIsMobile()
+  const location = useLocation();
+  const [conversationData, setConversationData] = useState(null);
+
+  // Determine if we're on a conversation route
+  const isConversationRoute = location.pathname.startsWith('/instagram')
+
   return (
     <div className="h-screen flex overflow-hidden">
-      {isMobile && <MobileHeader />}
+      {isMobile && (
+        <MobileHeader conversation={conversationData} key={location.pathname} />
+      )}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         <Routes>
-          <Route path="/" element={<ThreadedMessages />} />
-          <Route path="/instagram" element={<ThreadedMessages />} />
+          <Route path="/" element={<ThreadedMessages setConversationData={setConversationData} />} />
+          <Route path="/instagram" element={<ThreadedMessages setConversationData={setConversationData} />} />
           <Route
             path="/youtube"
             element={<Navigate to="/instagram" replace />}
