@@ -1,4 +1,4 @@
-// See CHANGELOG.md for 2025-06-12 [Changed - remove MobileHeader]
+// See CHANGELOG.md for 2025-06-17 [Changed - global MobileHeader]
 import {
   BrowserRouter as Router,
   Routes,
@@ -10,6 +10,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ThemeProvider } from '@/components/ui/theme-provider'
+import { useIsMobile } from '@/hooks/use-mobile'
+import MobileHeader from '@/components/layout/MobileHeader'
 
 import NotFound from '@/pages/not-found'
 import Instagram from '@/pages/instagram/Instagram'
@@ -30,8 +32,10 @@ import APIKeysPage from '@/pages/settings/APIKeysPage'
 import Sidebar from '@/components/layout/Sidebar'
 
 function AppLayout() {
+  const isMobile = useIsMobile()
   return (
     <div className="h-screen flex overflow-hidden">
+      {isMobile && <MobileHeader />}
       <Sidebar />
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         <Routes>
@@ -47,7 +51,10 @@ function AppLayout() {
           <Route path="/settings/persona" element={<AvatarSettingsPage />} />
           <Route path="/settings/ai" element={<AISettingsPage />} />
           <Route path="/settings/automation" element={<AutomationPage />} />
-          <Route path="/settings/notifications" element={<NotificationSettings />} />
+          <Route
+            path="/settings/notifications"
+            element={<NotificationSettings />}
+          />
           <Route path="/settings/api" element={<APIKeysPage />} />
           <Route path="/settings/testing-tools" element={<Testing />} />
           <Route path="/settings/privacy" element={<Privacy />} />
