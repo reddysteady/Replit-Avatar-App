@@ -163,7 +163,7 @@ export default function AvatarSettingsPage() {
                   <Textarea
                     value={prompt}
                     readOnly
-                    className="font-mono text-sm mb-2 max-h-60 overflow-y-auto"
+                    className="font-mono text-sm mb-2 h-80 overflow-y-auto resize-none"
                   />
                   <div className="flex gap-2">
                     <Button
