@@ -47,6 +47,7 @@ const MobileHeader = ({ conversationData, onBack, onDeleteThread, lastConversati
   const [customMessage, setCustomMessage] = useState('')
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
+  const path = location.pathname
   const isConversationView = ['/', '/instagram', '/youtube'].includes(path)
   const showBack = onBack || (
     typeof window !== 'undefined' &&
