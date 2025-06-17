@@ -328,7 +328,7 @@ const DesktopHeader = ({
           </NavItem>
         </nav>
 
-        {isConversationView && (
+        {isConversationView && conversationData?.threadId && (
           <div className="mt-4">
             <Separator className="my-3" />
             <div className="px-4">
