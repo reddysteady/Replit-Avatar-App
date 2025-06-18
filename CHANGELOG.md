@@ -261,3 +261,7 @@ CHANGLOG.md file.
 [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
 [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
 [Codex][Removed] Deprecated refresh tools from ThreadedMessages.
+
+## 2025-06-19
+
+- [Codex][Schema] content_items has new embedding pgvector column.
