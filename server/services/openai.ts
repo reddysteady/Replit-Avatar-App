@@ -521,7 +521,23 @@ Generate ONE opening question in this style:`
     if (personaMode === 'guidance') {
       systemPrompt = `You are an AI assistant helping a content creator configure their AI avatar's personality. Your goal is to extract specific configuration data through natural conversation.
 
-CRITICAL: Always respond with valid JSON only. Do not include any text outside the JSON structure.
+CRITICAL: Always respond with valid JSON in this exact format:
+{
+  "response": "your conversational response text here",
+  "extractedData": {
+    "toneDescription": "extracted tone if found",
+    "styleTags": ["array", "of", "style", "tags"],
+    "allowedTopics": ["topics", "they", "want", "to", "discuss"],
+    "restrictedTopics": ["topics", "to", "avoid"],
+    "fallbackReply": "what to say for restricted topics",
+    "avatarObjective": ["their", "main", "goals"],
+    "audienceDescription": "description of their audience"
+  },
+  "isComplete": false,
+  "isFinished": false
+}
+
+Only include fields in extractedData if you have confident information. Use empty arrays [] for array fields if no data found.
 
 Current conversation context:
 - Message count: ${messages.length}
@@ -592,7 +608,23 @@ ${!currentConfig.fallbackReply ? '- How they prefer to handle sensitive topics\n
 ${!currentConfig.avatarObjective?.length ? '- Their main goals and objectives\n' : ''}
 ${!currentConfig.audienceDescription ? '- More details about their target audience\n' : ''}
 
-CRITICAL: Always respond with valid JSON only. Do not include any text outside the JSON structure.
+CRITICAL: Always respond with valid JSON in this exact format:
+{
+  "response": "your response in the creator's voice",
+  "extractedData": {
+    "toneDescription": "more details about tone if found",
+    "styleTags": ["additional", "style", "characteristics"],
+    "allowedTopics": ["more", "topics", "discovered"],
+    "restrictedTopics": ["topics", "to", "avoid"],
+    "fallbackReply": "preferred way to handle sensitive topics",
+    "avatarObjective": ["clarified", "goals"],
+    "audienceDescription": "refined audience description"
+  },
+  "isComplete": false,
+  "isFinished": false
+}
+
+Only include fields in extractedData if you discovered NEW or REFINED information. Use empty arrays [] for array fields if no new data.
 
 BEHAVIOR RULES:
 - Speak in first person as the creator ("I", "my audience", "when I...")
@@ -651,35 +683,76 @@ ${JSON.stringify(currentConfig, null, 2)}`
         }
       }
 
-      // Ensure the response has the required structure
-      if (!result.response || typeof result.response !== 'string') {
-        result.response = "Great! Tell me more about what you'd like your avatar to focus on."
+      // Handle different response formats from OpenAI
+      let extractedData = {}
+      let responseText = ""
+      
+      // Check if result has the expected structure (response + extractedData)
+      if (result.response && result.extractedData) {
+        responseText = result.response
+        extractedData = result.extractedData
+      } 
+      // If result only contains configuration data (direct extraction)
+      else if (result.toneDescription !== undefined || result.styleTags !== undefined || 
+               result.allowedTopics !== undefined || result.restrictedTopics !== undefined ||
+               result.fallbackReply !== undefined || result.avatarObjective !== undefined ||
+               result.audienceDescription !== undefined) {
+        // This is extracted configuration data, we need to generate a response
+        extractedData = result
+        
+        // Generate appropriate response based on what we extracted and persona mode
+        if (personaMode === 'guidance') {
+          if (fieldsCollected < 2) {
+            responseText = "That's great insight! Tell me more about your typical communication style - are you more casual and conversational, or professional and informative?"
+          } else if (fieldsCollected < 4) {
+            responseText = "Perfect! I'm getting a good sense of your style. What topics do you love discussing with your audience most?"
+          } else {
+            responseText = "Excellent! I'm capturing your personality well. What topics should I avoid or handle carefully when representing you?"
+          }
+        } else {
+          // In persona preview mode, generate response in their voice
+          const tone = extractedData.toneDescription || currentConfig.toneDescription || 'friendly'
+          if (fieldsCollected >= 4) {
+            responseText = "I'm really starting to get your vibe! What else should I know about how you like to connect with your audience?"
+          } else {
+            responseText = "This is coming together nicely! Tell me more about the topics you're passionate about sharing."
+          }
+        }
+      }
+      // Fallback if we can't parse the structure
+      else {
+        console.warn('[PERSONALITY-DEBUG] Unexpected response structure:', result)
+        responseText = "Great! Tell me more about what you'd like your avatar to focus on."
+        extractedData = {}
       }
 
-      if (!result.extractedData || typeof result.extractedData !== 'object') {
-        result.extractedData = {}
-      }
-
-      if (typeof result.isComplete !== 'boolean') {
-        result.isComplete = false
-      }
+      // Clean up and merge extracted data
+      const cleanExtractedData = {}
+      Object.keys(extractedData).forEach(key => {
+        if (extractedData[key] !== null && extractedData[key] !== undefined && extractedData[key] !== '') {
+          cleanExtractedData[key] = extractedData[key]
+        }
+      })
 
       const finalResult = {
-        response: result.response,
-        extractedData: result.extractedData,
+        response: responseText,
+        extractedData: cleanExtractedData,
         personaMode: personaMode,
         isComplete: isComplete,
         isFinished: result.isFinished || messages.length > 12,
-        confidenceScore: fieldsCollected / 7,
+        confidenceScore: (fieldsCollected + Object.keys(cleanExtractedData).length) / 7,
         transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined
       }
       
       console.log('[PERSONALITY-DEBUG] Final result:', {
         responseLength: finalResult.response.length,
         extractedDataKeys: Object.keys(finalResult.extractedData),
+        extractedDataValues: finalResult.extractedData,
         personaMode: finalResult.personaMode,
         isComplete: finalResult.isComplete,
-        isFinished: finalResult.isFinished
+        isFinished: finalResult.isFinished,
+        fieldsCollectedBefore: fieldsCollected,
+        newFieldsFound: Object.keys(cleanExtractedData).length
       })
       
       return finalResult

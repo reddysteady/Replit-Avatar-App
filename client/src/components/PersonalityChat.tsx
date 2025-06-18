@@ -169,6 +169,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       setMessages(prev => [...prev, aiMessage])
+      
+      // Debug log for configuration updates
+      console.log('[PERSONALITY-FRONTEND] Merging config:', {
+        previousConfig: extractedConfig,
+        newData: aiResponse.extractedData,
+        mergedConfig: { ...extractedConfig, ...aiResponse.extractedData }
+      })
+      
       setExtractedConfig(prev => ({ ...prev, ...aiResponse.extractedData }))
       setIsComplete(aiResponse.isComplete)
       setIsFinished(aiResponse.isFinished || false)
