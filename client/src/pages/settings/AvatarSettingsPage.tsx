@@ -192,7 +192,6 @@ export default function AvatarSettingsPage() {
       <Tabs defaultValue="setup" className="space-y-6">
         <TabsList>
           <TabsTrigger value="setup">Setup</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="advanced">Advanced</TabsTrigger>
         </TabsList>
 
@@ -262,6 +261,21 @@ export default function AvatarSettingsPage() {
                         </AlertDescription>
                       </Alert>
                     )}
+                    
+                    {/* Restart AI Chat Button */}
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSetupMode('chat')
+                          setHasCompletedChat(false)
+                        }}
+                        className="w-full flex items-center gap-2"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        Restart AI Chat
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -269,46 +283,7 @@ export default function AvatarSettingsPage() {
           </ResizablePanelGroup>
         </TabsContent>
 
-        <TabsContent value="preview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Prompt</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {systemPrompt ? (
-                <div className="relative">
-                  <Textarea
-                    readOnly
-                    value={systemPrompt}
-                    className="resize-none"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={() => {
-                      navigator.clipboard.writeText(systemPrompt)
-                      toast({
-                        title: 'Copied!',
-                        description: 'System prompt copied to clipboard.',
-                      })
-                    }}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    No prompt generated yet. Please configure your persona
-                    settings.
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
         <TabsContent value="advanced">
           <div className="flex justify-between">
