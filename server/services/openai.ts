@@ -491,6 +491,14 @@ Respond with valid JSON in this exact format:
 }`
 
     try {
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] Personality extraction request:', {
+          messageCount: messages.length,
+          currentConfigKeys: Object.keys(currentConfig),
+          fieldsCollected
+        })
+      }
+
       const response = await client.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -503,15 +511,20 @@ Respond with valid JSON in this exact format:
 
       const content = response.choices[0]?.message?.content || '{}'
       
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] OpenAI raw response:', content)
+      }
+      
       // Additional validation to ensure we have valid JSON
       let result
       try {
         result = JSON.parse(content)
       } catch (parseError) {
-        log('JSON parse error, content was:', content)
+        console.error('JSON parse error, content was:', content)
+        log('Personality extraction JSON parse failed')
         // Extract any meaningful content and create a valid response
         return {
-          response: "I want to make sure I understand you correctly. Could you tell me more about your communication style and goals?",
+          response: "Let me ask this more directly - are you looking to be more casual and friendly, or professional and informative with your audience?",
           extractedData: {},
           isComplete: false
         }
@@ -531,10 +544,29 @@ Respond with valid JSON in this exact format:
       }
 
       return result
-    } catch (error) {
-      log('Error extracting personality:', error)
+    } catch (error: any) {
+      console.error('Error extracting personality:', error)
+      log('Personality extraction failed:', error.message)
+      
+      // Handle specific error types
+      if (error.status === 401 || error.message?.includes('401')) {
+        return {
+          response: "I'm having trouble with my AI connection. Let's try a simple question - what's your main goal: building community, educating people, or entertaining your audience?",
+          extractedData: {},
+          isComplete: false
+        }
+      }
+      
+      if (error.status === 429 || error.message?.includes('429')) {
+        return {
+          response: "I need to slow down a bit. While I reset, tell me - how would you describe your communication style in one word?",
+          extractedData: {},
+          isComplete: false
+        }
+      }
+      
       return {
-        response: "Let me ask this differently - what would you say is your main goal with your audience? Are you trying to build community, educate, entertain, or something else?",
+        response: "Let me try a different approach - what's the most important thing you want your avatar to accomplish with your audience?",
         extractedData: {},
         isComplete: false
       }

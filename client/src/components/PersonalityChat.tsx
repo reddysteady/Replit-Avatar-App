@@ -76,9 +76,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         })
       })
 
-      if (!response.ok) throw new Error('Failed to process message')
-
       const data = await response.json()
+      
+      if (!response.ok) {
+        console.error('API Error:', data)
+        throw new Error(data.error || 'Failed to process message')
+      }
 
       const assistantMessage: ChatMessage = {
         role: 'assistant',
@@ -103,11 +106,17 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         setCompletedFields(newCompleted)
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing message:', error)
+      
+      // Use the server's error response if available
+      const errorMessage = error.message?.includes('Failed to process message') 
+        ? "I'm experiencing some technical issues. Let's try this: what's your main goal - are you trying to build community, educate, or entertain your audience?"
+        : "Let me try a different question - how would you describe your communication style? Are you more casual and fun, or professional and structured?"
+      
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Sorry, I had trouble processing that. Could you try rephrasing?",
+        content: errorMessage,
         timestamp: new Date()
       }])
     } finally {

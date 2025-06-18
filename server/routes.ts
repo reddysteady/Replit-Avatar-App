@@ -1705,6 +1705,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
+  app.post('/api/ai/personality-extract', async (req, res) => {
+    try {
+      const { messages, currentConfig } = req.body
+      
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' })
+      }
+
+      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig || {})
+      res.json(result)
+    } catch (error: any) {
+      console.error('Personality extraction error:', error)
+      res.status(500).json({ 
+        error: 'Failed to process personality extraction',
+        response: "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
+        extractedData: {},
+        isComplete: false
+      })
+    }
+  })
+
   app.get('/api/persona', async (_req, res) => {
     const settings = await storage.getSettings(1)
     res.json({
