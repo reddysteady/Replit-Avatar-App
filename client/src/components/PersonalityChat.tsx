@@ -1,12 +1,12 @@
+
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { MessageCircle, Send, Sparkles, User, Bot, ArrowRight, SkipForward } from 'lucide-react'
+import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 
@@ -21,6 +21,7 @@ interface ChatMessage {
   content: string
   timestamp: Date
   personaMode?: 'guidance' | 'blended' | 'persona_preview'
+  isSpecial?: boolean
 }
 
 interface PersonalityExtractionResponse {
@@ -30,6 +31,7 @@ interface PersonalityExtractionResponse {
   personaMode?: 'guidance' | 'blended' | 'persona_preview'
   confidenceScore?: number
   transitionMessage?: string
+  isFinished?: boolean
 }
 
 export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatProps) {
@@ -39,17 +41,33 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [isLoading, setIsLoading] = useState(false)
   const [extractedConfig, setExtractedConfig] = useState<Partial<AvatarPersonaConfig>>({})
   const [isComplete, setIsComplete] = useState(false)
+  const [isFinished, setIsFinished] = useState(false)
   const [currentPersonaMode, setCurrentPersonaMode] = useState<'guidance' | 'blended' | 'persona_preview'>('guidance')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const focusInput = () => {
+    if (inputRef.current && !isFinished) {
+      inputRef.current.focus()
+    }
+  }
+
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Focus input on mount and after each message
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      focusInput()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [messages, isFinished])
 
   // Generate dynamic initial message
   useEffect(() => {
@@ -107,7 +125,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   }, [])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return
+    if (!inputValue.trim() || isLoading || isFinished) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -146,12 +164,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         role: 'assistant',
         content: aiResponse.response,
         timestamp: new Date(),
-        personaMode: aiResponse.personaMode || 'guidance'
+        personaMode: aiResponse.personaMode || 'guidance',
+        isSpecial: aiResponse.isComplete && !aiResponse.isFinished
       }
 
       setMessages(prev => [...prev, aiMessage])
       setExtractedConfig(prev => ({ ...prev, ...aiResponse.extractedData }))
       setIsComplete(aiResponse.isComplete)
+      setIsFinished(aiResponse.isFinished || false)
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
       if (aiResponse.transitionMessage) {
@@ -200,10 +220,25 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       case 'blended':
         return <Badge variant="secondary" className="mb-2">🎭 Learning Your Voice</Badge>
       case 'persona_preview':
-        return <Badge variant="default" className="mb-2 bg-purple-100 text-purple-800">🎭 Persona Preview Active</Badge>
+        return (
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="default" className="bg-purple-100 text-purple-800">🎭 Persona Preview Active</Badge>
+            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center relative">
+              <Sparkles className="h-3 w-3 text-purple-600 absolute top-0 right-0 transform translate-x-1 -translate-y-1" />
+            </div>
+          </div>
+        )
       default:
         return null
     }
+  }
+
+  const formatTimestamp = (date: Date) => {
+    return date.toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    })
   }
 
   const progressPercentage = Math.min((Object.keys(extractedConfig).filter(key => 
@@ -214,16 +249,17 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   ).length / 7) * 100, 100)
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <Card className="h-[80vh] flex flex-col">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Sticky Header with Progress */}
+      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+        <div className="container mx-auto p-4 max-w-4xl">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="h-5 w-5" />
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <MessageCircle className="h-6 w-6" />
                 AI Voice Setup Chat
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              </h1>
+              <p className="text-sm text-muted-foreground">
                 Let's discover your unique communication style through conversation
               </p>
             </div>
@@ -234,7 +270,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           </div>
           
           {progressPercentage > 0 && (
-            <div className="mt-4">
+            <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Personality Discovery Progress</span>
                 <span>{Math.round(progressPercentage)}%</span>
@@ -247,96 +283,102 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
               </div>
             </div>
           )}
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardContent className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 pr-4">
+      {/* Chat Container */}
+      <div className="container mx-auto p-6 max-w-4xl">
+        <Card className="flex flex-col" style={{ minHeight: 'calc(100vh - 200px)' }}>
+          <CardContent className="flex-1 flex flex-col p-6">
+            <ScrollArea className="flex-1 pr-4 mb-4" style={{ maxHeight: 'calc(100vh - 350px)' }}>
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center relative ${
+                        message.role === 'user' 
+                          ? 'bg-blue-100 text-blue-600' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                        {message.personaMode === 'persona_preview' && message.role === 'assistant' && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                            <Sparkles className="h-2 w-2 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      <div className={`rounded-lg px-4 py-2 ${
+                        message.role === 'user'
+                          ? 'bg-blue-600 text-white'
+                          : message.isSpecial 
+                            ? 'bg-gradient-to-r from-green-50 to-blue-50 text-gray-900 border border-green-200 shadow-lg animate-pulse'
+                            : 'bg-gray-100 text-gray-900'
+                      }`}>
+                        {getPersonaModeIndicator(message.personaMode)}
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xs mt-1 opacity-70">
+                          {formatTimestamp(message.timestamp)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {(isLoading || isInitializing) && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                    <div className="bg-gray-100 text-gray-900 rounded-lg px-4 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full" />
+                        {isInitializing ? 'Preparing your chat...' : 'Analyzing your style...'}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div ref={messagesEndRef} />
+            </ScrollArea>
+
+            <Separator className="mb-4" />
+
             <div className="space-y-4">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      message.role === 'user' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                    </div>
-                    <div className={`rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}>
-                      {getPersonaModeIndicator(message.personaMode)}
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                      <p className="text-xs mt-1 opacity-70">
-                        {message.timestamp.toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {(isLoading || isInitializing) && (
-                <div className="flex gap-3 justify-start">
-                  <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                    <Bot className="h-4 w-4" />
-                  </div>
-                  <div className="bg-gray-100 text-gray-900 rounded-lg px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full" />
-                      {isInitializing ? 'Preparing your chat...' : 'Analyzing your style...'}
-                    </div>
-                  </div>
+              <div className="flex gap-2">
+                <Input
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={isFinished ? "Chat completed" : "Share your thoughts about your communication style..."}
+                  disabled={isLoading || isFinished}
+                  className={`flex-1 ${isFinished ? 'bg-gray-100 text-gray-500' : ''}`}
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!inputValue.trim() || isLoading || isFinished}
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {isComplete && (
+                <div className="flex gap-2">
+                  <Button onClick={handleComplete} className="flex-1 flex items-center gap-2">
+                    Complete Setup
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  {!isFinished && (
+                    <Button variant="outline" onClick={() => focusInput()}>
+                      Keep Chatting
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
-            <div ref={messagesEndRef} />
-          </ScrollArea>
-
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            {isComplete && (
-              <Alert className="border-green-200 bg-green-50">
-                <Sparkles className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  Perfect! I've captured your personality. Ready to finalize your AI avatar setup?
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-2">
-              <Input
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Share your thoughts about your communication style..."
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSendMessage} 
-                disabled={!inputValue.trim() || isLoading}
-                size="icon"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {isComplete && (
-              <div className="flex gap-2">
-                <Button onClick={handleComplete} className="flex-1 flex items-center gap-2">
-                  Complete Setup
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" onClick={() => setIsComplete(false)}>
-                  Keep Chatting
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

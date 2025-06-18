@@ -434,7 +434,7 @@ export class AIService {
     enablePersonaPreview: boolean = false,
     transitionThreshold: number = 4,
     initialMessage: boolean = false
-  ): Promise<{ response: string; extractedData: any; isComplete: boolean; personaMode?: string; confidenceScore?: number; transitionMessage?: string }> {
+  ): Promise<{ response: string; extractedData: any; isComplete: boolean; personaMode?: string; confidenceScore?: number; transitionMessage?: string; isFinished?: boolean }> {
     const { client, hasKey } = await this.getClient()
     if (!hasKey) {
       return {
@@ -503,43 +503,66 @@ Generate ONE opening question in this style:`
 
     const isNearComplete = fieldsCollected >= 5
 
-    const systemPrompt = `You are guiding a creator through setting up their digital twin avatar. Your job is to collect their tone, content style, and goals through natural conversation.
+    const systemPrompt = `You are an AI assistant helping a content creator configure their AI avatar's personality. Your goal is to extract specific configuration data through natural conversation.
 
-You must extract these 7 key items:
-1. toneDescription - Overall communication style and vibe
-2. styleTags - Array of style descriptors (friendly, professional, sarcastic, etc.)
-3. allowedTopics - Array of topics they're comfortable discussing
-4. restrictedTopics - Array of topics they want to avoid
-5. fallbackReply - How to respond to restricted topics
-6. avatarObjective - Array of goals (Build Community, Educate, Entertain, etc.)
-7. audienceDescription - Who they're talking to
+CRITICAL: Always respond with valid JSON only. Do not include any text outside the JSON structure.
 
-Current extracted data (${fieldsCollected}/${totalFieldsNeeded} fields): ${JSON.stringify(currentConfig)}
+Current conversation context:
+- Message count: ${messages.length}
+- Configuration fields collected: ${fieldsCollected}
+- Completion status: ${isNearComplete ? 'Near complete' : 'In progress'}
 
-CRITICAL: You MUST respond with valid JSON only. No additional text outside the JSON object.
+${messages.length <= 2 ? `
+OPENING APPROACH: Start with an engaging, specific question that gets them talking about their communication style naturally. Make it personal and relatable.
+` : ''}
 
-Instructions:
-- Continue the conversation naturally based on what they've already shared
-- Don't repeat questions about data you've already extracted
-- If they give vague answers, ask follow-ups like "Could you tell me more about that?" or "Can you give me some examples?"
-- When they mention multiple preferences in one response, extract ALL of them into arrays
-- Look for implied information (e.g., if they mention "fitness tips", add "fitness" to allowedTopics)
-- ${isNearComplete ? 'Focus on completing missing fields and preparing to wrap up' : 'Focus on the most important missing fields first'}
-- Set isComplete to true only when you have meaningful data for at least 6 out of 7 fields
+${messages.length > 2 && messages.length <= 5 ? `
+FOLLOW-UP STRATEGY: Build on what they've shared. Ask follow-up questions that dig deeper into their communication patterns, audience, and goals.
+` : ''}
+
+${messages.length > 5 && messages.length <= 12 ? `
+DEEPER EXPLORATION: You have good foundational data. Now explore nuances - their tone variations, specific topics they love/avoid, and communication objectives.
+` : ''}
+
+${messages.length > 12 ? `
+CONVERSATION COMPLETION: You should have comprehensive data by now. If you have solid information for most configuration fields, gracefully end the conversation. If the user keeps giving the same types of answers or you're not getting new insights, politely conclude that you have enough information.
+` : ''}
+
+CONFIGURATION TARGETS to extract:
+1. toneDescription: Their overall communication style and voice
+2. styleTags: Communication characteristics (Casual, Professional, Humorous, etc.)
+3. allowedTopics: Topics they want to discuss
+4. restrictedTopics: Topics they want to avoid
+5. fallbackReply: What to say when asked about restricted topics
+6. avatarObjective: Their main goals (Educate, Entertain, Build Community, etc.)
+7. audienceDescription: Who they're trying to reach
+
+RESPONSE BEHAVIOR:
+- When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality, keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Continue asking questions to gather more detail.
+- When isFinished is true: Say something like "That's wonderful! I think I've gathered enough information to create your persona. Click the Complete Setup button to review your configuration." Stop asking questions.
+- Ask ONE clear question per response (unless finishing)
+- Build on their previous answers naturally
+- Use their own words and examples when possible
+- Keep responses conversational and encouraging
+- Extract data incrementally without being obvious about it
+
+CURRENT CONFIGURATION STATE:
+${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}
 
 Respond with valid JSON in this exact format:
 {
-  "response": "Your conversational response that builds on previous messages",
+  "response": "your conversational response with one clear question (or completion message)",
   "extractedData": {
     "toneDescription": "extracted or refined tone description",
-    "styleTags": ["array", "of", "style", "tags"],
-    "allowedTopics": ["topics", "they", "want", "to", "discuss"],
+    "styleTags": ["extracted", "style", "tags"],
+    "allowedTopics": ["topics", "they", "mentioned"],
     "restrictedTopics": ["topics", "to", "avoid"],
-    "fallbackReply": "how they want to handle restricted topics",
+    "fallbackReply": "their preferred response for restricted topics",
     "avatarObjective": ["their", "main", "goals"],
     "audienceDescription": "description of their target audience"
   },
-  "isComplete": ${isNearComplete ? 'true if you have enough data, false if you need more' : 'false'}
+  "isComplete": ${isNearComplete ? 'true if you have enough data, false if you need more' : 'false'},
+  "isFinished": ${messages.length > 12 ? 'true if conversation should end, false to continue' : 'false'}
 }`
 
     try {
