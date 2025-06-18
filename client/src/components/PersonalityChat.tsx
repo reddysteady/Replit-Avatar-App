@@ -194,7 +194,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         setGlowingMessageId(aiMessage.id);
         setTimeout(() => {
           setGlowingMessageId(null);
-        }, 3000);
+        }, 5000);
       }
 
 
@@ -237,14 +237,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       case 'blended':
         return <Badge variant="secondary" className="mb-2">🎭 Learning Your Voice</Badge>
       case 'persona_preview':
-        return (
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant="default" className="bg-purple-100 text-purple-800">🎭 Persona Preview Active</Badge>
-            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center relative">
-              <Sparkles className="h-3 w-3 text-purple-600 absolute top-0 right-0 transform translate-x-1 -translate-y-1" />
-            </div>
-          </div>
-        )
+        return <Badge variant="default" className="bg-purple-100 text-purple-800 mb-2">🎭 Persona Preview Active</Badge>
       default:
         return null
     }
@@ -305,24 +298,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       {/* Chat Container */}
       <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="flex flex-col" style={{ minHeight: 'calc(100vh - 200px)' }}>
-          <CardContent className="flex-1 flex flex-col p-6">
-            <ScrollArea className="flex-1 pr-4 mb-4" style={{ maxHeight: 'calc(100vh - 350px)' }}>
-              <div className="space-y-4">
+        <Card className="flex flex-col h-[calc(100vh-200px)]">
+          <CardContent className="flex-1 flex flex-col p-6 overflow-hidden">
+            <ScrollArea className="flex-1 pr-4 mb-4">
+              <div className="space-y-4 min-h-0">
                 {messages.map((message) => (
                   <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`flex gap-3 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center relative ${
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         message.role === 'user' 
                           ? 'bg-blue-100 text-blue-600' 
                           : 'bg-gray-100 text-gray-600'
                       }`}>
                         {message.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
-                        {message.personaMode === 'persona_preview' && message.role === 'assistant' && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
-                            <Sparkles className="h-2 w-2 text-white" />
-                          </div>
-                        )}
                       </div>
                       <div className={`rounded-lg px-4 py-2 transition-all duration-300 ${
                         message.role === 'user'
