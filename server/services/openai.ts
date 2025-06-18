@@ -657,12 +657,13 @@ ${JSON.stringify(currentConfig, null, 2)}`
       }
 
       return {
-        response: `${personaMode === 'persona_preview' ? 'your response IN THE CREATOR\'S VOICE with one clear question' : personaMode === 'blended' ? 'your response blending guidance with emerging personality' : 'your conversational response with one clear question'}`,
+        response: result.response,
         extractedData: result.extractedData,
         personaMode: personaMode,
         isComplete: isComplete,
-        isFinished: messages.length > 12,
-        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : null
+        isFinished: result.isFinished || messages.length > 12,
+        confidenceScore: fieldsCollected / 7,
+        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined
       }
     } catch (error: any) {
       console.error('Error extracting personality:', error)
