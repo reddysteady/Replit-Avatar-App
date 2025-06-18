@@ -140,48 +140,66 @@ export default function AvatarSettingsPage() {
      UI
   ────────────────────────────────── */
   return (
-    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none md:pt-0 pt-16 p-4">
-      <h2 className="text-2xl font-bold mb-4">
+    <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none md:pt-6 pt-16 p-4">
+      <h2 className="text-2xl font-bold mb-6">
         Persona: Voice &amp; Boundaries
       </h2>
 
-      <PrivacyPersonalityForm
-        onSave={handlePersonaConfig}
-        initialConfig={currentConfig}
-        isLoading={isLoading}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <PrivacyPersonalityForm
+            onSave={handlePersonaConfig}
+            initialConfig={currentConfig}
+            isLoading={isLoading}
+          />
+        </div>
 
-      {prompt && (
-        <Accordion type="single" collapsible className="mt-6">
-          <AccordionItem value="preview">
-            <AccordionTrigger>Generated Prompt</AccordionTrigger>
-            <AccordionContent>
-              <Textarea
-                value={prompt}
-                readOnly
-                className="font-mono text-sm mb-2 max-h-60 overflow-y-auto"
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText(prompt)}
-                  size="sm"
-                >
-                  Copy to clipboard
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleClearCache}
-                  size="sm"
-                  variant="outline"
-                >
-                  Clear AI Cache
-                </Button>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      )}
+        {prompt && (
+          <div className="border rounded-lg p-6 bg-card">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="preview" className="border-0">
+                <AccordionTrigger>Generated Prompt</AccordionTrigger>
+                <AccordionContent>
+                  <Textarea
+                    value={prompt}
+                    readOnly
+                    className="font-mono text-sm mb-2 resize-none overflow-hidden"
+                    style={{
+                      height: 'auto',
+                      minHeight: '20rem'
+                    }}
+                    ref={(textarea) => {
+                      if (textarea) {
+                        // Reset height to auto to get the scroll height
+                        textarea.style.height = 'auto';
+                        // Set height to match content
+                        textarea.style.height = `${Math.max(textarea.scrollHeight, 320)}px`;
+                      }
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(prompt)}
+                      size="sm"
+                    >
+                      Copy to clipboard
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleClearCache}
+                      size="sm"
+                      variant="outline"
+                    >
+                      Clear AI Cache
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
+      </div>
     </main>
   )
 }

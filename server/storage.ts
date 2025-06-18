@@ -4,6 +4,7 @@
 // See CHANGELOG.md for 2025-06-13 [Added]
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-13 [Added-2]
+// See CHANGELOG.md for 2025-06-19 [Schema]
 import {
   messages,
   users,
@@ -80,7 +81,7 @@ export interface IStorage {
   ): Promise<Analytics>
 
   // Content methods for RAG pipeline
-  createContentItem(contentItem: any): Promise<any>
+  createContentItem(contentItem: InsertContentItem): Promise<ContentItem>
   findSimilarContent(
     userId: number,
     embedding: number[],
@@ -873,7 +874,7 @@ export class MemStorage {
 
   // Content methods
   async createContentItem(
-    contentItem: InsertContentItem & { embedding: number[] },
+    contentItem: InsertContentItem,
   ): Promise<ContentItem> {
     const id = this.contentItems.size + 1
     const item: ContentItem = { ...contentItem, id } as ContentItem

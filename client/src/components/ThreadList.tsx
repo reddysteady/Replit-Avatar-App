@@ -4,7 +4,8 @@
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-15 [Added]
-// See CHANGELOG.md for 2025-06-18 [Changed - added Unread filter]
+// See CHANGELOG.md for 2025-06-17 [Changed - added Unread filter]
+
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast'
 interface ThreadListProps {
   activeThreadId?: number | null
   onSelectThread: (threadId: number, threadData?: any) => void
-  source?: 'all' | 'instagram' | 'youtube' | 'high-intent' | 'unread'
+  source?: 'all' | 'instagram' | 'youtube' | 'high-intent'  | 'unread' | 'archived' | 'requires-escalation'
 }
 
 const ThreadList: React.FC<ThreadListProps> = ({
@@ -32,25 +33,29 @@ const ThreadList: React.FC<ThreadListProps> = ({
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
+  const statusParam = source === 'archived' ? 'archived' : 'active'
+  const sourceParam =
+    source !== 'all' && source !== 'high-intent' && source !== 'archived'
+      ? `&source=${source}`
+      : ''
+  const queryKeyPath = `/api/threads?status=${statusParam}${sourceParam}`
+
   const handleAutoReplyToggle = async (threadId: number, val: boolean) => {
-    queryClient.setQueryData<ThreadType[] | undefined>(
-      ['/api/threads'],
-      (old) =>
-        old?.map((t) => (t.id === threadId ? { ...t, autoReply: val } : t)),
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.map((t) => (t.id === threadId ? { ...t, autoReply: val } : t)),
     )
     try {
       await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, {
         autoReply: val,
       })
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
     }
   }
 
   const handleDeleteThread = async (threadId: number) => {
-    queryClient.setQueryData<ThreadType[] | undefined>(
-      ['/api/threads'],
-      (old) => old?.filter((t) => t.id !== threadId),
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.filter((t) => t.id !== threadId),
     )
     setOpenPopoverId(null)
     try {
@@ -65,13 +70,36 @@ const ThreadList: React.FC<ThreadListProps> = ({
         variant: 'destructive',
       })
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
+    }
+  }
+
+  const handleArchiveThread = async (threadId: number) => {
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.filter((t) => t.id !== threadId),
+    )
+    setOpenPopoverId(null)
+    try {
+      const res = await fetch(`/api/threads/${threadId}/archive`, {
+        method: 'PATCH',
+      })
+      if (!res.ok) {
+        throw new Error('archive failed')
+      }
+      toast({ title: 'Thread archived' })
+    } catch (err) {
+      toast({
+        title: 'Could not archive thread. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
     }
   }
 
   // Fetch threads from API
   const { data: threads, isLoading } = useQuery({
-    queryKey: ['/api/threads'],
+    queryKey: [queryKeyPath],
     staleTime: 10000, // 10 seconds
   })
 
@@ -81,25 +109,41 @@ const ThreadList: React.FC<ThreadListProps> = ({
       ? (threads as ThreadType[])
       : sampleConversations
 
-  // Filter threads by source and search term
-  const filteredThreads = React.useMemo(() => {
-    if (!threadsData) return []
+  // Filter threads by types
+ const filteredThreads = Array.isArray(threadsData)
+  ? threadsData.filter((thread: ThreadType) => {
+      /* ---------- 1. ARCHIVED TAB ---------- */
+      if (source === 'archived') {
+        return thread.status === 'archived';
+      }
+      if (thread.status === 'archived') {
+        return false;                 // hide archived elsewhere
+      }
 
-    return Array.isArray(threadsData)
-      ? threadsData.filter((thread: ThreadType) => {
-          // Filter by source, high intent, or unread status
-          if (source === 'high-intent' && !thread?.isHighIntent) {
-            return false
-          } else if (source === 'unread' && thread.unreadCount <= 0) {
-            return false
-          } else if (
-            source !== 'all' &&
-            source !== 'high-intent' &&
-            source !== 'unread' &&
-            thread?.source !== source
-          ) {
-            return false
-          }
+      /* ---------- 2. REQUIRES-ESCALATION TAB ---------- */
+      if (source === 'requires-escalation') {
+        return !!thread.requiresEscalation;
+      }
+
+      /* ---------- 3. HIGH-INTENT TAB ---------- */
+      if (source === 'high-intent') {
+        return !!thread.isHighIntent;
+      }
+
+      /* ---------- 4. UNREAD TAB ---------- */
+      if (source === 'unread') {
+        return thread.unreadCount > 0;
+      }
+
+      /* ---------- 5. ALL TAB ---------- */
+      if (source === 'all') {
+        return true;                  // every non-archived thread
+      }
+
+      /* ---------- 6. PLATFORM TABS ---------- */
+      return thread.source === source; // instagram, youtube, etc.
+    })
+  : [];
 
           // Filter by search term
           if (searchTerm && thread?.participantName) {
@@ -163,6 +207,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
               openPopoverId={openPopoverId}
               setOpenPopoverId={setOpenPopoverId}
               onDeleteThread={handleDeleteThread}
+              onArchiveThread={handleArchiveThread}
             />
           ))
         )}

@@ -1,4 +1,5 @@
 // See CHANGELOG.md for 2025-06-12 [Added]
+// See CHANGELOG.md for 2025-06-19 [Schema]
 import {
   pgTable,
   text,
@@ -8,6 +9,8 @@ import {
   timestamp,
   jsonb,
   index,
+  // pgvector support
+  vector,
 } from 'drizzle-orm/pg-core'
 import { createInsertSchema } from 'drizzle-zod'
 import { z } from 'zod'
@@ -200,6 +203,7 @@ export const contentItems = pgTable(
     content: text('content').notNull(),
     url: text('url').notNull(),
     engagementScore: integer('engagement_score').notNull(),
+    embedding: vector('embedding', { dimensions: 1536 }).notNull(),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -250,9 +254,7 @@ export type InsertAnalytics = z.infer<typeof insertAnalyticsSchema>
 export type Analytics = typeof analytics.$inferSelect
 
 export type InsertContentItem = z.infer<typeof insertContentItemSchema>
-export type ContentItem = typeof contentItems.$inferSelect & {
-  embedding?: number[]
-}
+export type ContentItem = typeof contentItems.$inferSelect
 export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>
 export type MessageThread = typeof messageThreads.$inferSelect
 
