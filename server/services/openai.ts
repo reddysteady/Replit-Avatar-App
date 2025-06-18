@@ -501,9 +501,20 @@ Generate ONE opening question in this style:`
       }
     }
 
-    const isNearComplete = fieldsCollected >= 5
+    const isNearComplete = fieldsCollected >= 4
+    const isComplete = fieldsCollected >= 4
+    const shouldUsePersonaMode = isComplete && fieldsCollected >= 4
 
-    const systemPrompt = `You are an AI assistant helping a content creator configure their AI avatar's personality. Your goal is to extract specific configuration data through natural conversation.
+    // Determine persona mode
+    let personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'
+    if (shouldUsePersonaMode && currentConfig.toneDescription) {
+      personaMode = fieldsCollected >= 5 ? 'persona_preview' : 'blended'
+    }
+
+    let systemPrompt = ''
+
+    if (personaMode === 'guidance') {
+      systemPrompt = `You are an AI assistant helping a content creator configure their AI avatar's personality. Your goal is to extract specific configuration data through natural conversation.
 
 CRITICAL: Always respond with valid JSON only. Do not include any text outside the JSON structure.
 
@@ -540,6 +551,7 @@ CONFIGURATION TARGETS to extract:
 RESPONSE BEHAVIOR:
 - When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality, keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Continue asking questions to gather more detail.
 - When isFinished is true: Say something like "That's wonderful! I think I've gathered enough information to create your persona. Click the Complete Setup button to review your configuration." Stop asking questions.
+- Set isComplete to true when you have captured basic personality information (tone, style, some topics, objectives)
 - Ask ONE clear question per response (unless finishing)
 - Build on their previous answers naturally
 - Use their own words and examples when possible
@@ -547,23 +559,47 @@ RESPONSE BEHAVIOR:
 - Extract data incrementally without being obvious about it
 
 CURRENT CONFIGURATION STATE:
-${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}
+${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}`
+    } else {
+      // Persona preview mode - blend captured personality with guidance
+      const toneDesc = currentConfig.toneDescription || 'friendly and conversational'
+      const styleInfo = currentConfig.styleTags?.length > 0 ? ` Style: ${currentConfig.styleTags.join(', ')}.` : ''
+      const topicInfo = currentConfig.allowedTopics?.length > 0 ? ` Topics I love: ${currentConfig.allowedTopics.slice(0, 3).join(', ')}.` : ''
+      const audienceInfo = currentConfig.audienceDescription ? ` My audience: ${currentConfig.audienceDescription}.` : ''
 
-Respond with valid JSON in this exact format:
-{
-  "response": "your conversational response with one clear question (or completion message)",
-  "extractedData": {
-    "toneDescription": "extracted or refined tone description",
-    "styleTags": ["extracted", "style", "tags"],
-    "allowedTopics": ["topics", "they", "mentioned"],
-    "restrictedTopics": ["topics", "to", "avoid"],
-    "fallbackReply": "their preferred response for restricted topics",
-    "avatarObjective": ["their", "main", "goals"],
-    "audienceDescription": "description of their target audience"
-  },
-  "isComplete": ${isNearComplete ? 'true if you have enough data, false if you need more' : 'false'},
-  "isFinished": ${messages.length > 12 ? 'true if conversation should end, false to continue' : 'false'}
-}`
+      systemPrompt = `You are demonstrating the creator's captured personality while continuing to gather configuration data. 
+
+PERSONA TO ADOPT:
+- Tone: ${toneDesc}${styleInfo}${topicInfo}${audienceInfo}
+- Speak AS the creator, using their voice and personality
+- ${personaMode === 'persona_preview' ? 'Fully embody their personality while asking questions' : 'Blend their emerging personality with guidance questions'}
+
+DUAL PURPOSE:
+1. DEMONSTRATE their captured personality by speaking in their voice
+2. CONTINUE gathering missing configuration data: ${7 - fieldsCollected} fields remaining
+
+GUIDANCE OBJECTIVES (ask about these while in persona):
+${!currentConfig.toneDescription ? '- More details about their communication tone and style\n' : ''}
+${!currentConfig.styleTags?.length ? '- Specific style characteristics (casual, professional, humorous, etc.)\n' : ''}
+${!currentConfig.allowedTopics?.length ? '- Topics they want to discuss with their audience\n' : ''}
+${!currentConfig.restrictedTopics?.length ? '- Topics they want to avoid or handle carefully\n' : ''}
+${!currentConfig.fallbackReply ? '- How they prefer to handle sensitive topics\n' : ''}
+${!currentConfig.avatarObjective?.length ? '- Their main goals and objectives\n' : ''}
+${!currentConfig.audienceDescription ? '- More details about their target audience\n' : ''}
+
+CRITICAL: Always respond with valid JSON only. Do not include any text outside the JSON structure.
+
+BEHAVIOR RULES:
+- Speak in first person as the creator ("I", "my audience", "when I...")
+- Use their captured tone and style in your response
+- Ask follow-up questions IN THEIR VOICE
+- Show enthusiasm about the persona development using their style
+- Keep the dual purpose: demonstrate personality + gather data
+- ${personaMode === 'persona_preview' ? 'Add confidence and personality to questions' : 'Gradually transition to their voice'}
+
+CURRENT CONFIGURATION STATE:
+${JSON.stringify(currentConfig, null, 2)}`
+    }
 
     try {
       if (process.env.DEBUG_AI) {
@@ -620,7 +656,14 @@ Respond with valid JSON in this exact format:
         result.isComplete = false
       }
 
-      return result
+      return {
+        response: `${personaMode === 'persona_preview' ? 'your response IN THE CREATOR\'S VOICE with one clear question' : personaMode === 'blended' ? 'your response blending guidance with emerging personality' : 'your conversational response with one clear question'}`,
+        extractedData: result.extractedData,
+        personaMode: personaMode,
+        isComplete: isComplete,
+        isFinished: messages.length > 12,
+        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : null
+      }
     } catch (error: any) {
       console.error('Error extracting personality:', error)
       log('Personality extraction failed:', error.message)
