@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
+import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles, Info } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
@@ -231,8 +231,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         return (
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="default" className="bg-purple-100 text-purple-800">🎭 Persona Preview Active</Badge>
-            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center relative">
-              <Sparkles className="h-3 w-3 text-purple-600 absolute top-0 right-0 transform translate-x-1 -translate-y-1" />
+            <div className="relative group">
+              <Info className="h-4 w-4 text-purple-600 cursor-help" />
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                The chat is now speaking using your persona
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black"></div>
+              </div>
             </div>
           </div>
         )
@@ -249,12 +253,44 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     })
   }
 
-  const progressPercentage = Math.min((Object.keys(extractedConfig).filter(key => 
-    extractedConfig[key as keyof AvatarPersonaConfig] && 
-    (Array.isArray(extractedConfig[key as keyof AvatarPersonaConfig]) 
-      ? (extractedConfig[key as keyof AvatarPersonaConfig] as any[]).length > 0
-      : (extractedConfig[key as keyof AvatarPersonaConfig] as string).length > 0)
-  ).length / 7) * 100, 100)
+  // Enhanced progress calculation that considers data quality
+  const getConfigQuality = () => {
+    const keys = Object.keys(extractedConfig)
+    let qualityScore = 0
+    let maxScore = 7
+    
+    // Tone description quality (0-2 points)
+    if (extractedConfig.toneDescription) {
+      const toneLength = extractedConfig.toneDescription.length
+      qualityScore += toneLength > 50 ? 2 : toneLength > 20 ? 1 : 0.5
+    }
+    
+    // Style tags completeness (0-1 point)
+    if (extractedConfig.styleTags?.length) {
+      qualityScore += extractedConfig.styleTags.length >= 3 ? 1 : 0.5
+    }
+    
+    // Topics coverage (0-2 points)
+    if (extractedConfig.allowedTopics?.length) {
+      qualityScore += extractedConfig.allowedTopics.length >= 3 ? 1 : 0.5
+    }
+    if (extractedConfig.restrictedTopics?.length || extractedConfig.fallbackReply) {
+      qualityScore += 1
+    }
+    
+    // Goals and audience (0-2 points)
+    if (extractedConfig.avatarObjective?.length) {
+      qualityScore += extractedConfig.avatarObjective.length >= 2 ? 1 : 0.5
+    }
+    if (extractedConfig.audienceDescription) {
+      qualityScore += extractedConfig.audienceDescription.length > 30 ? 1 : 0.5
+    }
+    
+    return Math.min((qualityScore / maxScore) * 100, 100)
+  }
+  
+  const progressPercentage = getConfigQuality()
+  const configQuality = progressPercentage < 50 ? 'Initial' : progressPercentage < 75 ? 'Good' : 'Comprehensive'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -281,14 +317,27 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Personality Discovery Progress</span>
-                <span>{Math.round(progressPercentage)}%</span>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {configQuality}
+                  </Badge>
+                  <span>{Math.round(progressPercentage)}%</span>
+                </div>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    progressPercentage < 50 ? 'bg-orange-500' : 
+                    progressPercentage < 75 ? 'bg-blue-500' : 'bg-green-500'
+                  }`}
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
+              {progressPercentage < 75 && Object.keys(extractedConfig).length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  I'm still learning about your style - let's explore a few more scenarios to get it just right
+                </p>
+              )}
             </div>
           )}
         </div>
