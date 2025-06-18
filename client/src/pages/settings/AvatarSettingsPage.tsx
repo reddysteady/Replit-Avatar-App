@@ -20,21 +20,15 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { useToast } from '@/hooks/use-toast'
+import { buildSystemPrompt } from '@shared/prompt'
 
 export default function AvatarSettingsPage() {
-  const [prompt, setPrompt] = useState('')
+  const [personaConfig, setPersonaConfig] = useState<AvatarPersonaConfig | null>(null)
+  const [systemPrompt, setSystemPrompt] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
-  const [currentConfig, setCurrentConfig] =
-    useState<AvatarPersonaConfig | null>(null)
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [setupMode, setSetupMode] = useState<'chat' | 'form'>('chat')
+  const [hasCompletedChat, setHasCompletedChat] = useState(false)
   const { toast } = useToast()
 
   /* ────────────────────────────────
@@ -55,12 +49,12 @@ export default function AvatarSettingsPage() {
         console.log('Fetched persona config:', data.personaConfig)
 
         if (data.personaConfig && data.personaConfig.toneDescription) {
-          setCurrentConfig(data.personaConfig)
-          setPrompt(buildSystemPrompt(data.personaConfig))
+          setPersonaConfig(data.personaConfig)
+          setSystemPrompt(buildSystemPrompt(data.personaConfig))
         } else {
           // Clear UI when no valid persona exists
-          setCurrentConfig(null)
-          setPrompt('')
+          setPersonaConfig(null)
+          setSystemPrompt('')
         }
       } else {
         const errData = await response.json().catch(() => ({}))
@@ -80,8 +74,8 @@ export default function AvatarSettingsPage() {
   const handlePersonaConfig = async (config: AvatarPersonaConfig) => {
     setIsLoading(true)
     try {
-      const systemPrompt = buildSystemPrompt(config)
-      setPrompt(systemPrompt)
+      const prompt = buildSystemPrompt(config)
+      setSystemPrompt(prompt)
 
       const response = await fetch('/api/persona', {
         method: 'POST',
@@ -91,7 +85,7 @@ export default function AvatarSettingsPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setCurrentConfig(data.personaConfig)
+        setPersonaConfig(data.personaConfig)
         toast({
           title: 'Success',
           description: 'Persona configuration saved successfully!',
@@ -150,13 +144,6 @@ export default function AvatarSettingsPage() {
       })
     }
   }
-  const [personaConfig, setPersonaConfig] = useState<AvatarPersonaConfig | null>(null)
-  const [systemPrompt, setSystemPrompt] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [setupMode, setSetupMode] = useState<'chat' | 'form'>('chat')
-  const [hasCompletedChat, setHasCompletedChat] = useState(false)
-  const { toast } = useToast()
 
   const handleChatComplete = (config: AvatarPersonaConfig) => {
     setPersonaConfig(config)
@@ -227,45 +214,7 @@ export default function AvatarSettingsPage() {
             <PrivacyPersonalityForm
               isLoading={isLoading}
               initialConfig={personaConfig}
-              onSave={async (config) => {
-                setIsLoading(true)
-                try {
-                  const systemPrompt = buildSystemPrompt(config)
-                  setSystemPrompt(systemPrompt)
-
-                  const response = await fetch('/api/persona', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ personaConfig: config }),
-                  })
-
-                  if (response.ok) {
-                    const data = await response.json()
-                    setPersonaConfig(data.personaConfig)
-                    toast({
-                      title: 'Success',
-                      description: 'Persona configuration saved successfully!',
-                    })
-                  } else {
-                    const errData = await response.json().catch(() => ({}))
-                    const message =
-                      errData.message || 'Failed to save persona configuration'
-                    toast({
-                      title: 'Error',
-                      description: message,
-                      variant: 'destructive',
-                    })
-                  }
-                } catch (error) {
-                  toast({
-                    title: 'Error',
-                    description: 'Failed to save persona configuration',
-                    variant: 'destructive',
-                  })
-                } finally {
-                  setIsLoading(false)
-                }
-              }}
+              onSave={handlePersonaConfig}
             />
           </div>
         </TabsContent>
@@ -331,35 +280,7 @@ export default function AvatarSettingsPage() {
             </Alert>
             <Button
               variant="destructive"
-              onClick={async () => {
-                try {
-                  const response = await fetch('/api/cache/clear', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: 1 }),
-                  })
-
-                  if (response.ok) {
-                    // Refresh persona after cache clear
-                    toast({
-                      title: 'Cleared!',
-                      description: 'AI cache cleared successfully!',
-                    })
-                  } else {
-                    toast({
-                      title: 'Error',
-                      description: 'Failed to clear cache',
-                      variant: 'destructive',
-                    })
-                  }
-                } catch (error) {
-                  toast({
-                    title: 'Error',
-                    description: 'Failed to clear cache',
-                    variant: 'destructive',
-                  })
-                }
-              }}
+              onClick={handleClearCache}
             >
               Clear AI Cache
               <Trash2 className="w-4 h-4 ml-2" />
