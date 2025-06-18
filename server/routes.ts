@@ -1247,6 +1247,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
+  app.post('/api/ai/personality-extract', async (req, res) => {
+    try {
+      const schema = z.object({
+        messages: z.array(z.object({
+          role: z.enum(['user', 'assistant', 'system']),
+          content: z.string()
+        })),
+        currentConfig: z.object({}).partial().optional()
+      })
+      
+      const { messages, currentConfig } = schema.parse(req.body)
+      
+      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig)
+      res.json(result)
+    } catch (error: any) {
+      res.status(500).json({ message: error.message })
+    }
+  })
+
   // Airtable lead capture
   app.post('/api/airtable/lead', async (req, res) => {
     try {

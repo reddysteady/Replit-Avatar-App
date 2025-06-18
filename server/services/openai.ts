@@ -186,9 +186,9 @@ export class AIService {
       if (contextSnippets && contextSnippets.length > 0) {
         contextSection = `
         IMPORTANT CONTEXT: The following are direct quotes from the creator's content that show their expertise, opinions, and communication style. Use this to ensure your response authentically represents them:
-        
+
         ${contextSnippets.map((snippet, index) => `[${index + 1}] "${snippet}"`).join('\n\n')}
-        
+
         Use the above content to inform your response when relevant. Don't explicitly reference these quotes or mention that you're using them as context. Instead, seamlessly incorporate the creator's expertise, preferences, and tone into your response as if you are truly their digital twin.
         `
       }
@@ -197,7 +197,7 @@ export class AIService {
       const userId = 1 // For MVP, assume user ID 1
       const now = Date.now()
       const cached = this.systemPromptCache.get(userId)
-      
+
       let systemPrompt: string
       if (cached && (now - cached.timestamp) < this.CACHE_TTL) {
         systemPrompt = cached.prompt
@@ -233,7 +233,7 @@ export class AIService {
       if (contextSection) {
         systemPrompt += `\n\n${contextSection}`
       }
-      
+
       /* ────────────────────────────────────────────────────────── */
       /* 🔍 DEBUG: dump the exact payload that will be sent to OpenAI */
       if (process.env.DEBUG_AI) {
@@ -244,14 +244,14 @@ export class AIService {
           contextSnippets,      // raw array for quick inspection
         })
       }
-      
+
       /* ────────────────────────────────────────────────────────── */
       // now continue with userPrompt / messages / client.chat …
-      
+
       const userPrompt = `
         Here is a message from a follower named ${senderName}:
         "${content}"
-        
+
         Write a response that matches the creator's tone and communication style.
         ${contextSnippets && contextSnippets.length > 0 ? "Use the contextual information when it's relevant to the question." : ''}
       `
@@ -400,46 +400,100 @@ export class AIService {
    * Detects sensitive content in messages that might require human review
    */
   async detectSensitiveContent(text: string): Promise<DetectSensitiveResult> {
+    const { client, hasKey } = await this.getClient()
+    if (!hasKey) {
+      return { isSensitive: false, confidence: 0, category: 'none' }
+    }
+
     try {
-      const prompt = `
-        Analyze the following message and determine if it contains sensitive content 
-        that should be reviewed by a human rather than receiving an automated response.
-        Sensitive content includes: legal issues, complaints, refund requests, account issues, 
-        sensitive personal information, potentially harmful topics, or any content that might 
-        require special handling.
-
-        Message: "${text}"
-
-        Respond with JSON in this format:
-        {
-          "isSensitive": boolean,
-          "confidence": number between 0 and 1,
-          "category": one of ["not_sensitive", "legal", "complaint", "refund", "account_issue", "personal_info", "harmful", "other"]
-        }
-      `
-
-      const { client } = await this.getClient()
       const response = await client.chat.completions.create({
-        model: DEFAULT_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Analyze the following text for sensitive content. Return a JSON object with:
+              - isSensitive: boolean
+              - confidence: number between 0-1
+              - category: string (e.g., "political", "personal", "legal", "medical", "none")`,
+          },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.1,
       })
 
-      const result = JSON.parse(response.choices[0].message.content || '{}')
+      return JSON.parse(response.choices[0]?.message?.content || '{}')
+    } catch (error) {
+      log('Error detecting sensitive content:', error)
+      return { isSensitive: false, confidence: 0, category: 'error' }
+    }
+  }
 
+  async extractPersonalityFromConversation(
+    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+    currentConfig: any = {}
+  ): Promise<{ response: string; extractedData: any; isComplete: boolean }> {
+    const { client, hasKey } = await this.getClient()
+    if (!hasKey) {
       return {
-        isSensitive: result.isSensitive || false,
-        confidence: Math.max(0, Math.min(1, result.confidence || 0)),
-        category: result.category || 'not_sensitive',
+        response: "I'm having trouble processing right now. Could you try again?",
+        extractedData: {},
+        isComplete: false
       }
-    } catch (error: any) {
-      console.error('Error detecting sensitive content:', error.message)
-      // Return default values in case of error
+    }
+
+    const systemPrompt = `You are guiding a creator through setting up their digital twin avatar. Your job is to collect their tone, content style, and goals through natural conversation.
+
+You must extract these 7 key items:
+1. toneDescription - Overall communication style and vibe
+2. styleTags - Array of style descriptors (friendly, professional, sarcastic, etc.)
+3. allowedTopics - Array of topics they're comfortable discussing
+4. restrictedTopics - Array of topics they want to avoid
+5. fallbackReply - How to respond to restricted topics
+6. avatarObjective - Array of goals (Build Community, Educate, Entertain, etc.)
+7. audienceDescription - Who they're talking to
+
+Current extracted data: ${JSON.stringify(currentConfig)}
+
+Instructions:
+- Ask conversational, natural questions
+- Don't make it feel like a form
+- If they give vague answers, ask follow-ups like "Could you tell me more about that?"
+- Extract structured data from their responses
+- Once you have most fields, guide toward completion
+
+Respond with JSON in this format:
+{
+  "response": "Your conversational response to continue the dialogue",
+  "extractedData": {
+    "toneDescription": "extracted tone if mentioned",
+    "styleTags": ["array", "of", "tags"],
+    "allowedTopics": ["topics", "they", "mentioned"],
+    "restrictedTopics": ["topics", "to", "avoid"],
+    "fallbackReply": "how they want to handle restricted topics",
+    "avatarObjective": ["their", "goals"],
+    "audienceDescription": "who they're targeting"
+  },
+  "isComplete": false
+}`
+
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        temperature: 0.7,
+      })
+
+      const result = JSON.parse(response.choices[0]?.message?.content || '{}')
+      return result
+    } catch (error) {
+      log('Error extracting personality:', error)
       return {
-        isSensitive: false,
-        confidence: 0,
-        category: 'not_sensitive',
+        response: "Let me ask this differently - what would you say is your main goal with your audience? Are you trying to build community, educate, entertain, or something else?",
+        extractedData: {},
+        isComplete: false
       }
     }
   }
