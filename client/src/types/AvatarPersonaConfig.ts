@@ -23,4 +23,12 @@ export interface AvatarPersonaConfig {
    * Default response when a user asks about a restricted topic.
    */
   fallbackReply: string
+  /**
+   * Main objectives or goals for the avatar's interactions.
+   */
+  avatarObjective: string[]
+  /**
+   * Description of the target audience for the avatar.
+   */
+  audienceDescription: string
 }
