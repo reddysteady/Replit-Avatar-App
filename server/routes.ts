@@ -141,12 +141,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Daniel Rodriguez',
         ]
         const avatars = [
-          'https://images.unsplash.com/photo-1580489944761-15a19d654956',
-          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde',
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6',
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d',
+          'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=64&h=64&fit=crop&crop=face',
+          'https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=64&h=64&fit=crop&crop=face'
         ]
 
         const instagramContents = [
@@ -270,9 +272,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Random avatar selection
       const avatars = [
-        'https://images.unsplash.com/photo-1560250097-0b93528c311a',
-        'https://images.unsplash.com/photo-1573497019236-17f8177b81e8',
-        'https://images.unsplash.com/photo-1573496358961-3c82861ab8f4',
+        'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=64&h=64&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=64&h=64&fit=crop&crop=face',
+        'https://images.unsplash.com/photo-1573496358961-3c82861ab8f4?w=64&h=64&fit=crop&crop=face',
       ]
       const avatar = avatars[Math.floor(Math.random() * avatars.length)]
 
@@ -332,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // See CHANGELOG.md for 2025-06-16 [Fixed]
         const senderId = `${faker.internet.userName().toLowerCase()}.${faker.string.nanoid(6)}`
         const senderName = faker.person.fullName()
-        const senderAvatar = faker.image.avatar()
+        const senderAvatar = `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`
 
         const thread = await storage.findOrCreateThreadByParticipant(
           1,
@@ -412,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         senderId: thread.externalParticipantId,
         senderName: thread.participantName,
-        senderAvatar: thread.participantAvatar || faker.image.avatar(),
+        senderAvatar: thread.participantAvatar || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`,
         timestamp: new Date(),
         status: 'new',
         isHighIntent: false,

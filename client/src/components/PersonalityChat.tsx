@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +8,7 @@ import { Separator } from '@/components/ui/separator'
 import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -211,7 +211,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       avatarObjective: extractedConfig.avatarObjective || ["Engage with audience"],
       audienceDescription: extractedConfig.audienceDescription || "General audience"
     }
-    
+
     onComplete(finalConfig)
   }
 
@@ -268,7 +268,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
               Skip to Form
             </Button>
           </div>
-          
+
           {progressPercentage > 0 && (
             <div>
               <div className="flex justify-between text-sm mb-2">
