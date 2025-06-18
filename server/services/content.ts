@@ -2,6 +2,7 @@
  * Content Service
  * Handles content ingestion, processing, and embedding for the RAG pipeline
  */
+// See CHANGELOG.md for 2025-06-19 [Schema]
 
 import { db } from '../db'
 import { storage } from '../storage'
@@ -226,7 +227,7 @@ export class ContentService {
         const embedding = await aiService.generateEmbedding(chunk)
 
         // Step 3: Store content and embedding
-        const contentItem: InsertContentItem & { embedding: number[] } = {
+        const contentItem: InsertContentItem = {
           externalId: source.id,
           userId,
           contentType: source.type,
