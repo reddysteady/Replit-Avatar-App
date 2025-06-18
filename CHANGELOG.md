@@ -260,4 +260,8 @@ CHANGLOG.md file.
 [Codex][Removed] ThreadedMessages no longer renders its own header.
 [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
 [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
-[Codex][Removed] Deprecated refresh tools from ThreadedMessages.
+
+## 2025-06-18
+
+- [Codex][Changed] ThreadedMessages tabs now include an Unread option.
+- [Codex][Changed] ThreadList filters threads by unread count when Unread is active.

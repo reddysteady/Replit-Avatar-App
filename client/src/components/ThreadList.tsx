@@ -4,6 +4,7 @@
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-15 [Added]
+// See CHANGELOG.md for 2025-06-18 [Changed - added Unread filter]
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 interface ThreadListProps {
   activeThreadId?: number | null
   onSelectThread: (threadId: number, threadData?: any) => void
-  source?: 'all' | 'instagram' | 'youtube' | 'high-intent'
+  source?: 'all' | 'instagram' | 'youtube' | 'high-intent' | 'unread'
 }
 
 const ThreadList: React.FC<ThreadListProps> = ({
@@ -86,12 +87,15 @@ const ThreadList: React.FC<ThreadListProps> = ({
 
     return Array.isArray(threadsData)
       ? threadsData.filter((thread: ThreadType) => {
-          // Filter by source or high intent
+          // Filter by source, high intent, or unread status
           if (source === 'high-intent' && !thread?.isHighIntent) {
+            return false
+          } else if (source === 'unread' && thread.unreadCount <= 0) {
             return false
           } else if (
             source !== 'all' &&
             source !== 'high-intent' &&
+            source !== 'unread' &&
             thread?.source !== source
           ) {
             return false

@@ -17,6 +17,7 @@
 // See CHANGELOG.md for 2025-06-18 [Fixed - restore mobile burger menu]
 // See CHANGELOG.md for 2025-06-19 [Fixed - remove conversation top padding]
 // See CHANGELOG.md for 2025-06-16 [Added - debug log for custom message]
+// See CHANGELOG.md for 2025-06-18 [Changed - added Unread tab]
 import React, { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import ThreadList from '@/components/ThreadList'
@@ -65,8 +66,8 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null)
   const [hasSelectedThread, setHasSelectedThread] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    'all' | 'instagram' | 'youtube' | 'high-intent'
-  >('all')
+    'all' | 'instagram' | 'youtube' | 'high-intent' | 'unread'
+  >('all') // track which filter tab is active
   const [isMobile, setIsMobile] = useState(false)
   const [showThreadList, setShowThreadList] = useState(true)
   const { toast } = useToast()
@@ -390,7 +391,12 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
             value={activeTab}
             onValueChange={(value) =>
               setActiveTab(
-                value as 'all' | 'instagram' | 'youtube' | 'high-intent',
+                value as
+                  | 'all'
+                  | 'instagram'
+                  | 'youtube'
+                  | 'high-intent'
+                  | 'unread',
               )
             }
             className="mt-4"
@@ -400,6 +406,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
               <TabsTrigger value="instagram">Instagram</TabsTrigger>
               <TabsTrigger value="youtube">YouTube</TabsTrigger>
               <TabsTrigger value="high-intent">High Intent</TabsTrigger>
+              <TabsTrigger value="unread">Unread</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -418,7 +425,11 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                       ? 'All Messages'
                       : activeTab === 'instagram'
                         ? 'Instagram'
-                        : 'YouTube'}
+                        : activeTab === 'youtube'
+                          ? 'YouTube'
+                          : activeTab === 'high-intent'
+                            ? 'High Intent'
+                            : 'Unread'}
                   </span>
                   <ChevronDown className="h-4 w-4 ml-2" />
                 </Button>
@@ -447,6 +458,12 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                   className={activeTab === 'high-intent' ? 'bg-gray-100' : ''}
                 >
                   High Intent
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setActiveTab('unread')}
+                  className={activeTab === 'unread' ? 'bg-gray-100' : ''}
+                >
+                  Unread
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
