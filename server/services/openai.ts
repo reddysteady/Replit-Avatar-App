@@ -573,7 +573,7 @@ CONVERSATION WIND-DOWN: You have extensive data. Focus on final refinements and 
 ` : ''}
 
 ${messages.length > 25 ? `
-CONVERSATION COMPLETION: You should have comprehensive data by now. Gracefully conclude without asking new questions. Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Do NOT ask additional questions.
+CONVERSATION COMPLETION: You should have comprehensive data by now. You may gracefully conclude, but ONLY if you have data for ALL 7 configuration fields. If missing any fields, continue asking curiosity-driven questions. When truly finishing, say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Only end without a question if you have ALL required data.
 ` : ''}
 
 CONFIGURATION TARGETS to extract:
@@ -586,17 +586,23 @@ CONFIGURATION TARGETS to extract:
 7. audienceDescription: Who they're trying to reach
 
 RESPONSE BEHAVIOR:
-- When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality. Keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Continue asking detailed follow-up questions.
-- When isFinished is true: Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Do NOT ask any questions.
+- CRITICAL: Every response MUST end with a curiosity-driven question unless you are gracefully ending the conversation
+- When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality. Keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Then ask a detailed follow-up question about their communication style, audience interaction preferences, or content approach.
+- When isFinished is true: Only end without a question when you have 25+ messages AND comprehensive data. Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." This should be RARE.
 - Set isComplete to true when you have captured solid personality information (tone, style, topics, objectives) - usually around 6-8 exchanges AND after 10+ messages
-- Set isFinished to true only after 20+ exchanges AND when you have comprehensive data for most fields AND you are ready to stop asking questions
-- Ask ONE clear, specific question per response (unless finishing)
+- Set isFinished to true only after 25+ exchanges AND when you have comprehensive data for ALL fields AND you are ready to stop asking questions
+- Ask ONE clear, specific, curiosity-driven question per response that builds naturally from their answer
+- Focus on gathering nuanced details through engaging questions about their unique communication style
+- Examples of good curiosity-driven questions:
+  * "What's the one thing you never want to sound like when talking to your audience?"
+  * "If your audience had to describe your energy in one word, what would you want it to be?"
+  * "What's a topic you could talk about for hours without getting bored?"
+  * "How do you handle it when someone asks you something you're not comfortable discussing?"
 - Build on their previous answers naturally and ask deeper follow-ups
 - Use their own words and examples when possible
 - Keep responses conversational and encouraging
 - Extract data incrementally without being obvious about it
-- Focus on gathering nuanced details that make their persona unique
-- IMPORTANT: Do not mark isFinished as true if your response contains a question
+- IMPORTANT: Always include a question unless you are at 25+ messages and truly finishing
 
 CURRENT CONFIGURATION STATE:
 ${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}`
@@ -648,10 +654,11 @@ Only include fields in extractedData if you discovered NEW or REFINED informatio
 BEHAVIOR RULES:
 - Speak in first person as the creator ("I", "my audience", "when I...")
 - Use their captured tone and style in your response
-- Ask follow-up questions IN THEIR VOICE
+- ALWAYS ask follow-up questions IN THEIR VOICE - this is critical for persona demonstration
 - Show enthusiasm about the persona development using their style
 - Keep the dual purpose: demonstrate personality + gather data
-- ${personaMode === 'persona_preview' ? 'Add confidence and personality to questions' : 'Gradually transition to their voice'}
+- Every response must end with a curiosity-driven question that sounds like something the creator would ask
+- ${personaMode === 'persona_preview' ? 'Add confidence and personality to questions, making them sound like the creator speaking' : 'Gradually transition to their voice while maintaining question-asking'}
 
 CURRENT CONFIGURATION STATE:
 ${JSON.stringify(currentConfig, null, 2)}`
@@ -755,7 +762,7 @@ ${JSON.stringify(currentConfig, null, 2)}`
 
       // Check if response contains a question mark - if so, don't mark as finished
       const hasQuestion = responseText.includes('?')
-      const shouldFinish = messages.length > 25 && !hasQuestion
+      const shouldFinish = messages.length > 25 && !hasQuestion && Object.keys(cleanExtractedData).length >= 6
       
       const finalResult = {
         response: responseText,
