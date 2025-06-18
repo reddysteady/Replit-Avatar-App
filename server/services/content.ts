@@ -25,7 +25,94 @@ interface ContentSource {
   }
 }
 
+export interface ContentSourceFetcher {
+  fetch(userId: number, since: Date): Promise<ContentSource[]>
+}
+
+export class MockContentFetcher implements ContentSourceFetcher {
+  async fetch(userId: number, since: Date): Promise<ContentSource[]> {
+    // For development: Generate some sample content
+    return [
+      {
+        id: `post_${Date.now()}_1`,
+        type: 'post',
+        url: 'https://instagram.com/p/sample1',
+        title: 'Amazing encounter with sea turtles today!',
+        content:
+          "Had the most incredible dive today and encountered a family of green sea turtles! These magnificent creatures can live over 80 years and travel thousands of miles across oceans. Did you know that sea turtles use Earth's magnetic field to navigate? They return to the exact beach where they were born to lay their eggs. It's absolutely mind-blowing how they remember their birthplace after decades in the ocean. Conservation efforts are crucial - always maintain distance and never touch marine wildlife!",
+        publishedAt: new Date(),
+        engagement: {
+          likes: 1200,
+          comments: 150,
+          shares: 45,
+        },
+      },
+      {
+        id: `video_${Date.now()}_1`,
+        type: 'video',
+        url: 'https://youtube.com/watch?v=sample1',
+        title: 'The Secret Lives of Octopuses - Intelligence Underwater',
+        content:
+          "Octopuses are among the most intelligent invertebrates on Earth! In today's video, I explore their incredible problem-solving abilities and camouflage skills. These eight-armed wonders have three hearts, blue blood, and can change both color and texture in milliseconds. I've observed them using tools, solving mazes, and even showing what appears to be playful behavior. The mimic octopus can imitate over 15 different species! Their intelligence rivals that of many vertebrates, yet they live only 1-2 years. It's a reminder of how diverse and fascinating ocean life truly is.",
+        publishedAt: new Date(),
+        engagement: {
+          likes: 3500,
+          comments: 420,
+          shares: 210,
+        },
+      },
+      {
+        id: `blog_${Date.now()}_1`,
+        type: 'blog',
+        url: 'https://myblog.com/sample1',
+        title: 'The Mysterious World of Deep Sea Creatures',
+        content:
+          "The deep ocean is Earth's final frontier, home to creatures that seem like they're from another planet. Bioluminescent jellyfish create living light shows in the darkness, while giant tube worms thrive around volcanic vents without sunlight. The vampire squid isn't actually a squid or vampire - it's a unique cephalopod that can turn itself inside out when threatened! Anglerfish use their glowing lure to attract prey in the pitch-black depths. These adaptations showcase millions of years of evolution in extreme conditions. Every deep-sea expedition reveals new species, reminding us how much we still don't know about our own planet.",
+        publishedAt: new Date(),
+        engagement: {
+          likes: 890,
+          comments: 75,
+          shares: 120,
+        },
+      },
+    ]
+  }
+}
+
+export class InstagramPostFetcher implements ContentSourceFetcher {
+  async fetch(userId: number, since: Date): Promise<ContentSource[]> {
+    log(`Fetching Instagram posts since ${since.toISOString()}`)
+    // TODO: integrate with Instagram API
+    return []
+  }
+}
+
+export class YouTubeVideoFetcher implements ContentSourceFetcher {
+  async fetch(userId: number, since: Date): Promise<ContentSource[]> {
+    log(`Fetching YouTube videos since ${since.toISOString()}`)
+    // TODO: integrate with YouTube API
+    return []
+  }
+}
+
+export class RSSContentFetcher implements ContentSourceFetcher {
+  async fetch(userId: number, since: Date): Promise<ContentSource[]> {
+    log(`Fetching RSS/blog posts since ${since.toISOString()}`)
+    // TODO: integrate with RSS feed reader
+    return []
+  }
+}
+
 export class ContentService {
+  private fetchers: ContentSourceFetcher[]
+
+  constructor(fetchers: ContentSourceFetcher[] = [new MockContentFetcher()]) {
+    this.fetchers = fetchers
+  }
+
+  registerFetcher(fetcher: ContentSourceFetcher) {
+    this.fetchers.push(fetcher)
+  }
   /**
    * Ingests and processes new content from various sources
    * @param userId The user ID to ingest content for
@@ -40,9 +127,11 @@ export class ContentService {
         ? new Date(0)
         : await this.getLastIngestionDate(userId)
 
-      // For Phase 1: Simulate content sources
-      // In production, these would be API calls to Instagram, YouTube, etc.
-      const sources = await this.fetchSampleContent(userId, lastIngestedDate)
+      const sources: ContentSource[] = []
+      for (const fetcher of this.fetchers) {
+        const fetched = await fetcher.fetch(userId, lastIngestedDate)
+        sources.push(...fetched)
+      }
 
       // Step 2: Filter content by engagement
       const highEngagementContent = this.filterByEngagement(sources)
@@ -90,61 +179,6 @@ export class ContentService {
       .limit(1)
 
     return latestItem?.timestamp || new Date(0)
-  }
-
-  /**
-   * Fetch sample content for development purposes
-   * In production, this would fetch from actual creator platforms
-   */
-  private async fetchSampleContent(
-    userId: number,
-    lastIngestedDate: Date,
-  ): Promise<ContentSource[]> {
-    // For development: Generate some sample content
-    return [
-      {
-        id: `post_${Date.now()}_1`,
-        type: 'post',
-        url: 'https://instagram.com/p/sample1',
-        title: 'Amazing encounter with sea turtles today!',
-        content:
-          "Had the most incredible dive today and encountered a family of green sea turtles! These magnificent creatures can live over 80 years and travel thousands of miles across oceans. Did you know that sea turtles use Earth's magnetic field to navigate? They return to the exact beach where they were born to lay their eggs. It's absolutely mind-blowing how they remember their birthplace after decades in the ocean. Conservation efforts are crucial - always maintain distance and never touch marine wildlife!",
-        publishedAt: new Date(),
-        engagement: {
-          likes: 1200,
-          comments: 150,
-          shares: 45,
-        },
-      },
-      {
-        id: `video_${Date.now()}_1`,
-        type: 'video',
-        url: 'https://youtube.com/watch?v=sample1',
-        title: 'The Secret Lives of Octopuses - Intelligence Underwater',
-        content:
-          "Octopuses are among the most intelligent invertebrates on Earth! In today's video, I explore their incredible problem-solving abilities and camouflage skills. These eight-armed wonders have three hearts, blue blood, and can change both color and texture in milliseconds. I've observed them using tools, solving mazes, and even showing what appears to be playful behavior. The mimic octopus can imitate over 15 different species! Their intelligence rivals that of many vertebrates, yet they live only 1-2 years. It's a reminder of how diverse and fascinating ocean life truly is.",
-        publishedAt: new Date(),
-        engagement: {
-          likes: 3500,
-          comments: 420,
-          shares: 210,
-        },
-      },
-      {
-        id: `blog_${Date.now()}_1`,
-        type: 'blog',
-        url: 'https://myblog.com/sample1',
-        title: 'The Mysterious World of Deep Sea Creatures',
-        content:
-          "The deep ocean is Earth's final frontier, home to creatures that seem like they're from another planet. Bioluminescent jellyfish create living light shows in the darkness, while giant tube worms thrive around volcanic vents without sunlight. The vampire squid isn't actually a squid or vampire - it's a unique cephalopod that can turn itself inside out when threatened! Anglerfish use their glowing lure to attract prey in the pitch-black depths. These adaptations showcase millions of years of evolution in extreme conditions. Every deep-sea expedition reveals new species, reminding us how much we still don't know about our own planet.",
-        publishedAt: new Date(),
-        engagement: {
-          likes: 890,
-          comments: 75,
-          shares: 120,
-        },
-      },
-    ]
   }
 
   /**
