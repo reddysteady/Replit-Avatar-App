@@ -4,7 +4,8 @@
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-15 [Added]
-// See CHANGELOG.md for 2025-06-18 [Changed]
+// See CHANGELOG.md for 2025-06-17 [Changed - added Unread filter]
+
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast'
 interface ThreadListProps {
   activeThreadId?: number | null
   onSelectThread: (threadId: number, threadData?: any) => void
-  source?: 'all' | 'instagram' | 'youtube' | 'high-intent' | 'archived'
+  source?: 'all' | 'instagram' | 'youtube' | 'high-intent'  | 'unread' | 'archived' | 'requires-escalation'
 }
 
 const ThreadList: React.FC<ThreadListProps> = ({
@@ -108,28 +109,41 @@ const ThreadList: React.FC<ThreadListProps> = ({
       ? (threads as ThreadType[])
       : sampleConversations
 
-  // Filter threads by source and search term
-  const filteredThreads = React.useMemo(() => {
-    if (!threadsData) return []
+  // Filter threads by types
+ const filteredThreads = Array.isArray(threadsData)
+  ? threadsData.filter((thread: ThreadType) => {
+      /* ---------- 1. ARCHIVED TAB ---------- */
+      if (source === 'archived') {
+        return thread.status === 'archived';
+      }
+      if (thread.status === 'archived') {
+        return false;                 // hide archived elsewhere
+      }
 
-    return Array.isArray(threadsData)
-      ? threadsData.filter((thread: ThreadType) => {
-          if (source !== 'archived' && thread.status === 'archived') {
-            return false
-          }
-          if (source === 'archived' && thread.status !== 'archived') {
-            return false
-          }
-          // Filter by source or high intent
-          if (source === 'high-intent' && !thread?.isHighIntent) {
-            return false
-          } else if (
-            source !== 'all' &&
-            source !== 'high-intent' &&
-            thread?.source !== source
-          ) {
-            return false
-          }
+      /* ---------- 2. REQUIRES-ESCALATION TAB ---------- */
+      if (source === 'requires-escalation') {
+        return !!thread.requiresEscalation;
+      }
+
+      /* ---------- 3. HIGH-INTENT TAB ---------- */
+      if (source === 'high-intent') {
+        return !!thread.isHighIntent;
+      }
+
+      /* ---------- 4. UNREAD TAB ---------- */
+      if (source === 'unread') {
+        return thread.unreadCount > 0;
+      }
+
+      /* ---------- 5. ALL TAB ---------- */
+      if (source === 'all') {
+        return true;                  // every non-archived thread
+      }
+
+      /* ---------- 6. PLATFORM TABS ---------- */
+      return thread.source === source; // instagram, youtube, etc.
+    })
+  : [];
 
           // Filter by search term
           if (searchTerm && thread?.participantName) {

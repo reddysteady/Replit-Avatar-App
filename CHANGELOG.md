@@ -260,10 +260,15 @@ CHANGLOG.md file.
 - [Codex][Removed] ThreadedMessages no longer renders its own header.
 - [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
 - [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
+- [Codex][Changed] ThreadedMessages tabs now include an Unread option.
+- [Codex][Changed] ThreadList filters threads by unread count when Unread is active.
+- [Codex][Changed] MobileHeader moved to App layout with optional back button.
+- [Codex][Removed] ThreadedMessages no longer renders its own header.
+- [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
+- [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
 - [Codex][Removed] Deprecated refresh tools from ThreadedMessages.
 - [Codex][Added] ThreadRow popover includes Archive action.
 - [Codex][Changed] ThreadList archives threads via new PATCH endpoint and
   omits archived threads from default query.
 - [Codex][Added] ThreadedMessages shows an Archived tab.
 - [Codex][Schema] content_items has new embedding pgvector column.
-
