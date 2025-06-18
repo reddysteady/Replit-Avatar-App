@@ -261,3 +261,4 @@ CHANGLOG.md file.
 [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
 [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
 [Codex][Removed] Deprecated refresh tools from ThreadedMessages.
+[Codex][Added] ContentService aggregates registered fetchers.
