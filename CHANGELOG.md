@@ -261,3 +261,10 @@ CHANGLOG.md file.
 [Codex][Fixed] Custom message menu now identifies thread via props instead of URL.
 [Codex][Added] DesktopHeader burger menu replaces Sidebar for desktop threads.
 [Codex][Removed] Deprecated refresh tools from ThreadedMessages.
+
+## 2025-06-18
+
+- [Codex][Added] ThreadRow popover includes Archive action.
+- [Codex][Changed] ThreadList archives threads via new PATCH endpoint and
+  omits archived threads from default query.
+- [Codex][Added] ThreadedMessages shows an Archived tab.

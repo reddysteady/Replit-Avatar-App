@@ -4,6 +4,7 @@
 // See CHANGELOG.md for 2025-06-15 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-15 [Added]
+// See CHANGELOG.md for 2025-06-18 [Changed]
 import React, { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Input } from '@/components/ui/input'
@@ -18,7 +19,7 @@ import { useToast } from '@/hooks/use-toast'
 interface ThreadListProps {
   activeThreadId?: number | null
   onSelectThread: (threadId: number, threadData?: any) => void
-  source?: 'all' | 'instagram' | 'youtube' | 'high-intent'
+  source?: 'all' | 'instagram' | 'youtube' | 'high-intent' | 'archived'
 }
 
 const ThreadList: React.FC<ThreadListProps> = ({
@@ -31,25 +32,29 @@ const ThreadList: React.FC<ThreadListProps> = ({
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
+  const statusParam = source === 'archived' ? 'archived' : 'active'
+  const sourceParam =
+    source !== 'all' && source !== 'high-intent' && source !== 'archived'
+      ? `&source=${source}`
+      : ''
+  const queryKeyPath = `/api/threads?status=${statusParam}${sourceParam}`
+
   const handleAutoReplyToggle = async (threadId: number, val: boolean) => {
-    queryClient.setQueryData<ThreadType[] | undefined>(
-      ['/api/threads'],
-      (old) =>
-        old?.map((t) => (t.id === threadId ? { ...t, autoReply: val } : t)),
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.map((t) => (t.id === threadId ? { ...t, autoReply: val } : t)),
     )
     try {
       await apiRequest('PATCH', `/api/threads/${threadId}/auto-reply`, {
         autoReply: val,
       })
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
     }
   }
 
   const handleDeleteThread = async (threadId: number) => {
-    queryClient.setQueryData<ThreadType[] | undefined>(
-      ['/api/threads'],
-      (old) => old?.filter((t) => t.id !== threadId),
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.filter((t) => t.id !== threadId),
     )
     setOpenPopoverId(null)
     try {
@@ -64,13 +69,36 @@ const ThreadList: React.FC<ThreadListProps> = ({
         variant: 'destructive',
       })
     } finally {
-      queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
+    }
+  }
+
+  const handleArchiveThread = async (threadId: number) => {
+    queryClient.setQueryData<ThreadType[] | undefined>([queryKeyPath], (old) =>
+      old?.filter((t) => t.id !== threadId),
+    )
+    setOpenPopoverId(null)
+    try {
+      const res = await fetch(`/api/threads/${threadId}/archive`, {
+        method: 'PATCH',
+      })
+      if (!res.ok) {
+        throw new Error('archive failed')
+      }
+      toast({ title: 'Thread archived' })
+    } catch (err) {
+      toast({
+        title: 'Could not archive thread. Please try again.',
+        variant: 'destructive',
+      })
+    } finally {
+      queryClient.invalidateQueries({ queryKey: [queryKeyPath] })
     }
   }
 
   // Fetch threads from API
   const { data: threads, isLoading } = useQuery({
-    queryKey: ['/api/threads'],
+    queryKey: [queryKeyPath],
     staleTime: 10000, // 10 seconds
   })
 
@@ -86,6 +114,12 @@ const ThreadList: React.FC<ThreadListProps> = ({
 
     return Array.isArray(threadsData)
       ? threadsData.filter((thread: ThreadType) => {
+          if (source !== 'archived' && thread.status === 'archived') {
+            return false
+          }
+          if (source === 'archived' && thread.status !== 'archived') {
+            return false
+          }
           // Filter by source or high intent
           if (source === 'high-intent' && !thread?.isHighIntent) {
             return false
@@ -159,6 +193,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
               openPopoverId={openPopoverId}
               setOpenPopoverId={setOpenPopoverId}
               onDeleteThread={handleDeleteThread}
+              onArchiveThread={handleArchiveThread}
             />
           ))
         )}
