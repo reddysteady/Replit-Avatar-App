@@ -267,3 +267,7 @@ CHANGLOG.md file.
 - [Codex][Added] ThreadedMessages shows an Archived tab.
 - [Codex][Schema] content_items has new embedding pgvector column.
 
+## 2025-06-18
+
+- [Codex][Fixed] Persona restrictedTopics schema uses z.string().min for validation.
+

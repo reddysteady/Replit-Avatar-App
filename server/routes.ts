@@ -17,6 +17,7 @@
 // See CHANGELOG.md for 2025-06-17 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Changed-2]
 // See CHANGELOG.md for 2025-06-17 [Fixed-2]
+// See CHANGELOG.md for 2025-06-18 [Fixed]
 import type { Express } from 'express'
 import { faker } from '@faker-js/faker'
 import { createServer, type Server } from 'http'
@@ -148,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=face',
           'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=64&h=64&fit=crop&crop=face',
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=64&h=64&fit=crop&crop=face',
-          'https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=64&h=64&fit=crop&crop=face'
+          'https://images.unsplash.com/photo-1573497019236-17f8177b81e8?w=64&h=64&fit=crop&crop=face',
         ]
 
         const instagramContents = [
@@ -414,7 +415,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         senderId: thread.externalParticipantId,
         senderName: thread.participantName,
-        senderAvatar: thread.participantAvatar || `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`,
+        senderAvatar:
+          thread.participantAvatar ||
+          `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`,
         timestamp: new Date(),
         status: 'new',
         isHighIntent: false,
@@ -1251,26 +1254,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/personality-extract', async (req, res) => {
     try {
-      const { messages, currentConfig, enablePersonaPreview, transitionThreshold, initialMessage } = req.body
+      const {
+        messages,
+        currentConfig,
+        enablePersonaPreview,
+        transitionThreshold,
+        initialMessage,
+      } = req.body
 
       if (!Array.isArray(messages)) {
         return res.status(400).json({ error: 'Messages must be an array' })
       }
 
       const result = await aiService.extractPersonalityFromConversation(
-        messages, 
+        messages,
         currentConfig || {},
         enablePersonaPreview || false,
         transitionThreshold || 4,
-        initialMessage || false
+        initialMessage || false,
       )
       res.json(result)
     } catch (error: any) {
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to process personality extraction',
-        response: "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
+        response:
+          "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
         extractedData: {},
-        isComplete: false
+        isComplete: false,
       })
     }
   })
@@ -1743,7 +1753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toneDescription: z.string().min(1),
           styleTags: z.array(z.string().min(1)).min(1),
           allowedTopics: z.array(z.string().min(1)),
-          restrictedTopics: z.array(z.string.min(1)),
+          restrictedTopics: z.array(z.string().min(1)),
           fallbackReply: z.string().min(1),
         }),
       })
