@@ -1249,17 +1249,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/personality-extract', async (req, res) => {
     try {
-      const schema = z.object({
-        messages: z.array(z.object({
-          role: z.enum(['user', 'assistant', 'system']),
-          content: z.string()
-        })),
-        currentConfig: z.object({}).partial().optional()
+      const { messages, currentConfig, enablePersonaPreview, transitionThreshold } = req.body
+
+      if (!Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages must be an array' })
+      }
+
+      const result = await aiService.extractPersonalityFromConversation(
+        messages, 
+        currentConfig || {},
+        enablePersonaPreview || false,
+        transitionThreshold || 4
+      )
+      res.json(result)
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: 'Failed to process personality extraction',
+        response: "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
+        extractedData: {},
+        isComplete: false
       })
-      
-      const { messages, currentConfig } = schema.parse(req.body)
-      
-      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig)
+    }
+  })
+
+  app.get('/api/airtable/lead', async (req, res) => {
+    try {
+      const { messageId, source } = req.body
+
+      if (!messageId || !source) {
+        return res.status(400).json({ error: 'messageId is required' })
+      }
+
+      const result = await airtableService.getLead(messageId, source)
       res.json(result)
     } catch (error: any) {
       res.status(500).json({ message: error.message })
@@ -1705,27 +1726,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
-  app.post('/api/ai/personality-extract', async (req, res) => {
-    try {
-      const { messages, currentConfig } = req.body
-      
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Messages array is required' })
-      }
-
-      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig || {})
-      res.json(result)
-    } catch (error: any) {
-      console.error('Personality extraction error:', error)
-      res.status(500).json({ 
-        error: 'Failed to process personality extraction',
-        response: "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
-        extractedData: {},
-        isComplete: false
-      })
-    }
-  })
-
   app.get('/api/persona', async (_req, res) => {
     const settings = await storage.getSettings(1)
     res.json({
@@ -1740,7 +1740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           toneDescription: z.string().min(1),
           styleTags: z.array(z.string().min(1)).min(1),
           allowedTopics: z.array(z.string().min(1)),
-          restrictedTopics: z.array(z.string().min(1)),
+          restrictedTopics: z.array(z.string.min(1)),
           fallbackReply: z.string().min(1),
         }),
       })

@@ -510,11 +510,11 @@ Respond with valid JSON in this exact format:
       })
 
       const content = response.choices[0]?.message?.content || '{}'
-      
+
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] OpenAI raw response:', content)
       }
-      
+
       // Additional validation to ensure we have valid JSON
       let result
       try {
@@ -526,7 +526,9 @@ Respond with valid JSON in this exact format:
         return {
           response: "Let me ask this more directly - are you looking to be more casual and friendly, or professional and informative with your audience?",
           extractedData: {},
-          isComplete: false
+          isComplete: false,
+          personaMode: 'guidance',
+          confidenceScore: 0
         }
       }
 
@@ -534,7 +536,7 @@ Respond with valid JSON in this exact format:
       if (!result.response || typeof result.response !== 'string') {
         result.response = "Great! Tell me more about what you'd like your avatar to focus on."
       }
-      
+
       if (!result.extractedData || typeof result.extractedData !== 'object') {
         result.extractedData = {}
       }
@@ -547,28 +549,34 @@ Respond with valid JSON in this exact format:
     } catch (error: any) {
       console.error('Error extracting personality:', error)
       log('Personality extraction failed:', error.message)
-      
+
       // Handle specific error types
       if (error.status === 401 || error.message?.includes('401')) {
         return {
           response: "I'm having trouble with my AI connection. Let's try a simple question - what's your main goal: building community, educating people, or entertaining your audience?",
           extractedData: {},
-          isComplete: false
+          isComplete: false,
+          personaMode: 'guidance',
+          confidenceScore: 0
         }
       }
-      
+
       if (error.status === 429 || error.message?.includes('429')) {
         return {
           response: "I need to slow down a bit. While I reset, tell me - how would you describe your communication style in one word?",
           extractedData: {},
-          isComplete: false
+          isComplete: false,
+          personaMode: 'guidance',
+          confidenceScore: 0
         }
       }
-      
+
       return {
         response: "Let me try a different approach - what's the most important thing you want your avatar to accomplish with your audience?",
         extractedData: {},
-        isComplete: false
+        isComplete: false,
+        personaMode: 'guidance',
+        confidenceScore: 0
       }
     }
   }
