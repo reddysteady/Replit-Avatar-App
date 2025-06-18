@@ -1,6 +1,6 @@
 {
-  "id": "800f3832-e5a7-4127-8351-ccee40b52499",
-  "prevId": "ee98b894-3887-4c9a-bcbd-2e8ee26beb5a",
+  "id": "ec5f76d8-c151-4e09-b47c-8b2e7035e6dd",
+  "prevId": "800f3832-e5a7-4127-8351-ccee40b52499",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -246,6 +246,12 @@
         "engagement_score": {
           "name": "engagement_score",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
           "primaryKey": false,
           "notNull": true
         },
@@ -803,12 +809,6 @@
         },
         "airtable_table_name": {
           "name": "airtable_table_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "creator_tone_description": {
-          "name": "creator_tone_description",
           "type": "text",
           "primaryKey": false,
           "notNull": false

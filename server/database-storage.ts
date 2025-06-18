@@ -4,6 +4,7 @@
 // See CHANGELOG.md for 2025-06-12 [Fixed]
 // See CHANGELOG.md for 2025-06-13 [Added-2]
 // See CHANGELOG.md for 2025-06-16 [Changed-2]
+// See CHANGELOG.md for 2025-06-19 [Schema]
 import {
   messages,
   users,

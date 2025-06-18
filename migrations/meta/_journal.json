@@ -13,6 +13,13 @@
       "when": 1750047815191,
       "tag": "0001_nebulous_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750213603868,
+      "tag": "0002_long_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }

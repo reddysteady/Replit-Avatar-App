@@ -18,7 +18,7 @@
 // See CHANGELOG.md for 2025-06-18 [Fixed - restore mobile burger menu]
 // See CHANGELOG.md for 2025-06-19 [Fixed - remove conversation top padding]
 // See CHANGELOG.md for 2025-06-16 [Added - debug log for custom message]
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import ThreadList from '@/components/ThreadList'
 import ConversationThread from '@/components/ConversationThread'
@@ -37,6 +37,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable'
 import { Loader2, SearchX, ChevronDown } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -78,7 +83,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     null,
   )
 
-  const handleGenerateCustomMessage = (msg: string) => {
+  const handleGenerateCustomMessage = useCallback((msg: string) => {
     if (!activeThreadId) return
     fetch(`/api/test/generate-for-user/${activeThreadId}`, {
       method: 'POST',
@@ -108,7 +113,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
           variant: 'destructive',
         })
       })
-  }
+  }, [activeThreadId, queryClient, toast])
 
   // Check for mobile view on mount and on resize
   useEffect(() => {
@@ -148,15 +153,36 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       }
     } else {
       setShowThreadList(true)
-      // Clear conversation data on desktop
+      // Pass conversation data for desktop header when thread is selected
       if (onConversationDataChange) {
-        onConversationDataChange(null)
+        if (activeThreadId && activeThreadData) {
+          onConversationDataChange({
+            participantName: activeThreadData.participantName,
+            participantAvatar: activeThreadData.participantAvatar,
+            platform: activeThreadData.source,
+            threadId: activeThreadId,
+            onBack: handleBack,
+          })
+        } else {
+          onConversationDataChange(null)
+        }
       }
     }
   }, [isMobile, activeThreadId, activeThreadData, onConversationDataChange])
 
+  // Check for empty threads
+  const {
+    data: threads,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['/api/threads'],
+    staleTime: 30000, // Increase stale time to 30 seconds
+    refetchInterval: 60000, // Refetch every minute instead of more frequently
+  })
+
   // Handle thread selection
-  const handleThreadSelect = (threadId: number, threadData: any = null) => {
+  const handleThreadSelect = useCallback((threadId: number, threadData: any = null) => {
     setActiveThreadId(threadId)
     setHasSelectedThread(true)
 
@@ -166,11 +192,12 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       setActiveThreadData({
         ...threadData,
         id: threadId,
+        threadId: threadId, // Explicitly include threadId for header actions
         // Ensure we have sensible defaults for required fields
         participantName: threadData.participantName || 'User',
         source: threadData.source || 'instagram',
       })
-    } else if (threads) {
+    } else if (threads && Array.isArray(threads)) {
       // Find thread data in the threads list
       const selectedThread = (threads as any[]).find(
         (t: any) => t.id === threadId,
@@ -178,6 +205,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       if (selectedThread) {
         setActiveThreadData({
           ...selectedThread,
+          threadId: threadId, // Explicitly include threadId for header actions
           // Ensure we have sensible defaults for required fields
           participantName: selectedThread.participantName || 'User',
           source: selectedThread.source || 'instagram',
@@ -189,10 +217,10 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
     if (isMobile) {
       setShowThreadList(false)
     }
-  }
+  }, [threads, isMobile])
 
   // Handle back navigation to thread list
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (onBack) {
       onBack()
     } else {
@@ -205,27 +233,36 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         onConversationDataChange(null)
       }
     }
-  }
+  }, [onBack, onConversationDataChange])
 
   // No explicit back/delete actions when headers hidden
-
-  // Check for empty threads
-  const {
-    data: threads,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['/api/threads'],
-    staleTime: 10000,
-  })
 
   const { data: settings } = useQuery<Settings>({
     queryKey: ['/api/settings'],
   })
+  const handleGenerateBatch = useCallback(() => {
+    fetch('/api/test/generate-batch', { method: 'POST' })
+      .then(res => {
+        if (!res.ok) {
+          return res.text().then(t => { throw new Error(`Server error: ${t}`); });
+        }
+        return res.json();
+      })
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['/api/instagram/messages'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/youtube/messages'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
+        toast({ title: 'Batch generated', description: '10 messages created' });
+      })
+      .catch(err => {
+        console.error('Batch error:', err);
+        toast({ title: 'Error', description: String(err), variant: 'destructive' });
+      });
+  }, [queryClient, toast])
 
   // Keep active thread data in sync when thread list updates
   useEffect(() => {
-    if (!activeThreadId || !Array.isArray(threads)) return
+    if (!activeThreadId || !threads || !Array.isArray(threads)) return
     const t = (threads as any[]).find((thr: any) => thr.id === activeThreadId)
     if (t) {
       setActiveThreadData({
@@ -269,8 +306,11 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       threads.length > 0
     ) {
       setTimeout(() => {
-        setActiveThreadId(threads[0]?.id)
-        setHasSelectedThread(true)
+        const firstThread = threads[0]
+        if (firstThread?.id) {
+          setActiveThreadId(firstThread.id)
+          setHasSelectedThread(true)
+        }
       }, 0)
     }
 
@@ -305,21 +345,23 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
       )
     }
 
-    // Desktop view - always show split view
+    // Desktop view - always show split view with resizable panels
     if (activeThreadId) {
       return (
-        <div className="h-full flex">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Thread list */}
-          <div className="md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white">
+          <ResizablePanel defaultSize={25} minSize={20} maxSize={50} className="bg-white">
             <ThreadList
               activeThreadId={activeThreadId}
               onSelectThread={handleThreadSelect}
               source={activeTab}
             />
-          </div>
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
 
           {/* Conversation thread */}
-          <div className="md:w-2/3 lg:w-3/4 h-full">
+          <ResizablePanel defaultSize={75} minSize={50}>
             <ConversationThread
               threadId={activeThreadId}
               threadData={activeThreadData}
@@ -329,36 +371,43 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
                 setActiveThreadData(null)
               }}
             />
-          </div>
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       )
     }
 
     return (
-      <div className="flex h-full">
+      <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Thread list */}
-        <div
-          className={`${activeThreadId ? 'hidden md:block' : 'w-full'} md:w-1/3 lg:w-1/4 h-full border-r border-gray-200 bg-white`}
+        <ResizablePanel 
+          defaultSize={25} 
+          minSize={20} 
+          maxSize={50}
+          className="bg-white"
         >
           <ThreadList
             activeThreadId={activeThreadId}
             onSelectThread={handleThreadSelect}
             source={activeTab}
           />
-        </div>
+        </ResizablePanel>
 
-        {/* Conversation thread */}
-        <div className="hidden md:block md:w-2/3 lg:w-3/4 h-full">
+        <ResizableHandle withHandle />
+
+        {/* Conversation thread or placeholder */}
+        <ResizablePanel defaultSize={75} minSize={50}>
           {activeThreadId ? (
             <ConversationThread
               threadId={activeThreadId}
+              threadData={activeThreadData}
+              showBackButton={false}
               onDeleted={() => {
                 setActiveThreadId(null)
                 setActiveThreadData(null)
               }}
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-center p-4">
+            <div className="flex items-center justify-center text-center p-4 h-full">
               <div>
                 <h3 className="text-lg font-medium mb-2">
                   No conversation selected
@@ -369,8 +418,8 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     )
   }
 
@@ -384,6 +433,17 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Messages</h1>
           <div className="flex items-center space-x-2" />
+          <div className="flex items-center space-x-2">
+            {/* Generate Batch Messages Button */}
+            <Button
+              onClick={handleGenerateBatch}
+              size="sm"
+              variant="outline"
+              className="bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Generate Batch Messages
+            </Button>
+          </div>
         </div>
         {/* Desktop tabs */}
         <div className="hidden md:block">
@@ -410,7 +470,7 @@ const ThreadedMessages: React.FC<ThreadedMessagesProps> = ({
             </TabsList>
           </Tabs>
         </div>
-
+     
         {/* Mobile filter dropdown */}
         {showThreadList && (
           <div className="md:hidden mt-4">
