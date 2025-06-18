@@ -33,15 +33,8 @@ interface PersonalityExtractionResponse {
 }
 
 export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: "Hi! I'm here to help set up your AI avatar's personality. Let's have a natural conversation about how you want your avatar to communicate with your audience. What kind of vibe are you going for?",
-      timestamp: new Date(),
-      personaMode: 'guidance'
-    }
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [isInitializing, setIsInitializing] = useState(true)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [extractedConfig, setExtractedConfig] = useState<Partial<AvatarPersonaConfig>>({})
@@ -57,6 +50,61 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Generate dynamic initial message
+  useEffect(() => {
+    const generateInitialMessage = async () => {
+      try {
+        const response = await fetch('/api/ai/personality-extract', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: 'Generate an engaging opening question to start persona discovery. Make it warm, specific, and designed to capture the creator\'s communication style and goals.'
+              }
+            ],
+            currentConfig: {},
+            initialMessage: true
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to generate initial message')
+        }
+
+        const aiResponse: PersonalityExtractionResponse = await response.json()
+
+        const initialMessage: ChatMessage = {
+          id: '1',
+          role: 'assistant',
+          content: aiResponse.response || "Hi! I'm here to help set up your AI avatar's personality. Let's start with something specific - imagine your favorite follower just asked you for advice. How do you typically respond to them?",
+          timestamp: new Date(),
+          personaMode: 'guidance'
+        }
+
+        setMessages([initialMessage])
+      } catch (error) {
+        console.error('Error generating initial message:', error)
+        // Fallback to improved static message
+        const fallbackMessage: ChatMessage = {
+          id: '1',
+          role: 'assistant',
+          content: "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
+          timestamp: new Date(),
+          personaMode: 'guidance'
+        }
+        setMessages([fallbackMessage])
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+
+    generateInitialMessage()
+  }, [])
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return
@@ -228,7 +276,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   </div>
                 </div>
               ))}
-              {isLoading && (
+              {(isLoading || isInitializing) && (
                 <div className="flex gap-3 justify-start">
                   <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
                     <Bot className="h-4 w-4" />
@@ -236,7 +284,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   <div className="bg-gray-100 text-gray-900 rounded-lg px-4 py-2">
                     <div className="flex items-center gap-2">
                       <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full" />
-                      Analyzing your style...
+                      {isInitializing ? 'Preparing your chat...' : 'Analyzing your style...'}
                     </div>
                   </div>
                 </div>

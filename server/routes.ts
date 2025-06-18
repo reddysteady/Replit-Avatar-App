@@ -1249,7 +1249,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/ai/personality-extract', async (req, res) => {
     try {
-      const { messages, currentConfig, enablePersonaPreview, transitionThreshold } = req.body
+      const { messages, currentConfig, enablePersonaPreview, transitionThreshold, initialMessage } = req.body
 
       if (!Array.isArray(messages)) {
         return res.status(400).json({ error: 'Messages must be an array' })
@@ -1259,7 +1259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages, 
         currentConfig || {},
         enablePersonaPreview || false,
-        transitionThreshold || 4
+        transitionThreshold || 4,
+        initialMessage || false
       )
       res.json(result)
     } catch (error: any) {

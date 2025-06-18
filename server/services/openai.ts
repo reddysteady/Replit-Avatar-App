@@ -430,8 +430,11 @@ export class AIService {
 
   async extractPersonalityFromConversation(
     messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
-    currentConfig: any = {}
-  ): Promise<{ response: string; extractedData: any; isComplete: boolean }> {
+    currentConfig: any = {},
+    enablePersonaPreview: boolean = false,
+    transitionThreshold: number = 4,
+    initialMessage: boolean = false
+  ): Promise<{ response: string; extractedData: any; isComplete: boolean; personaMode?: string; confidenceScore?: number; transitionMessage?: string }> {
     const { client, hasKey } = await this.getClient()
     if (!hasKey) {
       return {
@@ -449,6 +452,55 @@ export class AIService {
     ).length
 
     const totalFieldsNeeded = 7
+    // Handle initial message generation
+    if (initialMessage && messages.length === 1 && messages[0].role === 'system') {
+      const initialSystemPrompt = `Generate an engaging, specific opening question to begin persona discovery for a creator's AI avatar. 
+
+Make the question:
+- Warm and conversational
+- Specific rather than generic (avoid "what's your vibe")
+- Designed to immediately capture personality traits
+- Action-oriented or scenario-based
+- Under 50 words
+
+Examples of good opening questions:
+- "Picture your most loyal follower - when they need advice, how do you typically respond to them?"
+- "If someone watched you create content for a week, what three words would they use to describe your style?"
+- "What's the one thing you always want your audience to feel after interacting with you?"
+
+Generate ONE opening question in this style:`
+
+      try {
+        const response = await client.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: initialSystemPrompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 100,
+        })
+
+        const initialQuestion = response.choices[0]?.message?.content || "Hey there! Picture your most engaged follower - when they ask you for advice, how do you naturally respond to them?"
+
+        return {
+          response: initialQuestion,
+          extractedData: {},
+          isComplete: false,
+          personaMode: 'guidance',
+          confidenceScore: 0
+        }
+      } catch (error) {
+        console.error('Error generating initial message:', error)
+        return {
+          response: "Hey there! Let's start with something specific - if your biggest supporter asked you to describe your communication style in three words, what would they be?",
+          extractedData: {},
+          isComplete: false,
+          personaMode: 'guidance',
+          confidenceScore: 0
+        }
+      }
+    }
+
     const isNearComplete = fieldsCollected >= 5
 
     const systemPrompt = `You are guiding a creator through setting up their digital twin avatar. Your job is to collect their tone, content style, and goals through natural conversation.
