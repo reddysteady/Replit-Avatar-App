@@ -468,12 +468,14 @@ Make the question:
 - Action-oriented or scenario-based
 - Under 50 words
 
-Examples of good opening questions:
-- "Picture your most loyal follower - when they need advice, how do you typically respond to them?"
-- "If someone watched you create content for a week, what three words would they use to describe your style?"
+Examples of good opening questions that reveal communication style:
+- "Picture your most loyal follower asking for advice - walk me through how you'd naturally respond to them"
+- "If someone watched you create content for a week, what three words would they use to describe your communication style?"
 - "What's the one thing you always want your audience to feel after interacting with you?"
+- "When you're explaining something you're passionate about, what does that look like? How do you naturally express that energy?"
+- "Describe how you handle it when someone disagrees with something you've shared - what's your natural approach?"
 
-Generate ONE opening question in this style:`
+Generate ONE opening question in this style that will reveal their authentic communication patterns:`
 
       try {
         const response = await client.chat.completions.create({
@@ -577,13 +579,32 @@ CONVERSATION COMPLETION: You should have comprehensive data by now. You may grac
 ` : ''}
 
 CONFIGURATION TARGETS to extract:
-1. toneDescription: Their overall communication style and voice
-2. styleTags: Communication characteristics (Casual, Professional, Humorous, etc.)
-3. allowedTopics: Topics they want to discuss
-4. restrictedTopics: Topics they want to avoid
-5. fallbackReply: What to say when asked about restricted topics
+1. toneDescription: Transform user responses into a rich description of their communication style (e.g., "Warm and approachable with casual, conversational energy. Uses humor and self-deprecation to connect authentically with audience.")
+2. styleTags: Extract style characteristics from how they communicate (e.g., ["Casual", "Humorous", "Self-deprecating", "Conversational"])
+3. allowedTopics: Topics they enjoy discussing or are passionate about
+4. restrictedTopics: Topics they want to avoid or handle carefully
+5. fallbackReply: How they prefer to handle sensitive topics
 6. avatarObjective: Their main goals (Educate, Entertain, Build Community, etc.)
-7. audienceDescription: Who they're trying to reach
+7. audienceDescription: Who they're trying to reach and connect with
+
+CRITICAL EXTRACTION RULES:
+- NEVER copy user responses verbatim into toneDescription
+- ANALYZE their communication style and CREATE a professional description
+- INFER styleTags from how they express themselves, not just what they say
+- BUILD comprehensive persona data from multiple interactions
+- EXTRACT underlying personality traits from their responses
+
+EXAMPLE PROPER EXTRACTION:
+User says: "I'm pretty casual and make fun of myself a lot"
+CORRECT toneDescription: "Relaxed and approachable communicator who uses self-deprecating humor to create authentic connections. Maintains a down-to-earth, conversational style that makes others feel comfortable."
+CORRECT styleTags: ["Casual", "Self-deprecating", "Humorous", "Authentic", "Conversational"]
+
+QUESTION STRATEGY - Ask questions that reveal personality patterns:
+- "When someone disagrees with your content, how do you typically respond?"
+- "What's your natural reaction when someone asks you something you're not sure about?"
+- "Describe a time when you had to explain something complex - what's your approach?"
+- "How do you want your audience to feel after interacting with you?"
+- "What would be completely out of character for you to say or do?"
 
 RESPONSE BEHAVIOR:
 - CRITICAL: Every response MUST end with a curiosity-driven question unless you are gracefully ending the conversation
@@ -593,11 +614,16 @@ RESPONSE BEHAVIOR:
 - Set isFinished to true only after 25+ exchanges AND when you have comprehensive data for ALL fields AND you are ready to stop asking questions
 - Ask ONE clear, specific, curiosity-driven question per response that builds naturally from their answer
 - Focus on gathering nuanced details through engaging questions about their unique communication style
-- Examples of good curiosity-driven questions:
+- Examples of good curiosity-driven questions that reveal communication style:
   * "What's the one thing you never want to sound like when talking to your audience?"
   * "If your audience had to describe your energy in one word, what would you want it to be?"
   * "What's a topic you could talk about for hours without getting bored?"
   * "How do you handle it when someone asks you something you're not comfortable discussing?"
+  * "When you're explaining something complex, do you tend to use analogies, step-by-step breakdowns, or storytelling?"
+  * "What's your instinct when someone shares something personal with you - do you offer advice, ask questions, or share your own experience?"
+  * "If you had to choose between being seen as the expert or the relatable friend, which feels more natural?"
+  * "What would completely shock your audience if you said it - what's totally against your usual style?"
+  * "When you're passionate about something, how does that show up in how you communicate?"
 - Build on their previous answers naturally and ask deeper follow-ups
 - Use their own words and examples when possible
 - Keep responses conversational and encouraging
@@ -655,7 +681,20 @@ CRITICAL: Always respond with valid JSON in this exact format:
   "isFinished": false
 }
 
-Only include fields in extractedData if you discovered NEW or REFINED information. Use empty arrays [] for array fields if no new data.
+CRITICAL EXTRACTION INSTRUCTIONS:
+- Transform user responses into professional persona descriptions
+- For toneDescription: Create rich, descriptive text that captures their communication essence
+- For styleTags: Extract style characteristics from HOW they communicate, not just what they say
+- Build upon previous data to create comprehensive persona profiles
+- Only include fields if you have NEW or REFINED information
+- Use empty arrays [] for array fields if no new data
+
+TRANSFORMATION EXAMPLES:
+User: "I'm pretty sarcastic and joke around a lot"
+Extract: {
+  "toneDescription": "Uses wit and sarcasm as primary communication tools, creating engagement through humor and playful banter. Maintains lighthearted approach while still being informative.",
+  "styleTags": ["Sarcastic", "Humorous", "Playful", "Witty"]
+}
 
 BEHAVIOR RULES:
 - Speak in first person as the creator ("I", "my audience", "when I...")
