@@ -506,9 +506,9 @@ Generate ONE opening question in this style:`
       }
     }
 
-    const isNearComplete = fieldsCollected >= 4
-    const isComplete = fieldsCollected >= 4
-    const shouldUsePersonaMode = isComplete && fieldsCollected >= 4
+    const isNearComplete = fieldsCollected >= 5
+    const isComplete = fieldsCollected >= 6 && messages.length > 10
+    const shouldUsePersonaMode = fieldsCollected >= 4
 
     // Determine persona mode
     let personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'
@@ -568,8 +568,12 @@ ADVANCED REFINEMENT: Focus on subtleties and edge cases. Ask about:
 - What they never want their avatar to say or do
 ` : ''}
 
+${messages.length > 20 ? `
+CONVERSATION WIND-DOWN: You have extensive data. Focus on final refinements and prepare to conclude. If asked another question, consider whether you truly need more information or if you should gracefully wrap up.
+` : ''}
+
 ${messages.length > 25 ? `
-CONVERSATION COMPLETION: You should have comprehensive data by now. If you have solid information for most configuration fields, gracefully conclude that you have enough information to create a robust persona. Say something like "That's wonderful! I think I've gathered enough information to create your persona. Click the Complete Setup button to review your configuration."
+CONVERSATION COMPLETION: You should have comprehensive data by now. Gracefully conclude without asking new questions. Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Do NOT ask additional questions.
 ` : ''}
 
 CONFIGURATION TARGETS to extract:
@@ -583,15 +587,16 @@ CONFIGURATION TARGETS to extract:
 
 RESPONSE BEHAVIOR:
 - When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality. Keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Continue asking detailed follow-up questions.
-- When isFinished is true: Say something like "That's wonderful! I think I've gathered enough information to create your persona. Click the Complete Setup button to review your configuration." Stop asking questions.
-- Set isComplete to true when you have captured basic personality information (tone, style, some topics, objectives) - usually around 4-6 exchanges
-- Set isFinished to true only after 15+ exchanges or when you have comprehensive data for all fields
+- When isFinished is true: Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Do NOT ask any questions.
+- Set isComplete to true when you have captured solid personality information (tone, style, topics, objectives) - usually around 6-8 exchanges AND after 10+ messages
+- Set isFinished to true only after 20+ exchanges AND when you have comprehensive data for most fields AND you are ready to stop asking questions
 - Ask ONE clear, specific question per response (unless finishing)
 - Build on their previous answers naturally and ask deeper follow-ups
 - Use their own words and examples when possible
 - Keep responses conversational and encouraging
 - Extract data incrementally without being obvious about it
 - Focus on gathering nuanced details that make their persona unique
+- IMPORTANT: Do not mark isFinished as true if your response contains a question
 
 CURRENT CONFIGURATION STATE:
 ${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}`
@@ -748,12 +753,16 @@ ${JSON.stringify(currentConfig, null, 2)}`
         }
       })
 
+      // Check if response contains a question mark - if so, don't mark as finished
+      const hasQuestion = responseText.includes('?')
+      const shouldFinish = messages.length > 25 && !hasQuestion
+      
       const finalResult = {
         response: responseText,
         extractedData: cleanExtractedData,
         personaMode: personaMode,
         isComplete: isComplete,
-        isFinished: result.isFinished || messages.length > 25,
+        isFinished: result.isFinished || shouldFinish,
         confidenceScore: (fieldsCollected + Object.keys(cleanExtractedData).length) / 7,
         transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined
       }
