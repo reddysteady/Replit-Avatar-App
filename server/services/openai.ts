@@ -454,14 +454,17 @@ You must extract these 7 key items:
 
 Current extracted data: ${JSON.stringify(currentConfig)}
 
+CRITICAL: You MUST respond with valid JSON only. No additional text outside the JSON object.
+
 Instructions:
 - Ask conversational, natural questions
 - Don't make it feel like a form
 - If they give vague answers, ask follow-ups like "Could you tell me more about that?"
 - Extract structured data from their responses
+- When they mention multiple preferences, extract ALL of them into arrays
 - Once you have most fields, guide toward completion
 
-Respond with JSON in this format:
+Respond with valid JSON in this exact format:
 {
   "response": "Your conversational response to continue the dialogue",
   "extractedData": {
@@ -483,10 +486,39 @@ Respond with JSON in this format:
           { role: 'system', content: systemPrompt },
           ...messages
         ],
-        temperature: 0.7,
+        response_format: { type: 'json_object' }, // Force JSON response
+        temperature: 0.3, // Lower temperature for more consistent JSON
       })
 
-      const result = JSON.parse(response.choices[0]?.message?.content || '{}')
+      const content = response.choices[0]?.message?.content || '{}'
+      
+      // Additional validation to ensure we have valid JSON
+      let result
+      try {
+        result = JSON.parse(content)
+      } catch (parseError) {
+        log('JSON parse error, content was:', content)
+        // Extract any meaningful content and create a valid response
+        return {
+          response: "I want to make sure I understand you correctly. Could you tell me more about your communication style and goals?",
+          extractedData: {},
+          isComplete: false
+        }
+      }
+
+      // Ensure the response has the required structure
+      if (!result.response || typeof result.response !== 'string') {
+        result.response = "Great! Tell me more about what you'd like your avatar to focus on."
+      }
+      
+      if (!result.extractedData || typeof result.extractedData !== 'object') {
+        result.extractedData = {}
+      }
+
+      if (typeof result.isComplete !== 'boolean') {
+        result.isComplete = false
+      }
+
       return result
     } catch (error) {
       log('Error extracting personality:', error)
