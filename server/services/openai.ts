@@ -160,6 +160,7 @@ export class AIService {
       const { client, hasKey, keySource: src } = await this.getClient()
       keySource = src
       if (!hasKey) {
+        console.error('[FALLBACK ROOT CAUSE] No OpenAI API key found in environment or settings')
         if (process.env.DEBUG_AI) {
           console.debug('[DEBUG-AI] Missing OPENAI_API_KEY, using fallback')
         }
@@ -172,6 +173,7 @@ export class AIService {
       const currentKey =
         keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
       if (currentKey && !this.isValidKeyFormat(currentKey)) {
+        console.error(`[FALLBACK ROOT CAUSE] Invalid OpenAI API key format from ${keySource}. Key starts with: ${currentKey.substring(0, 7)}...`)
         if (process.env.DEBUG_AI) {
           console.debug(`[DEBUG-AI] Invalid API key format from ${keySource}`)
         }
@@ -277,12 +279,13 @@ export class AIService {
     } catch (error: any) {
       console.error('Error generating AI reply:', error.message)
 
-      // Handle different types of API errors
+      // Handle different types of API errors with detailed logging
       if (
         error.status === 401 ||
         error.message.includes('401') ||
         error.message.includes('Unauthorized')
       ) {
+        console.error(`[FALLBACK ROOT CAUSE] Invalid OpenAI API key from ${keySource}. Error:`, error.message)
         log(`Invalid OpenAI API key from ${keySource}. Using fallback reply.`)
         return this.generateFallbackReply(params.content, params.senderName)
       }
@@ -292,6 +295,7 @@ export class AIService {
         error.message.includes('429') ||
         error.message.includes('quota exceeded')
       ) {
+        console.error('[FALLBACK ROOT CAUSE] OpenAI quota/rate limit exceeded. Error:', error.message)
         log('OpenAI quota exceeded. Using fallback reply.')
         return this.generateFallbackReply(params.content, params.senderName)
       }
@@ -301,6 +305,7 @@ export class AIService {
         error.message.includes('403') ||
         error.message.includes('insufficient_quota')
       ) {
+        console.error('[FALLBACK ROOT CAUSE] OpenAI insufficient quota/permissions. Error:', error.message)
         log('OpenAI insufficient quota/permissions. Using fallback reply.')
         return this.generateFallbackReply(params.content, params.senderName)
       }
