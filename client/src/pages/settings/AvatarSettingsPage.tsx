@@ -160,8 +160,8 @@ export default function AvatarSettingsPage() {
     setSetupMode('form')
   }
 
-  // Show chat interface first for new users
-  if (setupMode === 'chat' && !hasCompletedChat && !personaConfig) {
+  // Show chat interface when in chat mode (either new users or when explicitly requested)
+  if (setupMode === 'chat' && !hasCompletedChat) {
     return (
       <PersonalityChat 
         onComplete={handleChatComplete}
