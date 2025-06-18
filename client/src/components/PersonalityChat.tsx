@@ -190,7 +190,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         })
       }
 
-      if (aiResponse.isComplete && !aiResponse.isFinished) {
+      // Trigger green pulse on first "blended" or "persona_preview" mode message
+      if (aiResponse.personaMode === 'blended' || aiResponse.personaMode === 'persona_preview') {
         setGlowingMessageId(aiMessage.id);
         setTimeout(() => {
           setGlowingMessageId(null);
@@ -375,11 +376,6 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     Complete Setup
                     <ArrowRight className="h-4 w-4" />
                   </Button>
-                  {!isFinished && (
-                    <Button variant="outline" onClick={() => focusInput()}>
-                      Keep Chatting
-                    </Button>
-                  )}
                 </div>
               )}
             </div>
