@@ -1,3 +1,4 @@
+
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-17 [Changed]
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/accordion'
 import { Textarea } from '@/components/ui/textarea'
 import { buildSystemPrompt } from '@shared/prompt'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 
 export default function AvatarSettingsPage() {
   const [personaConfig, setPersonaConfig] = useState<AvatarPersonaConfig | null>(null)
@@ -171,7 +173,7 @@ export default function AvatarSettingsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl space-y-6">
+    <div className="container mx-auto p-6 max-w-7xl space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Persona: Voice & Boundaries</h1>
         <p className="text-muted-foreground">
@@ -209,14 +211,62 @@ export default function AvatarSettingsPage() {
         )}
 
         <TabsContent value="setup" className="space-y-4">
-          <div className="space-y-4">
-            {/* Form for editing persona */}
-            <PrivacyPersonalityForm
-              isLoading={isLoading}
-              initialConfig={personaConfig}
-              onSave={handlePersonaConfig}
-            />
-          </div>
+          <ResizablePanelGroup direction="horizontal" className="space-x-6">
+            <ResizablePanel defaultSize={60} minSize={50}>
+              <div className="space-y-4 pr-3">
+                <PrivacyPersonalityForm
+                  isLoading={isLoading}
+                  initialConfig={personaConfig}
+                  onSave={handlePersonaConfig}
+                />
+              </div>
+            </ResizablePanel>
+            
+            <ResizableHandle withHandle />
+            
+            <ResizablePanel defaultSize={40} minSize={30}>
+              <div className="pl-3">
+                <Card className="sticky top-6">
+                  <CardHeader>
+                    <CardTitle>Prompt Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {systemPrompt ? (
+                      <div className="relative">
+                        <Textarea
+                          readOnly
+                          value={systemPrompt}
+                          className="resize-none min-h-[400px] text-sm"
+                        />
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => {
+                            navigator.clipboard.writeText(systemPrompt)
+                            toast({
+                              title: 'Copied!',
+                              description: 'System prompt copied to clipboard.',
+                            })
+                          }}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          No prompt generated yet. Please configure your persona
+                          settings.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </TabsContent>
 
         <TabsContent value="preview" className="space-y-4">

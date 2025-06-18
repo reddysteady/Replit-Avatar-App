@@ -1,3 +1,4 @@
+
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Changed - deeper Tone & Style textbox]
 // Persona logic reference: docs/stage_1_persona.md
@@ -20,6 +21,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 
@@ -172,254 +175,318 @@ export default function PrivacyPersonalityForm({
     onSave(cleanedData)
   }
 
+  const isCustomFallback = (value: string) => {
+    return value !== 'Sorry, I keep that private.' && value !== "Let's chat about something else!"
+  }
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(submit)}
-        className="space-y-6 max-w-2xl"
-      >
-        <FormField
-          control={form.control}
-          name="toneDescription"
-          rules={{ required: true }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Tone & Style</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="How should your avatar speak?"
-                  className="min-h-[240px]"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="styleTags"
-          render={() => (
-            <FormItem>
-              <FormLabel>Style Tags</FormLabel>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {styleOptions.map((opt) => {
-                  const selected = form.watch('styleTags').includes(opt)
-                  return (
+    <TooltipProvider>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(submit)}
+          className="space-y-6 max-w-2xl"
+        >
+          <FormField
+            control={form.control}
+            name="toneDescription"
+            rules={{ required: true }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Tone & Style
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Describe how your avatar should communicate. Include personality traits, 
+                        communication style, and emotional tone. This forms the foundation of how 
+                        your AI will respond to messages.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="How should your avatar speak?"
+                    className="resize-none overflow-y-auto"
+                    style={{
+                      minHeight: '80px',
+                      maxHeight: '240px',
+                      height: Math.min(240, Math.max(80, (field.value?.split('\n').length || 1) * 24 + 32))
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="styleTags"
+            render={() => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Style Tags
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Quick descriptors that define your communication style. Click to select/deselect. 
+                        Type in the input field and press Enter to add new tags. Click × to remove tags.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </FormLabel>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {styleOptions.map((opt) => {
+                    const selected = form.watch('styleTags').includes(opt)
+                    return (
+                      <Badge
+                        key={opt}
+                        variant={selected ? 'default' : 'outline'}
+                        onClick={() => {
+                          const cur = form.getValues('styleTags')
+                          form.setValue(
+                            'styleTags',
+                            selected
+                              ? cur.filter((v) => v !== opt)
+                              : [...cur, opt],
+                          )
+                        }}
+                        className={cn(
+                          'cursor-pointer flex items-center h-8 px-3 text-sm',
+                          selected && 'bg-[#3A8DFF]',
+                        )}
+                      >
+                        {opt}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setStyleOptions((prev) =>
+                              prev.filter((v) => v !== opt),
+                            )
+                            form.setValue(
+                              'styleTags',
+                              form
+                                .getValues('styleTags')
+                                .filter((v) => v !== opt),
+                            )
+                          }}
+                          className="ml-2 text-xs hover:text-red-500"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    )
+                  })}
+                  <Input
+                    placeholder="Add tag"
+                    className="h-8 w-32 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const value = e.currentTarget.value.trim()
+                        if (value) {
+                          setStyleOptions((prev) =>
+                            Array.from(new Set([...prev, value])),
+                          )
+                          form.setValue('styleTags', [
+                            ...form.getValues('styleTags'),
+                            value,
+                          ])
+                          e.currentTarget.value = ''
+                        }
+                      }
+                    }}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="allowedTopics"
+            rules={{
+              validate: () =>
+                topics.some((t) => t.state !== 'neutral') ||
+                'Select at least one topic',
+            }}
+            render={() => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Topics
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Manage what your avatar can discuss. Click chips to cycle: 
+                        <br />• Gray = Neutral (no preference)
+                        <br />• Green = Allowed topics 
+                        <br />• Red = Restricted topics
+                        <br />Type and press Enter to add new topics. Click × to remove.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </FormLabel>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {topics.map((topic, idx) => (
                     <Badge
-                      key={opt}
-                      variant={selected ? 'default' : 'outline'}
+                      key={topic.label}
+                      variant={
+                        topic.state === 'allowed'
+                          ? 'secondary'
+                          : topic.state === 'restricted'
+                            ? 'destructive'
+                            : 'outline'
+                      }
                       onClick={() => {
-                        const cur = form.getValues('styleTags')
-                        form.setValue(
-                          'styleTags',
-                          selected
-                            ? cur.filter((v) => v !== opt)
-                            : [...cur, opt],
-                        )
+                        setTopics((prev) => {
+                          const next = [...prev]
+                          const current = next[idx]
+                          const nextState =
+                            current.state === 'neutral'
+                              ? 'allowed'
+                              : current.state === 'allowed'
+                                ? 'restricted'
+                                : 'neutral'
+                          next[idx] = { ...current, state: nextState }
+                          return next
+                        })
                       }}
                       className={cn(
-                        'cursor-pointer flex items-center',
-                        selected && 'bg-[#3A8DFF]',
+                        'cursor-pointer select-none flex items-center h-8 px-3 text-sm',
+                        {
+                          'border-green-600 text-green-600 bg-green-50 hover:bg-green-100':
+                            topic.state === 'allowed',
+                          'border-red-600 text-red-600 bg-red-50 hover:bg-red-100':
+                            topic.state === 'restricted',
+                        },
                       )}
                     >
-                      {opt}
+                      {topic.label}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          setStyleOptions((prev) =>
-                            prev.filter((v) => v !== opt),
-                          )
-                          form.setValue(
-                            'styleTags',
-                            form
-                              .getValues('styleTags')
-                              .filter((v) => v !== opt),
+                          setTopics((prev) =>
+                            prev.filter((t) => t.label !== topic.label),
                           )
                         }}
-                        className="ml-1 text-xs"
+                        className="ml-2 text-xs hover:text-red-500"
                       >
                         ×
                       </button>
                     </Badge>
-                  )
-                })}
-                <Input
-                  placeholder="Add tag"
-                  className="h-8 w-32"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const value = e.currentTarget.value.trim()
-                      if (value) {
-                        setStyleOptions((prev) =>
-                          Array.from(new Set([...prev, value])),
-                        )
-                        form.setValue('styleTags', [
-                          ...form.getValues('styleTags'),
-                          value,
-                        ])
-                        e.currentTarget.value = ''
-                      }
-                    }
-                  }}
-                />
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="allowedTopics"
-          rules={{
-            validate: () =>
-              topics.some((t) => t.state !== 'neutral') ||
-              'Select at least one topic',
-          }}
-          render={() => (
-            <FormItem>
-              <FormLabel>Topics</FormLabel>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {topics.map((topic, idx) => (
-                  <Badge
-                    key={topic.label}
-                    variant={
-                      topic.state === 'allowed'
-                        ? 'secondary'
-                        : topic.state === 'restricted'
-                          ? 'destructive'
-                          : 'outline'
-                    }
-                    onClick={() => {
-                      setTopics((prev) => {
-                        const next = [...prev]
-                        const current = next[idx]
-                        const nextState =
-                          current.state === 'neutral'
-                            ? 'allowed'
-                            : current.state === 'allowed'
-                              ? 'restricted'
-                              : 'neutral'
-                        next[idx] = { ...current, state: nextState }
-                        return next
-                      })
-                    }}
-                    className={cn(
-                      'cursor-pointer select-none flex items-center',
-                      {
-                        'border-green-600 text-green-600 bg-green-50':
-                          topic.state === 'allowed',
-                        'border-red-600 text-red-600 bg-red-50':
-                          topic.state === 'restricted',
-                      },
-                    )}
-                  >
-                    {topic.label}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setTopics((prev) =>
-                          prev.filter((t) => t.label !== topic.label),
-                        )
-                      }}
-                      className="ml-1 text-xs"
-                    >
-                      ×
-                    </button>
-                  </Badge>
-                ))}
-                <Input
-                  placeholder="Add topics"
-                  className="h-8 w-36"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      const values = e.currentTarget.value
-                        .split(',')
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                      if (values.length > 0) {
-                        setTopics((prev) => {
-                          const map = new Map(prev.map((t) => [t.label, t]))
-                          values.forEach((v) => {
-                            if (!map.has(v)) {
-                              map.set(v, { label: v, state: 'neutral' })
-                            }
+                  ))}
+                  <Input
+                    placeholder="Add topics"
+                    className="h-8 w-36 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        const values = e.currentTarget.value
+                          .split(',')
+                          .map((t) => t.trim())
+                          .filter(Boolean)
+                        if (values.length > 0) {
+                          setTopics((prev) => {
+                            const map = new Map(prev.map((t) => [t.label, t]))
+                            values.forEach((v) => {
+                              if (!map.has(v)) {
+                                map.set(v, { label: v, state: 'neutral' })
+                              }
+                            })
+                            return Array.from(map.values())
                           })
-                          return Array.from(map.values())
-                        })
-                        e.currentTarget.value = ''
+                          e.currentTarget.value = ''
+                        }
                       }
-                    }
-                  }}
-                />
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="fallbackReply"
-          rules={{ required: true }}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fallback Response</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="space-y-2"
-                >
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value="Sorry, I keep that private." />
-                    <span className="text-sm">Politely decline</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <RadioGroupItem value="Let's chat about something else!" />
-                    <span className="text-sm">Redirect topic</span>
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="custom" />
-                    <Input
-                      placeholder="Custom response"
-                      value={
-                        field.value === 'Sorry, I keep that private.' ||
-                        field.value === "Let's chat about something else!"
-                          ? ''
-                          : field.value
+                    }}
+                  />
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="fallbackReply"
+            rules={{ required: true }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Fallback Response
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">
+                        Choose how your avatar responds when asked about restricted topics. 
+                        Select a preset option or create a custom response that matches your style.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    value={isCustomFallback(field.value) ? 'custom' : field.value}
+                    onValueChange={(value) => {
+                      if (value === 'custom') {
+                        field.onChange('')
+                      } else {
+                        field.onChange(value)
                       }
-                      onChange={(e) => {
-                        const customValue = e.target.value
-                        if (customValue.trim()) {
+                    }}
+                    className="space-y-2"
+                  >
+                    <label className="flex items-center space-x-2">
+                      <RadioGroupItem value="Sorry, I keep that private." />
+                      <span className="text-sm">Politely decline</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <RadioGroupItem value="Let's chat about something else!" />
+                      <span className="text-sm">Redirect topic</span>
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="custom" />
+                      <Input
+                        placeholder="Custom response"
+                        value={
+                          isCustomFallback(field.value) ? field.value : ''
+                        }
+                        onChange={(e) => {
+                          const customValue = e.target.value
                           field.onChange(customValue)
-                        } else {
-                          field.onChange('custom')
-                        }
-                      }}
-                      onFocus={() => {
-                        if (
-                          field.value === 'Sorry, I keep that private.' ||
-                          field.value === "Let's chat about something else!"
-                        ) {
-                          field.onChange('')
-                        }
-                      }}
-                    />
-                  </div>
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="mt-2" disabled={isLoading}>
-          {isLoading ? 'Saving...' : 'Save Preferences'}
-        </Button>
-      </form>
-    </Form>
+                        }}
+                        onFocus={() => {
+                          if (!isCustomFallback(field.value)) {
+                            field.onChange('')
+                          }
+                        }}
+                        className="text-sm"
+                      />
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="mt-6" disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Save Preferences'}
+          </Button>
+        </form>
+      </Form>
+    </TooltipProvider>
   )
 }
