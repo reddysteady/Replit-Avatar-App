@@ -441,6 +441,16 @@ export class AIService {
       }
     }
 
+    // Count how many fields we already have
+    const fieldsCollected = Object.keys(currentConfig).filter(key => 
+      currentConfig[key] && 
+      (typeof currentConfig[key] === 'string' && currentConfig[key].length > 0) ||
+      (Array.isArray(currentConfig[key]) && currentConfig[key].length > 0)
+    ).length
+
+    const totalFieldsNeeded = 7
+    const isNearComplete = fieldsCollected >= 5
+
     const systemPrompt = `You are guiding a creator through setting up their digital twin avatar. Your job is to collect their tone, content style, and goals through natural conversation.
 
 You must extract these 7 key items:
@@ -452,31 +462,32 @@ You must extract these 7 key items:
 6. avatarObjective - Array of goals (Build Community, Educate, Entertain, etc.)
 7. audienceDescription - Who they're talking to
 
-Current extracted data: ${JSON.stringify(currentConfig)}
+Current extracted data (${fieldsCollected}/${totalFieldsNeeded} fields): ${JSON.stringify(currentConfig)}
 
 CRITICAL: You MUST respond with valid JSON only. No additional text outside the JSON object.
 
 Instructions:
-- Ask conversational, natural questions
-- Don't make it feel like a form
-- If they give vague answers, ask follow-ups like "Could you tell me more about that?"
-- Extract structured data from their responses
-- When they mention multiple preferences, extract ALL of them into arrays
-- Once you have most fields, guide toward completion
+- Continue the conversation naturally based on what they've already shared
+- Don't repeat questions about data you've already extracted
+- If they give vague answers, ask follow-ups like "Could you tell me more about that?" or "Can you give me some examples?"
+- When they mention multiple preferences in one response, extract ALL of them into arrays
+- Look for implied information (e.g., if they mention "fitness tips", add "fitness" to allowedTopics)
+- ${isNearComplete ? 'Focus on completing missing fields and preparing to wrap up' : 'Focus on the most important missing fields first'}
+- Set isComplete to true only when you have meaningful data for at least 6 out of 7 fields
 
 Respond with valid JSON in this exact format:
 {
-  "response": "Your conversational response to continue the dialogue",
+  "response": "Your conversational response that builds on previous messages",
   "extractedData": {
-    "toneDescription": "extracted tone if mentioned",
-    "styleTags": ["array", "of", "tags"],
-    "allowedTopics": ["topics", "they", "mentioned"],
+    "toneDescription": "extracted or refined tone description",
+    "styleTags": ["array", "of", "style", "tags"],
+    "allowedTopics": ["topics", "they", "want", "to", "discuss"],
     "restrictedTopics": ["topics", "to", "avoid"],
     "fallbackReply": "how they want to handle restricted topics",
-    "avatarObjective": ["their", "goals"],
-    "audienceDescription": "who they're targeting"
+    "avatarObjective": ["their", "main", "goals"],
+    "audienceDescription": "description of their target audience"
   },
-  "isComplete": false
+  "isComplete": ${isNearComplete ? 'true if you have enough data, false if you need more' : 'false'}
 }`
 
     try {

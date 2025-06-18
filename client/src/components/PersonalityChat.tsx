@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,7 +79,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       if (!response.ok) throw new Error('Failed to process message')
 
       const data = await response.json()
-      
+
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: data.response,
@@ -93,7 +92,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       // Update extracted config
       if (data.extractedData) {
         setExtractedConfig(prev => ({ ...prev, ...data.extractedData }))
-        
+
         // Track completed fields
         const newCompleted = new Set(completedFields)
         Object.keys(data.extractedData).forEach(key => {
