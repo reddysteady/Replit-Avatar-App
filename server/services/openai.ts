@@ -630,6 +630,9 @@ ${JSON.stringify(currentConfig, null, 2)}`
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] OpenAI raw response:', content)
       }
+      
+      // Always log personality extraction responses for debugging
+      console.log('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
 
       // Additional validation to ensure we have valid JSON
       let result
@@ -661,7 +664,7 @@ ${JSON.stringify(currentConfig, null, 2)}`
         result.isComplete = false
       }
 
-      return {
+      const finalResult = {
         response: result.response,
         extractedData: result.extractedData,
         personaMode: personaMode,
@@ -670,6 +673,16 @@ ${JSON.stringify(currentConfig, null, 2)}`
         confidenceScore: fieldsCollected / 7,
         transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined
       }
+      
+      console.log('[PERSONALITY-DEBUG] Final result:', {
+        responseLength: finalResult.response.length,
+        extractedDataKeys: Object.keys(finalResult.extractedData),
+        personaMode: finalResult.personaMode,
+        isComplete: finalResult.isComplete,
+        isFinished: finalResult.isFinished
+      })
+      
+      return finalResult
     } catch (error: any) {
       console.error('Error extracting personality:', error)
       log('Personality extraction failed:', error.message)
