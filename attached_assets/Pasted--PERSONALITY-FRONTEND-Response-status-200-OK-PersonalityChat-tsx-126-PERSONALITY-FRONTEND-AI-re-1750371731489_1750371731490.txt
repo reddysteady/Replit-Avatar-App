@@ -1,0 +1,90 @@
+[PERSONALITY-FRONTEND] Response status: 200 OK
+PersonalityChat.tsx:126 [PERSONALITY-FRONTEND] AI response received: 
+Object
+PersonalityChat.tsx:142 [PERSONALITY-FRONTEND] Initial message set successfully
+PersonalityChat.tsx:160 [PERSONALITY-FRONTEND] Initial message generation completed
+PersonalityChat.tsx:233 [PERSONALITY-FRONTEND] Sending message: when we were talking about the impact that AI is going to have on our kids
+PersonalityChat.tsx:255 [PERSONALITY-FRONTEND] Making request with: 
+Object
+PersonalityChat.tsx:269 [PERSONALITY-FRONTEND] Response received: 200 OK
+PersonalityChat.tsx:279 [PERSONALITY-FRONTEND] AI response parsed: 
+Object
+PersonalityChat.tsx:300 [PERSONALITY-FRONTEND] Merging config: 
+Object
+PersonalityChat.tsx:315 [PERSONALITY-DEBUG] Config count: 0 Stage: guidance
+PersonalityChat.tsx:353 [PERSONALITY-FRONTEND] Message handling completed
+PersonalityChat.tsx:233 [PERSONALITY-FRONTEND] Sending message: informative and fun
+PersonalityChat.tsx:255 [PERSONALITY-FRONTEND] Making request with: 
+Object
+PersonalityChat.tsx:269 [PERSONALITY-FRONTEND] Response received: 200 OK
+PersonalityChat.tsx:279 [PERSONALITY-FRONTEND] AI response parsed: 
+Object
+error
+: 
+undefined
+hasExtractedData
+: 
+false
+hasResponse
+: 
+true
+isComplete
+: 
+false
+personaMode
+: 
+"guidance"
+showChipSelector
+: 
+false
+[[Prototype]]
+: 
+Object
+PersonalityChat.tsx:300 [PERSONALITY-FRONTEND] Merging config: 
+Object
+PersonalityChat.tsx:315 [PERSONALITY-DEBUG] Config count: 0 Stage: guidance
+PersonalityChat.tsx:353 [PERSONALITY-FRONTEND] Message handling completed
+PersonalityChat.tsx:233 [PERSONALITY-FRONTEND] Sending message: things
+PersonalityChat.tsx:255 [PERSONALITY-FRONTEND] Making request with: 
+Object
+PersonalityChat.tsx:269 [PERSONALITY-FRONTEND] Response received: 200 OK
+PersonalityChat.tsx:279 [PERSONALITY-FRONTEND] AI response parsed: 
+Object
+error
+: 
+undefined
+hasExtractedData
+: 
+false
+hasResponse
+: 
+true
+isComplete
+: 
+false
+personaMode
+: 
+"guidance"
+showChipSelector
+: 
+false
+[[Prototype]]
+: 
+Object
+PersonalityChat.tsx:300 [PERSONALITY-FRONTEND] Merging config: 
+Object
+mergedConfig
+: 
+{}
+newData
+: 
+{}
+previousConfig
+: 
+{}
+[[Prototype]]
+: 
+Object
+PersonalityChat.tsx:315 [PERSONALITY-DEBUG] Config count: 0 Stage: guidance
+PersonalityChat.tsx:353 [PERSONALITY-FRONTEND] Message handling completed
+persona:1 
