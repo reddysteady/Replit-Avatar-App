@@ -263,16 +263,24 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
       // Phase 1: Show chip selector every 2 parameters (simplified validation)
-      const configCount = Object.keys(extractedConfig).length + (aiResponse.extractedData ? Object.keys(aiResponse.extractedData).length : 0)
+      const mergedConfig = { ...extractedConfig, ...aiResponse.extractedData }
+      const configCount = Object.keys(mergedConfig).filter(key => {
+        const value = mergedConfig[key]
+        if (typeof value === 'string') return value.length > 3
+        if (Array.isArray(value)) return value.length > 0
+        return Boolean(value)
+      }).length
       
-      if (aiResponse.showChipSelector && aiResponse.suggestedTraits) {
-        setShowChipSelector(true)
-        setSuggestedTraits(aiResponse.suggestedTraits)
-        setReflectionActive(true)
-      } else if (configCount > 0 && configCount % 2 === 0 && !aiResponse.isComplete && !showChipSelector) {
-        // Auto-trigger chip selector every 2 parameters for Phase 1
+      console.log('[PERSONALITY-DEBUG] Config count:', configCount, 'Stage:', aiResponse.personaMode)
+      
+      if (aiResponse.showChipSelector || aiResponse.reflectionCheckpoint) {
         setShowChipSelector(true)
         setSuggestedTraits(aiResponse.suggestedTraits || [])
+        setReflectionActive(true)
+      } else if (configCount >= 2 && configCount % 2 === 0 && !showChipSelector && messages.filter(m => m.role === 'user').length >= 2) {
+        // Auto-trigger chip selector every 2 parameters for Phase 1
+        setShowChipSelector(true)
+        setSuggestedTraits(generateDefaultTraits(mergedConfig))
         setReflectionActive(true)
       }
 
@@ -395,6 +403,41 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       minute: '2-digit',
       timeZoneName: 'short'
     })
+  }
+
+  const generateDefaultTraits = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
+    const traits: PersonalityTrait[] = []
+    let idCounter = 1
+
+    // Extract traits from tone description
+    if (config.toneDescription) {
+      const toneText = config.toneDescription.toLowerCase()
+      const commonTraits = ['friendly', 'professional', 'casual', 'humorous', 'analytical', 'creative', 'empathetic', 'direct']
+      
+      commonTraits.forEach(trait => {
+        if (toneText.includes(trait)) {
+          traits.push({
+            id: (idCounter++).toString(),
+            label: trait.charAt(0).toUpperCase() + trait.slice(1),
+            selected: true
+          })
+        }
+      })
+    }
+
+    // Add some common unselected options if we don't have enough
+    const additionalTraits = ['Supportive', 'Curious', 'Patient', 'Enthusiastic', 'Thoughtful']
+    additionalTraits.forEach(trait => {
+      if (!traits.some(t => t.label.toLowerCase() === trait.toLowerCase()) && traits.length < 8) {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: trait,
+          selected: false
+        })
+      }
+    })
+
+    return traits.slice(0, 8)
   }
 
   const progressPercentage = Math.min((Object.keys(extractedConfig).filter(key => 
@@ -534,11 +577,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 </Button>
               </div>
 
-              {/* Complete Setup Button - show when we have sufficient data and are in preview mode */}
-          {(currentPersonaMode === 'persona_preview' || currentPersonaMode === 'blended') && 
-           Object.keys(extractedConfig).length >= 3 && 
-           messages.filter(m => m.role === 'user').length >= 6 && 
-           !reflectionActive && (
+              {/* Complete Setup Button - show after chip validation when we have core data */}
+          {Object.keys(extractedConfig).length >= 2 && 
+           messages.filter(m => m.role === 'user').length >= 4 && 
+           !showChipSelector && 
+           !reflectionActive && 
+           !isFinished && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

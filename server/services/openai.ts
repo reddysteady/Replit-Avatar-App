@@ -576,7 +576,7 @@ export class AIService {
       const value = config[key];
       if (!value) return false;
       
-      if (typeof value === 'string') return value.length > 5;
+      if (typeof value === 'string') return value.length > 3;
       if (Array.isArray(value)) return value.length > 0;
       if (typeof value === 'object') return Object.keys(value).length > 0;
       
@@ -588,7 +588,7 @@ export class AIService {
    * Calculates confidence score based on core parameter completeness
    */
   private calculateConfidence(config: Partial<AvatarPersonaConfig>, extractedData: any): number {
-    const totalCoreParams = 6;
+    const totalCoreParams = 4; // Reduced for Phase 1
     const filledParams = this.countMeaningfulFields({...config, ...extractedData});
     return Math.min(0.95, filledParams / totalCoreParams);
   }
@@ -597,12 +597,11 @@ export class AIService {
    * Determines the current conversation stage for Phase 1 simplified flow
    */
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
-    // Phase 1: Simplified validation every 2 parameters
-    if (userMessages <= 2) return 'introduction'
-    if (userMessages <= 4 && fieldsCollected < 2) return 'discovery'
-    if (fieldsCollected >= 2 && fieldsCollected < 4 && !confirmedTraits) return 'reflection_checkpoint'
+    // Phase 1: Show chip selector every 2 parameters collected
+    if (userMessages <= 1) return 'introduction'
+    if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) return 'reflection_checkpoint'
     if (fieldsCollected >= 4) return 'persona_preview'
-    if (fieldsCollected >= 6 || userMessages >= 12) return 'completion'
+    if (userMessages <= 3) return 'discovery'
     return 'core_collection'
   }
 
@@ -690,16 +689,18 @@ RESPONSE RULES:
 2. Extract data systematically - prioritize missing fields
 3. Keep responses under 120 words for focus
 4. Avoid repetition and generic questions
-5. Build toward chip validation every 2 parameters
+5. NEVER end conversation with "Chat completed" - always continue until chip validation
+6. Always ask follow-up questions unless explicitly in reflection_checkpoint
 
 Respond with JSON:
 {
   "response": "Your targeted question focusing on: ${missingFields.slice(0, 1).join('')}",
   "extractedData": {core persona fields only},
   ${responseFormat}
-  "personaMode": "${stage === 'persona_preview' || stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
-  "isComplete": ${stage === 'completion'},
-  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
+  "personaMode": "${stage === 'persona_preview' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
+  "isComplete": false,
+  "isFinished": false,
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / 4)}
 }`
   }
 
