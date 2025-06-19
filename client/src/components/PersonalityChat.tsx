@@ -490,27 +490,26 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Sticky Header with Progress */}
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="container mx-auto p-3 max-w-4xl md:p-4">
-          <div className="flex items-center justify-between mb-3 md:mb-4">
+      {/* Desktop Header with Progress - Hidden on Mobile */}
+      <div className="sticky top-0 z-10 bg-white border-b shadow-sm hidden md:block">
+        <div className="container mx-auto p-4 max-w-4xl">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-lg font-semibold flex items-center gap-2 md:text-2xl md:font-bold">
-                <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <MessageCircle className="h-6 w-6" />
                 AI Voice Setup
               </h1>
-              <p className="text-sm text-muted-foreground hidden md:block">
+              <p className="text-sm text-muted-foreground">
                 Let's discover your unique communication style through conversation
               </p>
             </div>
             <Button 
               variant="outline" 
-              size="icon"
               onClick={onSkip} 
-              className="h-8 w-8 md:h-10 md:w-auto md:flex md:items-center md:gap-2 md:px-4"
+              className="flex items-center gap-2"
             >
               <SkipForward className="h-4 w-4" />
-              <span className="hidden md:inline">Skip to Form</span>
+              Skip to Form
             </Button>
           </div>
 
@@ -531,9 +530,21 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         </div>
       </div>
 
+      {/* Mobile Skip Button - Top Right Corner */}
+      <div className="md:hidden fixed top-4 right-4 z-20">
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={onSkip} 
+          className="h-8 w-8 bg-white shadow-sm"
+        >
+          <SkipForward className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Chat Container */}
       <div className="container mx-auto p-0 max-w-4xl md:p-6">
-        <Card className="flex flex-col h-[calc(100vh-200px)] md:rounded-lg rounded-none border-0 md:border">
+        <Card className="flex flex-col h-screen md:h-[calc(100vh-200px)] md:rounded-lg rounded-none border-0 md:border">
           <CardContent className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
             <ScrollArea className="flex-1 pr-4 mb-4">
               <div className="space-y-4 min-h-0">
@@ -597,7 +608,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
             <Separator className="mb-4" />
 
-            <div className="space-y-4">
+            <div className="space-y-4 pb-safe">
               <div className="flex gap-2">
                 <Input
                   ref={inputRef}
@@ -624,25 +635,25 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
               </div>
 
               {/* Complete Setup Button - show when we have sufficient core data and not in active flow */}
-          {Object.keys(extractedConfig).length >= 4 && 
-           messages.filter(m => m.role === 'user').length >= 6 && 
-           !showChipSelector && 
-           !reflectionActive && 
-           !isFinished && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-center mt-4"
-            >
-              <Button 
-                onClick={handleComplete}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex items-center gap-2"
-              >
-                <Sparkles className="h-4 w-4" />
-                Continue to Setup
-              </Button>
-            </motion.div>
-          )}
+              {Object.keys(extractedConfig).length >= 4 && 
+               messages.filter(m => m.role === 'user').length >= 6 && 
+               !showChipSelector && 
+               !reflectionActive && 
+               !isFinished && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-center"
+                >
+                  <Button 
+                    onClick={handleComplete}
+                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex items-center gap-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Continue to Setup
+                  </Button>
+                </motion.div>
+              )}
             </div>
           </CardContent>
         </Card>
