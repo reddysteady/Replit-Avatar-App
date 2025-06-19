@@ -492,20 +492,25 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     <div className="min-h-screen bg-gray-50">
       {/* Sticky Header with Progress */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
-        <div className="container mx-auto p-4 max-w-4xl">
-          <div className="flex items-center justify-between mb-4">
+        <div className="container mx-auto p-3 max-w-4xl md:p-4">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <MessageCircle className="h-6 w-6" />
-                AI Voice Setup Chat
+              <h1 className="text-lg font-semibold flex items-center gap-2 md:text-2xl md:font-bold">
+                <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
+                AI Voice Setup
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground hidden md:block">
                 Let's discover your unique communication style through conversation
               </p>
             </div>
-            <Button variant="outline" onClick={onSkip} className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={onSkip} 
+              className="h-8 w-8 md:h-10 md:w-auto md:flex md:items-center md:gap-2 md:px-4"
+            >
               <SkipForward className="h-4 w-4" />
-              Skip to Form
+              <span className="hidden md:inline">Skip to Form</span>
             </Button>
           </div>
 
@@ -527,9 +532,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       </div>
 
       {/* Chat Container */}
-      <div className="container mx-auto p-6 max-w-4xl">
-        <Card className="flex flex-col h-[calc(100vh-200px)]">
-          <CardContent className="flex-1 flex flex-col p-6 overflow-hidden">
+      <div className="container mx-auto p-0 max-w-4xl md:p-6">
+        <Card className="flex flex-col h-[calc(100vh-200px)] md:rounded-lg rounded-none border-0 md:border">
+          <CardContent className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
             <ScrollArea className="flex-1 pr-4 mb-4">
               <div className="space-y-4 min-h-0">
                 {messages.map((message) => (
