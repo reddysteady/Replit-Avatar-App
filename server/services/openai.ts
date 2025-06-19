@@ -467,8 +467,7 @@ export class AIService {
         console.error('[PERSONALITY-ERROR] No OpenAI API key available')
         return this.createFallbackResponse(
           "I need an OpenAI API key to help with personality setup. Please add your API key in Settings.",
-          'guidance',
-          true
+          'guidance'
         )
       }
 
@@ -482,15 +481,14 @@ export class AIService {
         })
         return this.createFallbackResponse(
           "There's an issue with the API key format. Please check your OpenAI API key in Settings.",
-          'guidance',
-          true
+          'guidance'
         )
       }
 
       // Handle initial message generation
       if (initialMessage || (messages.length === 0) || (messages.length === 1 && messages[0].role === 'system')) {
         console.log('[PERSONALITY-EXTRACT] Generating initial message')
-        return this.generateInitialMessage(client)
+        return await this.generateInitialMessage(client)
       }
 
       // Calculate conversation state
@@ -562,7 +560,11 @@ export class AIService {
   /**
    * Creates a fallback response with consistent structure
    */
-  private createFallbackResponse(responseText: string, personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'): any {
+  private createFallbackResponse(
+    responseText: string, 
+    personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance',
+    fallbackUsed: boolean = false
+  ): any {
     return {
       response: responseText,
       extractedData: {},
@@ -571,7 +573,8 @@ export class AIService {
       confidenceScore: 0,
       showChipSelector: false,
       suggestedTraits: [],
-      reflectionCheckpoint: false
+      reflectionCheckpoint: false,
+      ...(fallbackUsed && { fallbackUsed: true })
     }
   }
 
@@ -579,6 +582,13 @@ export class AIService {
    * Generates the initial conversation message
    */
   private async generateInitialMessage(client: OpenAI): Promise<any> {
+    const fallbackQuestions = [
+      "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+      "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
+      "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?",
+      "Let's dive in! When someone compliments your content, what's your typical response style? Quick and grateful, or do you love to chat back and forth?"
+    ]
+
     try {
       const response = await client.chat.completions.create({
         model: 'gpt-4o',
@@ -603,7 +613,7 @@ export class AIService {
       })
 
       const initialQuestion = response.choices[0]?.message?.content?.trim() || 
-        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
+        fallbackQuestions[0]
 
       return {
         response: initialQuestion,
@@ -618,9 +628,11 @@ export class AIService {
     } catch (error: any) {
       console.error('[PERSONALITY-ERROR] Failed to generate initial message:', error.message || error)
       
-      // Return a hardcoded fallback question
+      // Return a random fallback question
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
+      
       return {
-        response: "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        response: randomFallback,
         extractedData: {},
         isComplete: false,
         personaMode: 'guidance',

@@ -2039,20 +2039,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let session = null
       if (sessionId) {
         console.log('[PERSONALITY-ENDPOINT] Restoring session:', sessionId)
-        session = await personaStateManager.restoreSession(sessionId)
+        try {
+          session = await personaStateManager.restoreSession(sessionId)
+        } catch (sessionError) {
+          console.warn('[PERSONALITY-ENDPOINT] Session restore failed:', sessionError.message)
+        }
       }
 
       if (!session && !initialMessage) {
         console.log('[PERSONALITY-ENDPOINT] Creating new session')
-        // Create new session for ongoing conversations
-        session = await personaStateManager.createSession('1') // MVP: assume user ID 1
+        try {
+          // Create new session for ongoing conversations
+          session = await personaStateManager.createSession('1') // MVP: assume user ID 1
+        } catch (sessionError) {
+          console.warn('[PERSONALITY-ENDPOINT] Session creation failed:', sessionError.message)
+        }
       }
 
       console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
       const result = await aiService.extractPersonalityFromConversation(
         messages || [],
         currentConfig || {},
-        initialMessage || false
+        initialMessage || false,
+        confirmedTraits
       )
 
       console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
@@ -2060,14 +2069,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isComplete: result.isComplete,
         showChipSelector: result.showChipSelector,
         hasResponse: !!result.response,
-        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0
+        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0,
+        fallbackUsed: result.fallbackUsed
       })
 
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] Personality extract result:', {
           personaMode: result.personaMode,
           isComplete: result.isComplete,
-          showChipSelector: result.showChipSelector
+          showChipSelector: result.showChipSelector,
+          fallbackUsed: result.fallbackUsed
         })
       }
 
@@ -2075,14 +2086,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
         message: error.message,
-        stack: error.stack,
+        stack: error.stack?.split('\n').slice(0, 3),
         name: error.name,
         status: error.status
       })
 
       // Return a proper fallback response instead of just an error
+      const fallbackQuestions = [
+        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
+        "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
+      ]
+
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
+
       const fallbackResult = {
-        response: "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        response: randomFallback,
         extractedData: {},
         isComplete: false,
         personaMode: 'guidance',
@@ -2090,12 +2109,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         showChipSelector: false,
         suggestedTraits: [],
         reflectionCheckpoint: false,
-        error: true,
-        errorMessage: error.message
+        fallbackUsed: true,
+        errorRecovered: true
       }
 
       console.log('[PERSONALITY-ENDPOINT] Returning fallback result')
-      res.status(500).json(fallbackResult)
+      res.json(fallbackResult) // Return 200 with fallback instead of 500
     }
   })
 
