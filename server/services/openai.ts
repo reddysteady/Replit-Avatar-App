@@ -433,7 +433,7 @@ export class AIService {
     }
   }
 
-  export async function extractPersonalityFromConversation(
+  async extractPersonalityFromConversation(
   messages: any[],
   currentConfig: Partial<AvatarPersonaConfig> = {},
   initialMessage = false,
