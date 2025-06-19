@@ -1,4 +1,3 @@
-
 // See CHANGELOG.md for 2025-06-15 [Added]
 // See CHANGELOG.md for 2025-06-16 [Fixed]
 // See CHANGELOG.md for 2025-06-17 [Changed]
@@ -9,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Copy, RefreshCw, Trash2, AlertCircle, MessageCircle, Settings } from 'lucide-react'
+import { Copy, RefreshCw, Trash2, AlertCircle, MessageCircle, Info } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import PrivacyPersonalityForm from '@/components/PrivacyPersonalityForm'
 import PersonalityChat from '@/components/PersonalityChat'
@@ -220,9 +219,9 @@ export default function AvatarSettingsPage() {
                 />
               </div>
             </ResizablePanel>
-            
+
             <ResizableHandle withHandle />
-            
+
             <ResizablePanel defaultSize={40} minSize={30}>
               <div className="pl-3">
                 <Card className="sticky top-6">
@@ -261,7 +260,7 @@ export default function AvatarSettingsPage() {
                         </AlertDescription>
                       </Alert>
                     )}
-                    
+
                     {/* Restart AI Chat Button */}
                     <div className="mt-4">
                       <Button

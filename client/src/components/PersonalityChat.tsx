@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
 import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
+import { motion } from 'framer-motion'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -54,6 +55,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [showChipSelector, setShowChipSelector] = useState(false)
   const [suggestedTraits, setSuggestedTraits] = useState<PersonalityTrait[]>([])
   const [reflectionActive, setReflectionActive] = useState(false)
+
+  // New State Variables
+  const [personaMode, setPersonaMode] = useState<'guidance' | 'blended' | 'persona_preview'>('guidance')
+  const [showPersonaPreview, setShowPersonaPreview] = useState(false)
+  const [personaPulse, setPersonaPulse] = useState(false)
+  const [hasShownPersonaPulse, setHasShownPersonaPulse] = useState(false)
+  const [showCompleteButton, setShowCompleteButton] = useState(false)
+  const [progress, setProgress] = useState(0)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -135,7 +144,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const handleChipConfirmation = async (selectedTraits: PersonalityTrait[]) => {
     setShowChipSelector(false)
     setReflectionActive(false)
-    
+
     // Create a confirmation message
     const confirmationMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -168,7 +177,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       const aiResponse: PersonalityExtractionResponse = await response.json()
-      
+
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -286,6 +295,58 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
 
     setIsLoading(false)
+  }
+  // Handle extraction result and update state
+  const handleExtractionResult = (result: any) => {
+    console.log('[PERSONALITY-DEBUG] Handling extraction result:', result)
+
+    if (result.extractedData && Object.keys(result.extractedData).length > 0) {
+      setExtractedConfig(prev => ({ ...prev, ...result.extractedData }))
+    }
+
+    // Handle chip selector - only show during reflection checkpoint
+    if (result.reflectionCheckpoint && result.showChipSelector) {
+      setShowChipSelector(true)
+      setSuggestedTraits(result.suggestedTraits || [])
+    }
+
+    // Handle persona mode changes with simpler logic
+    const newPersonaMode = result.personaMode || 'guidance'
+    if (newPersonaMode !== personaMode) {
+      setPersonaMode(newPersonaMode)
+
+      if (newPersonaMode === 'persona_preview') {
+        setShowPersonaPreview(true)
+
+        // Only pulse once when first entering persona preview
+        if (!hasShownPersonaPulse) {
+          setPersonaPulse(true)
+          setHasShownPersonaPulse(true)
+          setTimeout(() => setPersonaPulse(false), 2000)
+        }
+      }
+    }
+
+    // Simplified completion logic
+    const configCount = Object.keys(extractedConfig).length + (result.extractedData ? Object.keys(result.extractedData).length : 0)
+    const messageCount = messages.length
+
+    // Show Complete Setup button when we have enough data AND are in persona preview mode
+    if (configCount >= 4 && newPersonaMode === 'persona_preview' && messageCount >= 10) {
+      setShowCompleteButton(true)
+      setIsComplete(true)
+    }
+
+    // Update progress bar
+    const newProgress = Math.min(95, (configCount / 6) * 100)
+    setProgress(newProgress)
+
+    // Show pulsing box when progress reaches 100%
+    if (newProgress >= 95 && !hasShownPersonaPulse) {
+      setPersonaPulse(true)
+      setHasShownPersonaPulse(true)
+      setTimeout(() => setPersonaPulse(false), 2000)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -421,7 +482,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     </div>
                   </div>
                 )}
-                
+
                 {showChipSelector && (
                   <div className="flex gap-3 justify-start">
                     <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
@@ -466,14 +527,21 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 </Button>
               </div>
 
-              {isComplete && (
-                <div className="flex gap-2">
-                  <Button onClick={handleComplete} className="flex-1 flex items-center gap-2">
-                    Complete Setup
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              {/* Complete Setup Button - show when in persona preview mode with sufficient data */}
+          {personaMode === 'persona_preview' && Object.keys(extractedConfig).length >= 4 && messages.length >= 8 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center mt-4"
+            >
+              <Button 
+                onClick={handleComplete}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+              >
+                Complete Setup
+              </Button>
+            </motion.div>
+          )}
             </div>
           </CardContent>
         </Card>

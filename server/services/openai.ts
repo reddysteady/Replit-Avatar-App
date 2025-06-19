@@ -456,54 +456,37 @@ export class AIService {
         response: "I'm having trouble processing right now. Could you try again?",
         extractedData: {},
         isComplete: false,
+        personaMode: 'guidance',
+        confidenceScore: 0,
         showChipSelector: false,
         suggestedTraits: [],
         reflectionCheckpoint: false
       }
     }
 
-    // Count how many fields we already have
-    const fieldsCollected = Object.keys(currentConfig).filter(key => 
-      currentConfig[key] && 
-      (typeof currentConfig[key] === 'string' && currentConfig[key].length > 0) ||
-      (Array.isArray(currentConfig[key]) && currentConfig[key].length > 0)
-    ).length
+    // Simplified field counting
+    const fieldsCollected = Object.keys(currentConfig).filter(key => {
+      const value = currentConfig[key]
+      return value && (
+        (typeof value === 'string' && value.length > 0) ||
+        (Array.isArray(value) && value.length > 0)
+      )
+    }).length
 
-    const totalFieldsNeeded = 7
     // Handle initial message generation
     if (initialMessage && messages.length === 1 && messages[0].role === 'system') {
-      const initialSystemPrompt = `Generate an engaging, specific opening question to begin persona discovery for a creator's AI avatar. 
-
-Make the question:
-- Warm and conversational
-- Specific rather than generic (avoid "what's your vibe")
-- Designed to immediately capture personality traits
-- Action-oriented or scenario-based
-- Under 50 words
-
-Examples of good opening questions that reveal communication style:
-- "Picture your most loyal follower asking for advice - walk me through how you'd naturally respond to them"
-- "If someone watched you create content for a week, what three words would they use to describe your communication style?"
-- "What's the one thing you always want your audience to feel after interacting with you?"
-- "When you're explaining something you're passionate about, what does that look like? How do you naturally express that energy?"
-- "Describe how you handle it when someone disagrees with something you've shared - what's your natural approach?"
-
-Generate ONE opening question in this style that will reveal their authentic communication patterns:`
-
       try {
         const response = await client.chat.completions.create({
           model: 'gpt-4o',
           messages: [
-            { role: 'system', content: initialSystemPrompt }
+            { role: 'system', content: 'Generate a warm, engaging opening question (under 50 words) to discover how someone naturally communicates with their audience. Focus on their authentic style rather than generic personality traits.' }
           ],
           temperature: 0.7,
           max_tokens: 100,
         })
 
-        const initialQuestion = response.choices[0]?.message?.content || "Hey there! Picture your most engaged follower - when they ask you for advice, how do you naturally respond to them?"
-
         return {
-          response: initialQuestion,
+          response: response.choices[0]?.message?.content || "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.",
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
@@ -515,7 +498,7 @@ Generate ONE opening question in this style that will reveal their authentic com
       } catch (error) {
         console.error('Error generating initial message:', error)
         return {
-          response: "Hey there! Let's start with something specific - if your biggest supporter asked you to describe your communication style in three words, what would they be?",
+          response: "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.",
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
@@ -527,74 +510,48 @@ Generate ONE opening question in this style that will reveal their authentic com
       }
     }
 
-    const isNearComplete = fieldsCollected >= 5
-    const isComplete = fieldsCollected >= 6 && messages.length > 10
-    const shouldUsePersonaMode = fieldsCollected >= 4
-
+    // Simplified conversation stage detection
+    const messageCount = messages.length
+    const isReflectionCheckpoint = messageCount >= 8 && messageCount <= 12 && !confirmedTraits && fieldsCollected >= 2
+    const isPersonaPreview = fieldsCollected >= 4 && messageCount >= 10
+    const isComplete = fieldsCollected >= 5 && messageCount >= 12
+    
     // Determine persona mode
     let personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'
-    if (shouldUsePersonaMode && currentConfig.toneDescription) {
-      personaMode = fieldsCollected >= 5 ? 'persona_preview' : 'blended'
+    if (isPersonaPreview) {
+      personaMode = 'persona_preview'
+    } else if (fieldsCollected >= 2 && messageCount >= 6) {
+      personaMode = 'blended'
     }
 
-    // Check for reflection checkpoint (messages 7-10)
-  const isReflectionCheckpoint = messages.length >= 7 && messages.length <= 10 && !confirmedTraits
+    // Generate suggested traits for chip selector
+    const suggestedTraits = isReflectionCheckpoint ? [
+      { id: "1", label: "Friendly", selected: true },
+      { id: "2", label: "Professional", selected: false },
+      { id: "3", label: "Humorous", selected: true },
+      { id: "4", label: "Direct", selected: false },
+      { id: "5", label: "Supportive", selected: true }
+    ] : []
 
-  const systemPrompt = `You are an AI assistant helping to extract personality information from a conversation.
+    // Simplified system prompt
+    const systemPrompt = `Extract personality data from this conversation and respond naturally.
 
-Your job is to:
-1. Engage in natural conversation to learn about the user's communication style
-2. Extract key personality traits, tone, and preferences
-3. Gradually transition from guidance mode to speaking in their voice
-4. Provide JSON data for persona configuration
-5. At reflection checkpoints (messages 7-10), show chip selector for trait confirmation
+Current stage: ${messageCount <= 8 ? 'Discovery' : messageCount <= 12 ? 'Reflection' : 'Finalization'}
+Fields collected: ${fieldsCollected}/6
+${isReflectionCheckpoint ? 'SHOW CHIP SELECTOR with discovered traits' : ''}
+${isPersonaPreview ? 'SPEAK IN THEIR VOICE - you are now their avatar' : ''}
 
-CONVERSATION FLOW:
-- Messages 1-6: Ask engaging questions to learn their style (guidance mode)
-- Messages 7-10: REFLECTION CHECKPOINT - Present chip selector with discovered traits
-- Messages 7-12: Start blending - mix guidance with their emerging voice (blended mode)  
-- Messages 13+: Speak primarily in their voice while gathering final details (persona_preview mode)
+${isComplete ? 'The conversation should be wrapping up. Offer to complete setup.' : 'Continue discovering their communication style.'}
 
-REFLECTION CHECKPOINT BEHAVIOR:
-${isReflectionCheckpoint ? `
-IMPORTANT: This is a reflection checkpoint! You should:
-1. Summarize what you've learned about their communication style
-2. Set "showChipSelector": true 
-3. Provide "suggestedTraits" array with discovered personality traits
-4. Ask them to confirm/modify the traits before continuing
-5. Set "reflectionCheckpoint": true
-` : ''}
-
-PERSONA MODES:
-- "guidance": You're helping them discover their voice
-- "blended": You're starting to mirror their style while still guiding
-- "persona_preview": You're speaking as their avatar would, showing them how you sound
-
-Always end every message with a curiosity-driven question to keep the conversation flowing.
-
-Current conversation length: ${messages.length} messages
-Current config extracted so far: ${JSON.stringify(currentConfig, null, 2)}
-${confirmedTraits ? `Confirmed traits from user: ${confirmedTraits.join(', ')}` : ''}
-
-Respond with valid JSON in this exact format:
+Respond with JSON:
 {
-  "response": "Your conversational response with a question at the end",
-  "extractedData": {
-    "toneDescription": "extracted tone if found",
-    "styleTags": ["tag1", "tag2"],
-    "allowedTopics": ["topic1", "topic2"],  
-    "restrictedTopics": ["topic1", "topic2"],
-    "fallbackReply": "extracted fallback if found",
-    "avatarObjective": ["objective1", "objective2"],
-    "audienceDescription": "extracted audience if found"
-  },
-  "isComplete": false,
-  "personaMode": "guidance|blended|persona_preview",
-  "confidenceScore": 0.7,
-  "transitionMessage": "optional message when switching modes",
-  "isFinished": false,
+  "response": "Natural conversational response",
+  "extractedData": {...personality fields...},
+  "isComplete": ${isComplete},
+  "personaMode": "${personaMode}",
+  "confidenceScore": ${fieldsCollected / 6},
+  "isFinished": ${isComplete && messageCount >= 12},
   "showChipSelector": ${isReflectionCheckpoint},
-  "suggestedTraits": [{"id": "1", "label": "Friendly", "selected": true}],
   "reflectionCheckpoint": ${isReflectionCheckpoint}
 }`
 

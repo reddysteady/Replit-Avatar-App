@@ -485,6 +485,11 @@ export default function PrivacyPersonalityForm({
           <Button type="submit" className="mt-6" disabled={isLoading}>
             {isLoading ? 'Saving...' : 'Save Preferences'}
           </Button>
+          
+          {/* Success instruction after save */}
+          <p className="text-sm text-muted-foreground mt-2">
+            After saving, you can test your AI avatar by going to the Messages page and starting a conversation.
+          </p>
         </form>
       </Form>
     </TooltipProvider>
