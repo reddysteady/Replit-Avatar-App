@@ -464,7 +464,7 @@ export class AIService {
       }
     }
 
-    // Simplified field counting
+    // Count meaningful fields collected
     const fieldsCollected = Object.keys(currentConfig).filter(key => {
       const value = currentConfig[key]
       return value && (
@@ -510,47 +510,55 @@ export class AIService {
       }
     }
 
-    // Simplified conversation stage detection
+    // Progressive conversation stages with better logic
     const messageCount = messages.length
-    const isReflectionCheckpoint = messageCount >= 8 && messageCount <= 12 && !confirmedTraits && fieldsCollected >= 2
-    const isPersonaPreview = fieldsCollected >= 4 && messageCount >= 10
-    const isComplete = fieldsCollected >= 5 && messageCount >= 12
+    const userMessages = messages.filter(m => m.role === 'user').length
     
-    // Determine persona mode
+    // Reflection checkpoint: occurs once around message 7-9 if we have some data
+    const isReflectionCheckpoint = userMessages >= 4 && userMessages <= 6 && !confirmedTraits && fieldsCollected >= 2
+    
+    // Persona preview: when we have enough data to start speaking in their voice
+    const shouldEnterPersonaPreview = fieldsCollected >= 3 && userMessages >= 5
+    
+    // Complete: when we have comprehensive data
+    const shouldComplete = fieldsCollected >= 4 && userMessages >= 8
+    
+    // Determine persona mode progression
     let personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'
-    if (isPersonaPreview) {
+    if (shouldComplete) {
       personaMode = 'persona_preview'
-    } else if (fieldsCollected >= 2 && messageCount >= 6) {
+    } else if (shouldEnterPersonaPreview || fieldsCollected >= 3) {
       personaMode = 'blended'
     }
 
-    // Generate suggested traits for chip selector
-    const suggestedTraits = isReflectionCheckpoint ? [
-      { id: "1", label: "Friendly", selected: true },
-      { id: "2", label: "Professional", selected: false },
-      { id: "3", label: "Humorous", selected: true },
-      { id: "4", label: "Direct", selected: false },
-      { id: "5", label: "Supportive", selected: true }
-    ] : []
+    // System prompt that prevents repetition
+    const systemPrompt = `You are helping extract personality data from a conversation. 
 
-    // Simplified system prompt
-    const systemPrompt = `Extract personality data from this conversation and respond naturally.
+Current status:
+- User messages: ${userMessages}
+- Fields collected: ${fieldsCollected}/6 (${Object.keys(currentConfig).join(', ')})
+- Stage: ${isReflectionCheckpoint ? 'Reflection' : shouldComplete ? 'Completion' : 'Discovery'}
 
-Current stage: ${messageCount <= 8 ? 'Discovery' : messageCount <= 12 ? 'Reflection' : 'Finalization'}
-Fields collected: ${fieldsCollected}/6
-${isReflectionCheckpoint ? 'SHOW CHIP SELECTOR with discovered traits' : ''}
-${isPersonaPreview ? 'SPEAK IN THEIR VOICE - you are now their avatar' : ''}
+${isReflectionCheckpoint ? 'TRIGGER CHIP SELECTOR - reflect on discovered traits and ask for confirmation' : ''}
+${shouldComplete ? 'READY TO COMPLETE - you have enough data, start speaking in their voice and suggest completion' : ''}
 
-${isComplete ? 'The conversation should be wrapping up. Offer to complete setup.' : 'Continue discovering their communication style.'}
+CRITICAL: Do not repeat the same response. Always ask NEW, DIFFERENT questions about:
+- Communication style and tone
+- Topics they discuss
+- Audience preferences  
+- Boundaries and restrictions
+- How they handle different situations
 
-Respond with JSON:
+${shouldComplete ? 'Since you have enough data, speak in their captured personality and mention they can complete setup.' : 'Ask a specific, unique question to learn more about their communication style.'}
+
+Respond with JSON only:
 {
-  "response": "Natural conversational response",
-  "extractedData": {...personality fields...},
-  "isComplete": ${isComplete},
+  "response": "Unique question or response (never repeat previous responses)",
+  "extractedData": {personality fields based on their answers},
+  "isComplete": ${shouldComplete},
   "personaMode": "${personaMode}",
-  "confidenceScore": ${fieldsCollected / 6},
-  "isFinished": ${isComplete && messageCount >= 12},
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)},
+  "isFinished": false,
   "showChipSelector": ${isReflectionCheckpoint},
   "reflectionCheckpoint": ${isReflectionCheckpoint}
 }`

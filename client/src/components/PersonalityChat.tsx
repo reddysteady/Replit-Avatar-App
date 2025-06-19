@@ -527,8 +527,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 </Button>
               </div>
 
-              {/* Complete Setup Button - show when in persona preview mode with sufficient data */}
-          {personaMode === 'persona_preview' && Object.keys(extractedConfig).length >= 4 && messages.length >= 8 && (
+              {/* Complete Setup Button - show when we have sufficient data and are in preview mode */}
+          {(currentPersonaMode === 'persona_preview' || currentPersonaMode === 'blended') && 
+           Object.keys(extractedConfig).length >= 3 && 
+           messages.filter(m => m.role === 'user').length >= 6 && 
+           !reflectionActive && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -536,8 +539,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             >
               <Button 
                 onClick={handleComplete}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex items-center gap-2"
               >
+                <Sparkles className="h-4 w-4" />
                 Complete Setup
               </Button>
             </motion.div>
