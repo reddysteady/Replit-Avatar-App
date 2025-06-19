@@ -452,290 +452,380 @@ export class AIService {
 }> {
     const { client, hasKey } = await this.getClient()
     if (!hasKey) {
-      return {
-        response: "I'm having trouble processing right now. Could you try again?",
-        extractedData: {},
-        isComplete: false,
-        personaMode: 'guidance',
-        confidenceScore: 0,
-        showChipSelector: false,
-        suggestedTraits: [],
-        reflectionCheckpoint: false
-      }
+      return this.createFallbackResponse("I'm having trouble processing right now. Could you try again?")
     }
 
-    // Count meaningful fields collected
-    const fieldsCollected = Object.keys(currentConfig).filter(key => {
-      const value = currentConfig[key]
-      return value && (
-        (typeof value === 'string' && value.length > 0) ||
-        (Array.isArray(value) && value.length > 0)
-      )
-    }).length
-
-    // Handle initial message generation
+    // Handle initial message generation with improved prompting
     if (initialMessage && messages.length === 1 && messages[0].role === 'system') {
-      try {
-        const response = await client.chat.completions.create({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'Generate a warm, engaging opening question (under 50 words) to discover how someone naturally communicates with their audience. Focus on their authentic style rather than generic personality traits.' }
-          ],
-          temperature: 0.7,
-          max_tokens: 100,
-        })
-
-        return {
-          response: response.choices[0]?.message?.content || "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.",
-          extractedData: {},
-          isComplete: false,
-          personaMode: 'guidance',
-          confidenceScore: 0,
-          showChipSelector: false,
-          suggestedTraits: [],
-          reflectionCheckpoint: false
-        }
-      } catch (error) {
-        console.error('Error generating initial message:', error)
-        return {
-          response: "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.",
-          extractedData: {},
-          isComplete: false,
-          personaMode: 'guidance',
-          confidenceScore: 0,
-          showChipSelector: false,
-          suggestedTraits: [],
-          reflectionCheckpoint: false
-        }
-      }
+      return this.generateInitialMessage(client)
     }
 
-    // Progressive conversation stages with better logic
-    const messageCount = messages.length
-    const userMessages = messages.filter(m => m.role === 'user').length
+    // Calculate conversation state
+    const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
     
-    // Reflection checkpoint: occurs once around message 7-9 if we have some data
-    const isReflectionCheckpoint = userMessages >= 4 && userMessages <= 6 && !confirmedTraits && fieldsCollected >= 2
-    
-    // Persona preview: when we have enough data to start speaking in their voice
-    const shouldEnterPersonaPreview = fieldsCollected >= 3 && userMessages >= 5
-    
-    // Complete: when we have comprehensive data
-    const shouldComplete = fieldsCollected >= 4 && userMessages >= 8
-    
-    // Determine persona mode progression
-    let personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'
-    if (shouldComplete) {
-      personaMode = 'persona_preview'
-    } else if (shouldEnterPersonaPreview || fieldsCollected >= 3) {
-      personaMode = 'blended'
-    }
-
-    // System prompt that prevents repetition
-    const systemPrompt = `You are helping extract personality data from a conversation. 
-
-Current status:
-- User messages: ${userMessages}
-- Fields collected: ${fieldsCollected}/6 (${Object.keys(currentConfig).join(', ')})
-- Stage: ${isReflectionCheckpoint ? 'Reflection' : shouldComplete ? 'Completion' : 'Discovery'}
-
-${isReflectionCheckpoint ? 'TRIGGER CHIP SELECTOR - reflect on discovered traits and ask for confirmation' : ''}
-${shouldComplete ? 'READY TO COMPLETE - you have enough data, start speaking in their voice and suggest completion' : ''}
-
-CRITICAL: Do not repeat the same response. Always ask NEW, DIFFERENT questions about:
-- Communication style and tone
-- Topics they discuss
-- Audience preferences  
-- Boundaries and restrictions
-- How they handle different situations
-
-${shouldComplete ? 'Since you have enough data, speak in their captured personality and mention they can complete setup.' : 'Ask a specific, unique question to learn more about their communication style.'}
-
-Respond with JSON only:
-{
-  "response": "Unique question or response (never repeat previous responses)",
-  "extractedData": {personality fields based on their answers},
-  "isComplete": ${shouldComplete},
-  "personaMode": "${personaMode}",
-  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)},
-  "isFinished": false,
-  "showChipSelector": ${isReflectionCheckpoint},
-  "reflectionCheckpoint": ${isReflectionCheckpoint}
-}`
+    // Generate contextual system prompt
+    const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
 
     try {
       if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] Personality extraction request:', {
-          messageCount: messages.length,
-          currentConfigKeys: Object.keys(currentConfig),
-          fieldsCollected
-        })
+        console.debug('[DEBUG-AI] Personality extraction request:', conversationState)
       }
 
       const response = await client.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages
+          ...messages.slice(-10) // Only use last 10 messages to prevent token overflow
         ],
-        response_format: { type: 'json_object' }, // Force JSON response
-        temperature: 0.3, // Lower temperature for more consistent JSON
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_tokens: 800 // Increased for better responses
       })
 
       const content = response.choices[0]?.message?.content || '{}'
-
-      if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] OpenAI raw response:', content)
-      }
-
-      // Always log personality extraction responses for debugging
       console.log('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
 
-      // Additional validation to ensure we have valid JSON
-      let result
-      try {
-        result = JSON.parse(content)
-      } catch (parseError) {
-        console.error('JSON parse error, content was:', content)
-        log('Personality extraction JSON parse failed')
-        // Extract any meaningful content and create a valid response
-        return {
-          response: "Let me ask this more directly - are you looking to be more casual and friendly, or professional and informative with your audience?",
-          extractedData: {},
-          isComplete: false,
-          personaMode: 'guidance',
-          confidenceScore: 0,
-          showChipSelector: false,
-          suggestedTraits: [],
-          reflectionCheckpoint: false
-        }
-      }
+      return this.processExtractionResponse(content, conversationState)
 
-      // Handle different response formats from OpenAI
-      let extractedData = {}
-      let responseText = ""
-
-      // Check if result has the expected structure (response + extractedData)
-      if (result.response && result.extractedData) {
-        responseText = result.response
-        extractedData = result.extractedData
-      } 
-      // If result only contains configuration data (direct extraction)
-      else if (result.toneDescription !== undefined || result.styleTags !== undefined || 
-               result.allowedTopics !== undefined || result.restrictedTopics !== undefined ||
-               result.fallbackReply !== undefined || result.avatarObjective !== undefined ||
-               result.audienceDescription !== undefined) {
-        // This is extracted configuration data, we need to generate a response
-        extractedData = result
-
-        // Generate appropriate response based on what we extracted and persona mode
-        if (personaMode === 'guidance') {
-          if (fieldsCollected < 2) {
-            responseText = "That's great insight! Tell me more about your typical communication style - are you more casual and conversational, or professional and informative?"
-          } else if (fieldsCollected < 4) {
-            responseText = "Perfect! I'm getting a good sense of your style. What topics do you love discussing with your audience most?"
-          } else {
-            responseText = "Excellent! I'm capturing your personality well. What topics should I avoid or handle carefully when representing you?"
-          }
-        } else {
-          // In persona preview mode, generate response in their voice
-          const tone = extractedData.toneDescription || currentConfig.toneDescription || 'friendly'
-          if (fieldsCollected >= 4) {
-            responseText = "I'm really starting to get your vibe! What else should I know about how you like to connect with your audience?"
-          } else {
-            responseText = "This is coming together nicely! Tell me more about the topics you're passionate about sharing."
-          }
-        }
-      }
-      // Fallback if we can't parse the structure
-      else {
-        console.warn('[PERSONALITY-DEBUG] Unexpected response structure:', result)
-        responseText = "Great! Tell me more about what you'd like your avatar to focus on."
-        extractedData = {}
-      }
-
-      // Clean up and merge extracted data
-      const cleanExtractedData = {}
-      Object.keys(extractedData).forEach(key => {
-        if (extractedData[key] !== null && extractedData[key] !== undefined && extractedData[key] !== '') {
-          cleanExtractedData[key] = extractedData[key]
-        }
-      })
-
-      // Check if response contains a question mark - if so, don't mark as finished
-      const hasQuestion = responseText.includes('?')
-      const shouldFinish = messages.length > 25 && !hasQuestion && Object.keys(cleanExtractedData).length >= 6
-
-      const finalResult = {
-        response: responseText,
-        extractedData: cleanExtractedData,
-        personaMode: personaMode,
-        isComplete: isComplete,
-        isFinished: result.isFinished || shouldFinish,
-        confidenceScore: (fieldsCollected + Object.keys(cleanExtractedData).length) / 7,
-        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined,
-        showChipSelector: isReflectionCheckpoint,
-        suggestedTraits: [{"id": "1", "label": "Friendly", "selected": true}],
-        reflectionCheckpoint: isReflectionCheckpoint
-      }
-
-      console.log('[PERSONALITY-DEBUG] Final result:', {
-        responseLength: finalResult.response.length,
-        extractedDataKeys: Object.keys(finalResult.extractedData),
-        extractedDataValues: finalResult.extractedData,
-        personaMode: finalResult.personaMode,
-        isComplete: finalResult.isComplete,
-        isFinished: finalResult.isFinished,
-        fieldsCollectedBefore: fieldsCollected,
-        newFieldsFound: Object.keys(cleanExtractedData).length,
-        showChipSelector: finalResult.showChipSelector,
-        suggestedTraits: finalResult.suggestedTraits,
-        reflectionCheckpoint: finalResult.reflectionCheckpoint
-      })
-
-      return finalResult
     } catch (error: any) {
       console.error('Error extracting personality:', error)
-      log('Personality extraction failed:', error.message)
-
-      // Handle specific error types
-      if (error.status === 401 || error.message?.includes('401')) {
-        return {
-          response: "I'm having trouble with my AI connection. Let's try a simple question - what's your main goal: building community, educating people, or entertaining your audience?",
-          extractedData: {},
-          isComplete: false,
-          personaMode: 'guidance',
-          confidenceScore: 0,
-          showChipSelector: false,
-          suggestedTraits: [],
-          reflectionCheckpoint: false
-        }
-      }
-
-      if (error.status === 429 || error.message?.includes('429')) {
-        return {
-          response: "I need to slow down a bit. While I reset, tell me - how would you describe your communication style in one word?",
-          extractedData: {},
-          isComplete: false,
-          personaMode: 'guidance',
-          confidenceScore: 0,
-          showChipSelector: false,
-          suggestedTraits: [],
-          reflectionCheckpoint: false
-        }
-      }
-
-      return {
-        response: "Let me try a different approach - what's the most important thing you want your avatar to accomplish with your audience?",
-        extractedData: {},
-        isComplete: false,
-        personaMode: 'guidance',
-        confidenceScore: 0,
-        showChipSelector: false,
-        suggestedTraits: [],
-        reflectionCheckpoint: false
-      }
+      return this.handleExtractionError(error, conversationState)
     }
+  }
+
+  /**
+   * Creates a fallback response with consistent structure
+   */
+  private createFallbackResponse(responseText: string, personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'): any {
+    return {
+      response: responseText,
+      extractedData: {},
+      isComplete: false,
+      personaMode,
+      confidenceScore: 0,
+      showChipSelector: false,
+      suggestedTraits: [],
+      reflectionCheckpoint: false
+    }
+  }
+
+  /**
+   * Generates the initial conversation message
+   */
+  private async generateInitialMessage(client: OpenAI): Promise<any> {
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { 
+            role: 'system', 
+            content: `Generate a warm, engaging opening question (under 50 words) that:
+            1. Feels conversational and personal
+            2. Gets them talking about their specific communication style
+            3. Avoids generic personality trait questions
+            4. Focuses on their authentic voice with their audience` 
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 100,
+      })
+
+      return this.createFallbackResponse(
+        response.choices[0]?.message?.content || "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them."
+      )
+    } catch (error) {
+      console.error('Error generating initial message:', error)
+      return this.createFallbackResponse("Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.")
+    }
+  }
+
+  /**
+   * Analyzes the current conversation state to determine next steps
+   */
+  private analyzeConversationState(messages: any[], currentConfig: Partial<AvatarPersonaConfig>, confirmedTraits?: string[]): any {
+    const userMessages = messages.filter(m => m.role === 'user')
+    const fieldsCollected = this.countMeaningfulFields(currentConfig)
+    
+    // Get the last few user messages to check for repetition
+    const recentUserMessages = userMessages.slice(-3).map(m => m.content?.toLowerCase() || '')
+    
+    // Stage determination with clearer logic
+    const stage = this.determineConversationStage(userMessages.length, fieldsCollected, confirmedTraits)
+    
+    // Missing field analysis
+    const missingFields = this.identifyMissingFields(currentConfig)
+    
+    return {
+      userMessageCount: userMessages.length,
+      fieldsCollected,
+      stage,
+      missingFields,
+      recentUserMessages,
+      hasConfirmedTraits: Boolean(confirmedTraits),
+      currentConfig
+    }
+  }
+
+  /**
+   * Counts meaningful fields in the configuration
+   */
+  private countMeaningfulFields(config: Partial<AvatarPersonaConfig>): number {
+    return Object.keys(config).filter(key => {
+      const value = config[key]
+      return value && (
+        (typeof value === 'string' && value.length > 10) || // Require substantial content
+        (Array.isArray(value) && value.length > 0)
+      )
+    }).length
+  }
+
+  /**
+   * Determines the current conversation stage
+   */
+  private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
+    if (userMessages <= 2) return 'introduction'
+    if (userMessages <= 4 && fieldsCollected < 2) return 'discovery'
+    if (userMessages <= 6 && fieldsCollected < 3 && !confirmedTraits) return 'reflection_checkpoint'
+    if (fieldsCollected >= 3) return 'persona_preview'
+    if (fieldsCollected >= 5 || userMessages >= 10) return 'completion'
+    return 'deep_dive'
+  }
+
+  /**
+   * Identifies which persona fields are still missing
+   */
+  private identifyMissingFields(config: Partial<AvatarPersonaConfig>): string[] {
+    const requiredFields = ['toneDescription', 'styleTags', 'allowedTopics', 'restrictedTopics', 'avatarObjective', 'audienceDescription']
+    return requiredFields.filter(field => !config[field] || 
+      (Array.isArray(config[field]) && (config[field] as any[]).length === 0) ||
+      (typeof config[field] === 'string' && (config[field] as string).length < 10)
+    )
+  }
+
+  /**
+   * Builds a contextual system prompt based on conversation state
+   */
+  private buildPersonalityExtractionPrompt(state: any): string {
+    const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits } = state
+    
+    let stageInstructions = ''
+    let responseFormat = ''
+    
+    switch (stage) {
+      case 'introduction':
+        stageInstructions = 'Focus on getting them comfortable sharing. Ask about their audience or content style.'
+        break
+      case 'discovery':
+        stageInstructions = 'Dig deeper into their communication patterns. Ask specific, contextual questions.'
+        break
+      case 'reflection_checkpoint':
+        stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned and ask for confirmation via chip selector.'
+        responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
+        break
+      case 'persona_preview':
+        stageInstructions = 'Start speaking in their voice while gathering remaining data. Show personality preview.'
+        break
+      case 'completion':
+        stageInstructions = 'You have enough data. Speak fully in their voice and offer to complete setup.'
+        break
+      default:
+        stageInstructions = 'Continue gathering specific details about their communication style.'
+    }
+
+    return `You are extracting personality data through natural conversation.
+
+CONVERSATION STATE:
+- Stage: ${stage}
+- User messages: ${userMessageCount}
+- Fields collected: ${fieldsCollected}/6
+- Missing: ${missingFields.join(', ')}
+- Has confirmed traits: ${hasConfirmedTraits}
+
+INSTRUCTIONS: ${stageInstructions}
+
+PERSONA FIELDS TO EXTRACT:
+- toneDescription: Their overall communication style and voice
+- styleTags: Specific style descriptors (humorous, professional, etc.)
+- allowedTopics: Topics they discuss with their audience
+- restrictedTopics: Topics they avoid or handle carefully
+- avatarObjective: What they want their avatar to accomplish
+- audienceDescription: Who their audience is
+
+RESPONSE RULES:
+1. Ask ONE specific, contextual question that builds on their previous answers
+2. Extract data naturally from their responses - don't force unnatural JSON
+3. Never repeat previous questions or responses
+4. Focus on missing fields: ${missingFields.slice(0, 2).join(', ')}
+5. Keep responses under 150 words
+
+Respond with JSON:
+{
+  "response": "Your contextual question or response",
+  "extractedData": {extracted persona fields from their answers},
+  ${responseFormat}
+  "personaMode": "${stage === 'persona_preview' || stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
+  "isComplete": ${stage === 'completion'},
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
+}`
+  }
+
+  /**
+   * Processes the OpenAI response and formats the result
+   */
+  private processExtractionResponse(content: string, state: any): any {
+    let result
+    try {
+      result = JSON.parse(content)
+    } catch (parseError) {
+      console.error('JSON parse error, content was:', content)
+      return this.createFallbackResponse(
+        "Let me try a different approach - what's the most important thing your audience values about how you communicate?"
+      )
+    }
+
+    // Validate response structure and extract data
+    const responseText = result.response || "Tell me more about your communication style."
+    const extractedData = this.cleanExtractedData(result.extractedData || {})
+    
+    // Generate suggested traits for chip selector
+    const suggestedTraits = this.generateSuggestedTraits(extractedData, state.currentConfig)
+    
+    const finalResult = {
+      response: responseText,
+      extractedData,
+      personaMode: result.personaMode || 'guidance',
+      isComplete: result.isComplete || false,
+      isFinished: result.isFinished || (state.fieldsCollected + Object.keys(extractedData).length >= 5),
+      confidenceScore: Math.min(0.95, (state.fieldsCollected + Object.keys(extractedData).length) / 6),
+      transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
+      showChipSelector: result.showChipSelector || false,
+      suggestedTraits,
+      reflectionCheckpoint: result.reflectionCheckpoint || false
+    }
+
+    if (process.env.DEBUG_AI) {
+      console.log('[PERSONALITY-DEBUG] Processed result:', {
+        stage: state.stage,
+        newFieldsExtracted: Object.keys(extractedData),
+        personaMode: finalResult.personaMode,
+        showChipSelector: finalResult.showChipSelector
+      })
+    }
+
+    return finalResult
+  }
+
+  /**
+   * Cleans and validates extracted data
+   */
+  private cleanExtractedData(data: any): Partial<AvatarPersonaConfig> {
+    const cleaned: any = {}
+    
+    Object.keys(data).forEach(key => {
+      const value = data[key]
+      if (value !== null && value !== undefined && value !== '') {
+        if (typeof value === 'string' && value.length > 2) {
+          cleaned[key] = value.trim()
+        } else if (Array.isArray(value) && value.length > 0) {
+          cleaned[key] = value.filter(item => item && item.length > 0)
+        }
+      }
+    })
+
+    return cleaned
+  }
+
+  /**
+   * Generates suggested traits based on extracted data
+   */
+  private generateSuggestedTraits(extractedData: any, currentConfig: any): Array<{id: string, label: string, selected: boolean}> {
+    const traits = []
+    let idCounter = 1
+
+    // Extract traits from tone description
+    if (extractedData.toneDescription || currentConfig.toneDescription) {
+      const toneText = (extractedData.toneDescription || currentConfig.toneDescription).toLowerCase()
+      const commonTraits = ['friendly', 'professional', 'casual', 'humorous', 'analytical', 'creative', 'empathetic']
+      
+      commonTraits.forEach(trait => {
+        if (toneText.includes(trait)) {
+          traits.push({
+            id: (idCounter++).toString(),
+            label: trait.charAt(0).toUpperCase() + trait.slice(1),
+            selected: true
+          })
+        }
+      })
+    }
+
+    // Add style tags if available
+    if (extractedData.styleTags) {
+      extractedData.styleTags.forEach((tag: string) => {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: tag,
+          selected: true
+        })
+      })
+    }
+
+    // Add some common unselected options
+    const additionalTraits = ['Direct', 'Supportive', 'Curious', 'Patient']
+    additionalTraits.forEach(trait => {
+      if (!traits.some(t => t.label.toLowerCase() === trait.toLowerCase())) {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: trait,
+          selected: false
+        })
+      }
+    })
+
+    return traits.slice(0, 8) // Limit to 8 traits
+  }
+
+  /**
+   * Generates transition messages for persona mode changes
+   */
+  private generateTransitionMessage(personaMode: string, stage: string): string | undefined {
+    if (personaMode === 'persona_preview' && stage !== 'persona_preview') {
+      return 'Now speaking in your captured personality! 🎭'
+    }
+    if (personaMode === 'blended' && stage === 'reflection_checkpoint') {
+      return 'I\'ve learned your style - let\'s confirm these traits! 🎯'
+    }
+    return undefined
+  }
+
+  /**
+   * Handles extraction errors with contextual fallbacks
+   */
+  private handleExtractionError(error: any, state: any): any {
+    if (error.status === 401 || error.message?.includes('401')) {
+      return this.createFallbackResponse(
+        "I'm having trouble with my AI connection. Let's try a simple question - what's your main goal: building community, educating people, or entertaining your audience?"
+      )
+    }
+
+    if (error.status === 429 || error.message?.includes('429')) {
+      return this.createFallbackResponse(
+        "I need to slow down a bit. While I reset, tell me - how would you describe your communication style in one word?"
+      )
+    }
+
+    // Contextual fallback based on missing fields
+    const missingField = state.missingFields[0]
+    const fallbackQuestions = {
+      toneDescription: "How would you describe your communication style with your audience?",
+      allowedTopics: "What topics do you love discussing with your audience?",
+      restrictedTopics: "Are there any topics you prefer to avoid or handle carefully?",
+      avatarObjective: "What's the main goal you want your avatar to accomplish?",
+      audienceDescription: "Who is your typical audience?"
+    }
+
+    const fallbackResponse = fallbackQuestions[missingField] || "Tell me more about your communication preferences."
+    
+    return this.createFallbackResponse(fallbackResponse)
   }
 
   /**
