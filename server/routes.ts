@@ -1274,9 +1274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages,
         currentConfig || {},
         enablePersonaPreview || false,
-        transitionThreshold || 4,
-        initialMessage || false,
-        confirmedTraits,
+        transitionThreshold || 4
       )
       res.json(result)
     } catch (error: any) {
@@ -1292,13 +1290,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/airtable/lead', async (req, res) => {
     try {
-      const { messageId, source } = req.body
+      const { baseId, tableName } = req.query
 
-      if (!messageId || !source) {
-        return res.status(400).json({ error: 'messageId is required' })
+      if (!baseId || !tableName) {
+        return res.status(400).json({ error: 'baseId and tableName are required' })
       }
 
-      const result = await airtableService.getLead(messageId, source)
+      const result = await airtableService.getLeads(baseId as string, tableName as string)
       res.json(result)
     } catch (error: any) {
       res.status(500).json({ message: error.message })
