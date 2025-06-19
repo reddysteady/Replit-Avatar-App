@@ -786,7 +786,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/messages/:id', async (req, res) => {
     try {
-```text
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
       if (!success) {
