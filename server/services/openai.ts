@@ -597,11 +597,11 @@ export class AIService {
    * Determines the current conversation stage for Phase 1 simplified flow
    */
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
-    // Phase 1: Show chip selector every 2 parameters collected
+    // Phase 1: Show chip selector every 3 parameters collected
     if (userMessages <= 1) return 'introduction'
-    if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) return 'reflection_checkpoint'
-    if (fieldsCollected >= 4) return 'persona_preview'
-    if (userMessages <= 3) return 'discovery'
+    if (fieldsCollected >= 3 && fieldsCollected % 3 === 0 && !confirmedTraits) return 'reflection_checkpoint'
+    if (fieldsCollected >= 5) return 'persona_preview'
+    if (userMessages <= 4) return 'discovery'
     return 'core_collection'
   }
 
@@ -689,18 +689,19 @@ RESPONSE RULES:
 2. Extract data systematically - prioritize missing fields
 3. Keep responses under 120 words for focus
 4. Avoid repetition and generic questions
-5. NEVER end conversation with "Chat completed" - always continue until chip validation
-6. Always ask follow-up questions unless explicitly in reflection_checkpoint
+5. NEVER end conversation - always ask follow-up questions
+6. NEVER set isComplete or isFinished to true unless explicitly in completion stage
+7. Only trigger chip validation at reflection_checkpoint stage
 
 Respond with JSON:
 {
-  "response": "Your targeted question focusing on: ${missingFields.slice(0, 1).join('')}",
+  "response": "Your targeted question focusing on missing field: ${missingFields.slice(0, 1).join('')}",
   "extractedData": {core persona fields only},
   ${responseFormat}
   "personaMode": "${stage === 'persona_preview' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "isComplete": false,
   "isFinished": false,
-  "confidenceScore": ${Math.min(0.95, fieldsCollected / 4)}
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
 }`
   }
 
@@ -838,38 +839,35 @@ Respond with JSON:
   private handleExtractionError(error: any, state: any): any {
     console.error('[PERSONA-ERROR] Phase 1 extraction error:', error.message)
     
-    // API-specific error handling
-    if (error.status === 401 || error.message?.includes('401')) {
-      return this.createFallbackResponse(
-        "I'm having connection issues. Let's focus on basics - what's your main communication goal with your audience?",
-        'guidance',
-        true // fallbackUsed flag
-      )
-    }
-
-    if (error.status === 429 || error.message?.includes('429')) {
-      return this.createFallbackResponse(
-        "Taking a moment to reset. While I do, describe your communication style in just a few words.",
-        'guidance', 
-        true
-      )
-    }
-
-    // Phase 1 core parameter fallbacks
-    const missingField = state.missingFields[0]
+    // Generate targeted question based on missing fields
+    const missingField = state.missingFields?.[0]
     const coreQuestions = {
-      toneDescription: "Describe your natural communication style - are you more casual and friendly, or professional and formal?",
-      audienceDescription: "Who typically follows your content? What age group or interests do they have?",
-      avatarObjective: "What's the main goal for your AI avatar - educate, entertain, build community, or promote your work?",
-      boundaries: "Are there any sensitive topics you prefer your avatar avoid discussing?",
-      fallbackReply: "When someone asks about topics you don't discuss, how should your avatar respond?",
-      communicationPrefs: "Do you prefer short, direct responses or detailed, explanatory ones?"
+      toneDescription: "How would you describe your natural communication style when talking to your audience?",
+      audienceDescription: "Who do you typically create content for? Tell me about your audience.",
+      avatarObjective: "What's your main goal when interacting with your community?",
+      boundaries: "Are there any topics you prefer not to discuss publicly?",
+      fallbackReply: "How should your avatar politely redirect conversations away from sensitive topics?",
+      communicationPrefs: "Do you prefer being more concise or detailed in your responses?"
     }
 
     const fallbackResponse = coreQuestions[missingField] || 
-      "Let's focus on the basics - how would you describe your communication style?"
+      "Tell me about your communication style when you're engaging with your audience."
     
-    return this.createFallbackResponse(fallbackResponse, 'guidance', true)
+    return {
+      response: fallbackResponse,
+      extractedData: {},
+      isComplete: false,
+      personaMode: 'guidance',
+      confidenceScore: 0,
+      showChipSelector: false,
+      suggestedTraits: [],
+      reflectionCheckpoint: false,
+      sessionState: {
+        fallbackUsed: true,
+        errorRecovery: true,
+        timestamp: new Date().toISOString()
+      }
+    }
   }
 
   /**

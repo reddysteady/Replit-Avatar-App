@@ -262,25 +262,15 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       setIsFinished(aiResponse.isFinished || false)
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
-      // Phase 1: Show chip selector every 2 parameters (simplified validation)
+      // Phase 1: Show chip selector every 3 parameters as per spec
       const mergedConfig = { ...extractedConfig, ...aiResponse.extractedData }
-      const configCount = Object.keys(mergedConfig).filter(key => {
-        const value = mergedConfig[key]
-        if (typeof value === 'string') return value.length > 3
-        if (Array.isArray(value)) return value.length > 0
-        return Boolean(value)
-      }).length
+      const configCount = this.countMeaningfulFields(mergedConfig)
       
       console.log('[PERSONALITY-DEBUG] Config count:', configCount, 'Stage:', aiResponse.personaMode)
       
       if (aiResponse.showChipSelector || aiResponse.reflectionCheckpoint) {
         setShowChipSelector(true)
         setSuggestedTraits(aiResponse.suggestedTraits || [])
-        setReflectionActive(true)
-      } else if (configCount >= 2 && configCount % 2 === 0 && !showChipSelector && messages.filter(m => m.role === 'user').length >= 2) {
-        // Auto-trigger chip selector every 2 parameters for Phase 1
-        setShowChipSelector(true)
-        setSuggestedTraits(generateDefaultTraits(mergedConfig))
         setReflectionActive(true)
       }
 
@@ -577,9 +567,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 </Button>
               </div>
 
-              {/* Complete Setup Button - show after chip validation when we have core data */}
-          {Object.keys(extractedConfig).length >= 2 && 
-           messages.filter(m => m.role === 'user').length >= 4 && 
+              {/* Complete Setup Button - show when we have sufficient core data and not in active flow */}
+          {Object.keys(extractedConfig).length >= 4 && 
+           messages.filter(m => m.role === 'user').length >= 6 && 
            !showChipSelector && 
            !reflectionActive && 
            !isFinished && (
@@ -593,7 +583,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex items-center gap-2"
               >
                 <Sparkles className="h-4 w-4" />
-                Complete Setup
+                Continue to Setup
               </Button>
             </motion.div>
           )}
@@ -604,16 +594,16 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     </div>
   )
 }
-  // Helper method to count core parameters for Phase 1
-  const countCoreParameters = (config: Partial<AvatarPersonaConfig>, newData?: any): number => {
-    const combined = { ...config, ...newData }
-    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply']
+  // Helper method to count meaningful fields for Phase 1
+  const countMeaningfulFields = (config: Partial<AvatarPersonaConfig>): number => {
+    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply', 'communicationPrefs']
     
     return coreFields.filter(field => {
-      const value = combined[field]
+      const value = config[field]
       if (!value) return false
       if (typeof value === 'string') return value.length > 3
       if (Array.isArray(value)) return value.length > 0
+      if (typeof value === 'object') return Object.keys(value).length > 0
       return true
     }).length
   }
