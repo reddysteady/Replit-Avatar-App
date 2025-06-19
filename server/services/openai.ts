@@ -700,7 +700,7 @@ export class AIService {
       topics: this.extractMentionedTopics(recentMessages),
       examples: this.extractUserExamples(recentMessages),
       tone: this.detectUserTone(recentMessages),
-      interests: this.extractInterests(recentMessages)
+      interests: this.extractMentionedTopics(recentMessages) // Use topics as interests for now
     }
   }
 
@@ -746,6 +746,22 @@ export class AIService {
     return messages
       .filter(m => m.role === 'user' && (m.content.includes('like') || m.content.includes('example')))
       .map(m => m.content.substring(0, 50))
+  }
+
+  /**
+   * Extracts interests from conversation
+   */
+  private extractInterests(messages: any[]): string[] {
+    const interests = []
+    const combinedText = messages.filter(m => m.role === 'user')
+      .map(m => m.content).join(' ').toLowerCase()
+    
+    const commonInterests = ['ai', 'technology', 'education', 'fitness', 'travel', 'business', 'creativity', 'coding', 'writing']
+    commonInterests.forEach(interest => {
+      if (combinedText.includes(interest)) interests.push(interest)
+    })
+    
+    return interests
   }
 
   /**
