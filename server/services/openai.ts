@@ -460,9 +460,9 @@ export class AIService {
 
     try {
       const { client, hasKey, keySource } = await this.getClient()
-      
+
       console.log('[PERSONALITY-EXTRACT] API key check:', { hasKey, keySource })
-      
+
       if (!hasKey) {
         console.error('[PERSONALITY-ERROR] No OpenAI API key available')
         return this.createFallbackResponse(
@@ -494,13 +494,13 @@ export class AIService {
       // Calculate conversation state
       console.log('[PERSONALITY-EXTRACT] Analyzing conversation state')
       const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
-      
+
       console.log('[PERSONALITY-EXTRACT] Conversation state:', {
         stage: conversationState.stage,
         fieldsCollected: conversationState.fieldsCollected,
         missingFields: conversationState.missingFields?.slice(0, 3)
       })
-      
+
       // Generate contextual system prompt
       const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
 
@@ -527,16 +527,16 @@ export class AIService {
       })
 
       const content = response.choices[0]?.message?.content || '{}'
-      
+
       console.log('[PERSONALITY-EXTRACT] OpenAI response received, length:', content.length)
-      
+
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
       }
 
       console.log('[PERSONALITY-EXTRACT] Processing response')
       const result = this.processExtractionResponse(content, conversationState)
-      
+
       console.log('[PERSONALITY-EXTRACT] Extraction completed successfully:', {
         personaMode: result.personaMode,
         isComplete: result.isComplete,
@@ -552,7 +552,7 @@ export class AIService {
         type: error.constructor.name,
         stack: error.stack?.split('\n').slice(0, 3)
       })
-      
+
       return this.handleExtractionError(error, { stage: 'core_collection', fieldsCollected: 0, missingFields: ['toneDescription'] })
     }
   }
@@ -627,10 +627,10 @@ export class AIService {
       }
     } catch (error: any) {
       console.error('[PERSONALITY-ERROR] Failed to generate initial message:', error.message || error)
-      
+
       // Return a random fallback question
       const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
-      
+
       return {
         response: randomFallback,
         extractedData: {},
@@ -651,16 +651,16 @@ export class AIService {
   private analyzeConversationState(messages: any[], currentConfig: Partial<AvatarPersonaConfig>, confirmedTraits?: string[]): any {
     const userMessages = messages.filter(m => m.role === 'user')
     const fieldsCollected = this.countMeaningfulFields(currentConfig)
-    
+
     // Extract conversation context for better flow
     const conversationContext = this.extractConversationContext(messages)
-    
+
     // Stage determination with more natural flow
     const stage = this.determineConversationStage(userMessages.length, fieldsCollected, confirmedTraits)
-    
+
     // Missing field analysis - ordered by priority and conversation flow
     const missingFields = this.identifyMissingFields(currentConfig)
-    
+
     // Enhanced state tracking
     const state = {
       userMessageCount: userMessages.length,
@@ -675,7 +675,7 @@ export class AIService {
       lastUserMessage: userMessages[userMessages.length - 1]?.content || '',
       conversationTone: this.assessConversationTone(messages)
     }
-    
+
     if (process.env.DEBUG_AI) {
       console.log('[PERSONALITY-DEBUG] Enhanced conversation state:', {
         userMessages: userMessages.length,
@@ -686,7 +686,7 @@ export class AIService {
         hasConfirmedTraits: Boolean(confirmedTraits)
       })
     }
-    
+
     return state
   }
 
@@ -695,7 +695,7 @@ export class AIService {
    */
   private extractConversationContext(messages: any[]): any {
     const recentMessages = messages.slice(-4) // Last 4 messages for context
-    
+
     return {
       topics: this.extractMentionedTopics(recentMessages),
       examples: this.extractUserExamples(recentMessages),
@@ -710,9 +710,9 @@ export class AIService {
   private assessConversationTone(messages: any[]): string {
     const userMessages = messages.filter(m => m.role === 'user').slice(-3)
     if (userMessages.length === 0) return 'neutral'
-    
+
     const combinedText = userMessages.map(m => m.content).join(' ').toLowerCase()
-    
+
     if (combinedText.includes('!') || combinedText.includes('haha') || combinedText.includes('lol')) {
       return 'enthusiastic'
     } else if (combinedText.length > 100) {
@@ -730,12 +730,12 @@ export class AIService {
     const topics = []
     const combinedText = messages.filter(m => m.role === 'user')
       .map(m => m.content).join(' ').toLowerCase()
-    
+
     const commonTopics = ['fitness', 'health', 'business', 'tech', 'creative', 'education', 'lifestyle']
     commonTopics.forEach(topic => {
       if (combinedText.includes(topic)) topics.push(topic)
     })
-    
+
     return topics
   }
 
@@ -755,12 +755,12 @@ export class AIService {
     const interests = []
     const combinedText = messages.filter(m => m.role === 'user')
       .map(m => m.content).join(' ').toLowerCase()
-    
+
     const commonInterests = ['ai', 'technology', 'education', 'fitness', 'travel', 'business', 'creativity', 'coding', 'writing']
     commonInterests.forEach(interest => {
       if (combinedText.includes(interest)) interests.push(interest)
     })
-    
+
     return interests
   }
 
@@ -769,11 +769,11 @@ export class AIService {
    */
   private detectUserTone(messages: any[]): string {
     const userText = messages.filter(m => m.role === 'user').map(m => m.content).join(' ')
-    
+
     if (userText.includes('!') && userText.includes('love')) return 'enthusiastic'
     if (userText.includes('professional') || userText.includes('business')) return 'professional'
     if (userText.includes('casual') || userText.includes('fun')) return 'casual'
-    
+
     return 'balanced'
   }
 
@@ -785,15 +785,15 @@ export class AIService {
     return coreFields.filter(key => {
       const value = config[key];
       if (!value) return false;
-      
+
       if (typeof value === 'string') return value.length > 3;
       if (Array.isArray(value)) return value.length > 0;
       if (typeof value === 'object') return Object.keys(value).length > 0;
-      
+
       return false;
     }).length;
   }
-  
+
   /**
    * Calculates confidence score based on core parameter completeness
    */
@@ -809,17 +809,17 @@ export class AIService {
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
     // Simple linear progression - never jump stages prematurely
     if (userMessages <= 1) return 'introduction'
-    
+
     // Show chip validation after every 2 parameters collected (simplified from 3)
     if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) {
       return 'reflection_checkpoint'
     }
-    
+
     // Only move to completion after ALL 6 core parameters + chip validation
     if (fieldsCollected >= 6 && confirmedTraits) {
       return 'completion'
     }
-    
+
     // Stay in core collection until requirements are met
     return 'core_collection'
   }
@@ -835,7 +835,7 @@ export class AIService {
       'boundaries', // restricted topics/boundaries
       'fallbackReply' // fallback response
     ];
-    
+
     return coreFields.filter(field => {
       const value = config[field];
       if (!value) return true;
@@ -850,16 +850,16 @@ export class AIService {
    */
   private buildPersonalityExtractionPrompt(state: any): string {
     const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits } = state
-    
+
     // Create more engaging, varied question approaches
     const questionStyles = [
       "scenario-based", "direct-curious", "story-prompt", "comparison", "example-driven"
     ]
     const currentStyle = questionStyles[userMessageCount % questionStyles.length]
-    
+
     let stageInstructions = ''
     let responseFormat = ''
-    
+
     switch (stage) {
       case 'introduction':
         stageInstructions = `Ask an engaging ${currentStyle} question that gets them talking naturally about their voice and style. Make it feel like a conversation, not an interview.`
@@ -940,13 +940,13 @@ REQUIRED JSON FORMAT:
     // Validate response structure and extract data
     const responseText = result.response || "Tell me more about your communication style."
     const extractedData = this.cleanExtractedData(result.extractedData || {})
-    
+
     // Generate suggested traits for chip selector
     const suggestedTraits = this.generateSuggestedTraits(extractedData, state.currentConfig)
-    
+
     // Calculate total fields after extraction
     const totalFields = state.fieldsCollected + Object.keys(extractedData).length
-    
+
     const finalResult = {
       response: responseText,
       extractedData,
@@ -959,7 +959,7 @@ REQUIRED JSON FORMAT:
       suggestedTraits,
       reflectionCheckpoint: result.reflectionCheckpoint || false
     }
-    
+
     // Only set completion flags if we're actually in completion stage
     if (state.stage === 'completion') {
       finalResult.isComplete = true
@@ -983,7 +983,7 @@ REQUIRED JSON FORMAT:
    */
   private cleanExtractedData(data: any): Partial<AvatarPersonaConfig> {
     const cleaned: any = {}
-    
+
     Object.keys(data).forEach(key => {
       const value = data[key]
       if (value !== null && value !== undefined && value !== '') {
@@ -1009,7 +1009,7 @@ REQUIRED JSON FORMAT:
     if (extractedData.toneDescription || currentConfig.toneDescription) {
       const toneText = (extractedData.toneDescription || currentConfig.toneDescription).toLowerCase()
       const commonTraits = ['friendly', 'professional', 'casual', 'humorous', 'analytical', 'creative', 'empathetic']
-      
+
       commonTraits.forEach(trait => {
         if (toneText.includes(trait)) {
           traits.push({
@@ -1065,7 +1065,7 @@ REQUIRED JSON FORMAT:
    */
   private handleExtractionError(error: any, state: any): any {
     console.error('[PERSONA-ERROR] Phase 1 extraction error:', error.message)
-    
+
     // Generate targeted question based on missing fields
     const missingField = state.missingFields?.[0]
     const coreQuestions = {
@@ -1079,7 +1079,7 @@ REQUIRED JSON FORMAT:
 
     const fallbackResponse = coreQuestions[missingField] || 
       "Tell me about your communication style when you're engaging with your audience."
-    
+
     return {
       response: fallbackResponse,
       extractedData: {},
