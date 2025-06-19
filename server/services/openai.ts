@@ -451,25 +451,47 @@ export class AIService {
   reflectionCheckpoint?: boolean
   sessionState?: any
 }> {
-    const { client, hasKey } = await this.getClient()
-    if (!hasKey) {
-      return this.createFallbackResponse("I'm having trouble processing right now. Could you try again?")
-    }
-
-    // Handle initial message generation with improved prompting
-    if (initialMessage && messages.length === 1 && messages[0].role === 'system') {
-      return this.generateInitialMessage(client)
-    }
-
-    // Calculate conversation state
-    const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
-    
-    // Generate contextual system prompt
-    const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
-
     try {
+      const { client, hasKey, keySource } = await this.getClient()
+      
+      if (!hasKey) {
+        console.error('[PERSONALITY-ERROR] No OpenAI API key available')
+        return this.createFallbackResponse(
+          "I need an OpenAI API key to help with personality setup. Please add your API key in Settings.",
+          'guidance',
+          true
+        )
+      }
+
+      // Validate API key format
+      const settings = await storage.getSettings(1)
+      const currentKey = keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
+      if (currentKey && !this.isValidKeyFormat(currentKey)) {
+        console.error('[PERSONALITY-ERROR] Invalid API key format')
+        return this.createFallbackResponse(
+          "There's an issue with the API key format. Please check your OpenAI API key in Settings.",
+          'guidance',
+          true
+        )
+      }
+
+      // Handle initial message generation
+      if (initialMessage || (messages.length === 0) || (messages.length === 1 && messages[0].role === 'system')) {
+        return this.generateInitialMessage(client)
+      }
+
+      // Calculate conversation state
+      const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
+      
+      // Generate contextual system prompt
+      const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
+
       if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] Personality extraction request:', conversationState)
+        console.debug('[DEBUG-AI] Personality extraction request:', {
+          messageCount: messages.length,
+          stage: conversationState.stage,
+          fieldsCollected: conversationState.fieldsCollected
+        })
       }
 
       const response = await client.chat.completions.create({
@@ -480,17 +502,20 @@ export class AIService {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.3,
-        max_tokens: 800 // Increased for better responses
+        max_tokens: 800
       })
 
       const content = response.choices[0]?.message?.content || '{}'
-      console.log('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
+      
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
+      }
 
       return this.processExtractionResponse(content, conversationState)
 
     } catch (error: any) {
-      console.error('Error extracting personality:', error)
-      return this.handleExtractionError(error, conversationState)
+      console.error('[PERSONALITY-ERROR] Extraction failed:', error.message || error)
+      return this.handleExtractionError(error, { stage: 'core_collection', fieldsCollected: 0, missingFields: ['toneDescription'] })
     }
   }
 
@@ -537,11 +562,11 @@ export class AIService {
         max_tokens: 80,
       })
 
-      const initialQuestion = response.choices[0]?.message?.content || 
+      const initialQuestion = response.choices[0]?.message?.content?.trim() || 
         "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
 
       return {
-        response: initialQuestion.trim(),
+        response: initialQuestion,
         extractedData: {},
         isComplete: false,
         personaMode: 'guidance',
@@ -551,7 +576,9 @@ export class AIService {
         reflectionCheckpoint: false
       }
     } catch (error: any) {
-      console.error('Error generating initial message:', error.message || error)
+      console.error('[PERSONALITY-ERROR] Failed to generate initial message:', error.message || error)
+      
+      // Return a hardcoded fallback question
       return {
         response: "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
         extractedData: {},
@@ -560,7 +587,8 @@ export class AIService {
         confidenceScore: 0,
         showChipSelector: false,
         suggestedTraits: [],
-        reflectionCheckpoint: false
+        reflectionCheckpoint: false,
+        fallbackUsed: true
       }
     }
   }
@@ -1002,7 +1030,7 @@ REQUIRED JSON FORMAT:
   }
 
   /**
-   * Creates fallback responses with error tracking
+   * Creates a fallback response with consistent structure
    */
   private createFallbackResponse(
     responseText: string, 
@@ -1018,27 +1046,11 @@ REQUIRED JSON FORMAT:
       showChipSelector: false,
       suggestedTraits: [],
       reflectionCheckpoint: false,
-      sessionState: {
-        fallbackUsed,
+      sessionState: fallbackUsed ? {
+        fallbackUsed: true,
         errorRecovery: true,
         timestamp: new Date().toISOString()
-      }
-    }
-  }
-
-  /**
-   * Creates a fallback response with consistent structure (overloaded version)
-   */
-  private createFallbackResponse(responseText: string, personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'): any {
-    return {
-      response: responseText,
-      extractedData: {},
-      isComplete: false,
-      personaMode,
-      confidenceScore: 0,
-      showChipSelector: false,
-      suggestedTraits: [],
-      reflectionCheckpoint: false
+      } : undefined
     }
   }
 
