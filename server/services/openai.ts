@@ -519,7 +519,7 @@ export class AIService {
         model: 'gpt-4o',
         messages: [
           { 
-            role: 'system', 
+            role: 'user', 
             content: `Generate a warm, engaging opening question that feels like starting a conversation with a friend. Choose from these approaches:
 
             1. SCENARIO: "Imagine your best follower just asked..."
@@ -528,22 +528,40 @@ export class AIService {
             4. DIRECT CURIOSITY: "What's something people always notice about..."
             5. EXAMPLE-DRIVEN: "Give me an example of how you usually..."
 
-            Keep it under 40 words, make it feel natural and conversational, and focus on getting them talking about how they naturally communicate with their audience.` 
+            Keep it under 40 words, make it feel natural and conversational, and focus on getting them talking about how they naturally communicate with their audience.
+
+            Return only the question, no extra formatting or explanation.` 
           }
         ],
-        temperature: 0.8, // Increased for more variety
+        temperature: 0.8,
         max_tokens: 80,
       })
 
       const initialQuestion = response.choices[0]?.message?.content || 
         "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
 
-      return this.createFallbackResponse(initialQuestion)
-    } catch (error) {
-      console.error('Error generating initial message:', error)
-      return this.createFallbackResponse(
-        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
-      )
+      return {
+        response: initialQuestion.trim(),
+        extractedData: {},
+        isComplete: false,
+        personaMode: 'guidance',
+        confidenceScore: 0,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false
+      }
+    } catch (error: any) {
+      console.error('Error generating initial message:', error.message || error)
+      return {
+        response: "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        extractedData: {},
+        isComplete: false,
+        personaMode: 'guidance',
+        confidenceScore: 0,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false
+      }
     }
   }
 
@@ -1005,6 +1023,22 @@ REQUIRED JSON FORMAT:
         errorRecovery: true,
         timestamp: new Date().toISOString()
       }
+    }
+  }
+
+  /**
+   * Creates a fallback response with consistent structure (overloaded version)
+   */
+  private createFallbackResponse(responseText: string, personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance'): any {
+    return {
+      response: responseText,
+      extractedData: {},
+      isComplete: false,
+      personaMode,
+      confidenceScore: 0,
+      showChipSelector: false,
+      suggestedTraits: [],
+      reflectionCheckpoint: false
     }
   }
 

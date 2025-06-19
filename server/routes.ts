@@ -1698,8 +1698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...existingSettings.aiSettings,
             autoReplyInstagram: Boolean(enabled),
           }
-        } else {
-          // Create aiSettings if it doesn't exist
+        } else {          // Create aiSettings if it doesn't exist
           updates.aiSettings = {
             autoReplyInstagram: Boolean(enabled),
             autoReplyYoutube: false,
@@ -2041,40 +2040,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await aiService.extractPersonalityFromConversation(
         messages || [],
         currentConfig || {},
-        initialMessage || false,
-        confirmedTraits
+        initialMessage || false
       )
 
-      // Update session state if available
-      if (session && result.extractedData) {
-        const confidence = { [Date.now()]: result.confidenceScore || 0 }
-        const messageHistory = (messages || []).map((m: any) => ({
-          role: m.role,
-          content: m.content,
-          timestamp: new Date()
-        }))
-
-        await personaStateManager.updateSession(
-          session.sessionId,
-          result.extractedData,
-          confidence,
-          messageHistory
-        )
-
-        // Add session info to response
-        result.sessionState = {
-          sessionId: session.sessionId,
-          stats: personaStateManager.getSessionStats(session.sessionId)
-        }
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] Personality extract result:', {
+          personaMode: result.personaMode,
+          isComplete: result.isComplete,
+          showChipSelector: result.showChipSelector
+        })
       }
 
       res.json(result)
     } catch (error: any) {
-      console.error('Error in personality extraction:', error)
-      res.status(500).json({
-        error: 'Failed to extract personality',
-        message: error.message,
-      })
+      console.error('Error in personality extraction:', error.message || error)
+
+      // Return a proper fallback response instead of just an error
+      const fallbackResult = {
+        response: "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        extractedData: {},
+        isComplete: false,
+        personaMode: 'guidance',
+        confidenceScore: 0,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false,
+        error: true,
+        errorMessage: error.message
+      }
+
+      res.json(fallbackResult)
     }
   })
 
