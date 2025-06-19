@@ -35,6 +35,7 @@ import { contentService } from './services/content'
 import type { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { oauthService } from './services/oauth'
 import { log } from './logger'
+import { personaStateManager } from './persona-state-manager'
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Threaded messages API endpoint with recursive SQL
@@ -785,6 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/messages/:id', async (req, res) => {
     try {
+```text
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
       if (!success) {
@@ -1252,19 +1254,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
+  // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req, res) => {
     try {
-      const {
-        messages,
-        currentConfig,
-        enablePersonaPreview,
-        transitionThreshold,
-        initialMessage,
-      } = req.body
+      const { messages, currentConfig, enablePersonaPreview, transitionThreshold, initialMessage } = req.body
 
-      if (!Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Messages must be an array' })
-      }
+      // Handle session state for Phase 1
+      // let session = null
+      // if (sessionId) {
+      //   session = await personaStateManager.restoreSession(sessionId)
+      // }
+
+      // if (!session && !initialMessage) {
+      //   // Create new session for ongoing conversations
+      //   session = await personaStateManager.createSession('1') // MVP: assume user ID 1
+      // }
 
       const { confirmedTraits } = req.body
       const result = await aiService.extractPersonalityFromConversation(
@@ -2018,6 +2022,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
     } catch (error: any) {
       res.status(500).json({ message: error.message })
+    }
+  })
+
+  // POST /api/ai/personality-extract - Extract personality from conversation with state management
+  app.post('/api/ai/personality-extract', async (req, res) => {
+    try {
+      const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
+
+      // Handle session state for Phase 1
+      let session = null
+      if (sessionId) {
+        session = await personaStateManager.restoreSession(sessionId)
+      }
+
+      if (!session && !initialMessage) {
+        // Create new session for ongoing conversations
+        session = await personaStateManager.createSession('1') // MVP: assume user ID 1
+      }
+
+      const result = await aiService.extractPersonalityFromConversation(
+        messages || [],
+        currentConfig || {},
+        initialMessage || false,
+        confirmedTraits
+      )
+
+      // Update session state if available
+      if (session && result.extractedData) {
+        const confidence = { [Date.now()]: result.confidenceScore || 0 }
+        const messageHistory = (messages || []).map((m: any) => ({
+          role: m.role,
+          content: m.content,
+          timestamp: new Date()
+        }))
+
+        await personaStateManager.updateSession(
+          session.sessionId,
+          result.extractedData,
+          confidence,
+          messageHistory
+        )
+
+        // Add session info to response
+        result.sessionState = {
+          sessionId: session.sessionId,
+          stats: personaStateManager.getSessionStats(session.sessionId)
+        }
+      }
+
+      res.json(result)
+    } catch (error: any) {
+      console.error('Error in personality extraction:', error)
+      res.status(500).json({
+        error: 'Failed to extract personality',
+        message: error.message,
+      })
     }
   })
 

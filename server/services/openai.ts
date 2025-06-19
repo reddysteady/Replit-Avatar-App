@@ -449,6 +449,7 @@ export class AIService {
   showChipSelector?: boolean
   suggestedTraits?: Array<{id: string, label: string, selected: boolean}>
   reflectionCheckpoint?: boolean
+  sessionState?: any
 }> {
     const { client, hasKey } = await this.getClient()
     if (!hasKey) {
@@ -567,43 +568,67 @@ export class AIService {
   }
 
   /**
-   * Counts meaningful fields in the configuration
+   * Counts meaningful fields in the configuration for Phase 1 core parameters
    */
   private countMeaningfulFields(config: Partial<AvatarPersonaConfig>): number {
-    return Object.keys(config).filter(key => {
-      const value = config[key]
-      return value && (
-        (typeof value === 'string' && value.length > 10) || // Require substantial content
-        (Array.isArray(value) && value.length > 0)
-      )
-    }).length
+    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'communicationPrefs', 'fallbackReply'];
+    return coreFields.filter(key => {
+      const value = config[key];
+      if (!value) return false;
+      
+      if (typeof value === 'string') return value.length > 5;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === 'object') return Object.keys(value).length > 0;
+      
+      return false;
+    }).length;
+  }
+  
+  /**
+   * Calculates confidence score based on core parameter completeness
+   */
+  private calculateConfidence(config: Partial<AvatarPersonaConfig>, extractedData: any): number {
+    const totalCoreParams = 6;
+    const filledParams = this.countMeaningfulFields({...config, ...extractedData});
+    return Math.min(0.95, filledParams / totalCoreParams);
   }
 
   /**
-   * Determines the current conversation stage
+   * Determines the current conversation stage for Phase 1 simplified flow
    */
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
+    // Phase 1: Simplified validation every 2 parameters
     if (userMessages <= 2) return 'introduction'
     if (userMessages <= 4 && fieldsCollected < 2) return 'discovery'
-    if (userMessages <= 6 && fieldsCollected < 3 && !confirmedTraits) return 'reflection_checkpoint'
-    if (fieldsCollected >= 3) return 'persona_preview'
-    if (fieldsCollected >= 5 || userMessages >= 10) return 'completion'
-    return 'deep_dive'
+    if (fieldsCollected >= 2 && fieldsCollected < 4 && !confirmedTraits) return 'reflection_checkpoint'
+    if (fieldsCollected >= 4) return 'persona_preview'
+    if (fieldsCollected >= 6 || userMessages >= 12) return 'completion'
+    return 'core_collection'
   }
 
   /**
-   * Identifies which persona fields are still missing
+   * Identifies which Phase 1 core fields are still missing
    */
   private identifyMissingFields(config: Partial<AvatarPersonaConfig>): string[] {
-    const requiredFields = ['toneDescription', 'styleTags', 'allowedTopics', 'restrictedTopics', 'avatarObjective', 'audienceDescription']
-    return requiredFields.filter(field => !config[field] || 
-      (Array.isArray(config[field]) && (config[field] as any[]).length === 0) ||
-      (typeof config[field] === 'string' && (config[field] as string).length < 10)
-    )
+    const coreFields = [
+      'toneDescription', // baseline tone
+      'audienceDescription', // audience understanding
+      'avatarObjective', // primary goals
+      'boundaries', // restricted topics/boundaries
+      'fallbackReply' // fallback response
+    ];
+    
+    return coreFields.filter(field => {
+      const value = config[field];
+      if (!value) return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      if (typeof value === 'string' && value.length < 5) return true;
+      return false;
+    });
   }
 
   /**
-   * Builds a contextual system prompt based on conversation state
+   * Builds a contextual system prompt for Phase 1 core parameter extraction
    */
   private buildPersonalityExtractionPrompt(state: any): string {
     const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits } = state
@@ -613,55 +638,64 @@ export class AIService {
     
     switch (stage) {
       case 'introduction':
-        stageInstructions = 'Focus on getting them comfortable sharing. Ask about their audience or content style.'
+        stageInstructions = 'Focus on baseline tone and audience. Ask warm, engaging questions about their communication style.'
         break
       case 'discovery':
-        stageInstructions = 'Dig deeper into their communication patterns. Ask specific, contextual questions.'
+        stageInstructions = 'Gather core communication patterns: tone, audience, and objectives. Be specific but conversational.'
+        break
+      case 'core_collection':
+        stageInstructions = 'Continue collecting core parameters systematically. Focus on missing essential fields.'
         break
       case 'reflection_checkpoint':
-        stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned and ask for confirmation via chip selector.'
+        stageInstructions = 'REFLECTION PHASE: Validate collected data every 2 parameters via chip selector. Summarize findings.'
         responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
         break
       case 'persona_preview':
-        stageInstructions = 'Start speaking in their voice while gathering remaining data. Show personality preview.'
+        stageInstructions = 'Demonstrate their voice while collecting final core parameters. Show personality in action.'
         break
       case 'completion':
-        stageInstructions = 'You have enough data. Speak fully in their voice and offer to complete setup.'
+        stageInstructions = 'Core parameters complete. Speak fully in their voice and offer to finish setup.'
         break
       default:
-        stageInstructions = 'Continue gathering specific details about their communication style.'
+        stageInstructions = 'Continue gathering core communication details systematically.'
     }
 
-    return `You are extracting personality data through natural conversation.
+    return `You are extracting Phase 1 core personality data through natural conversation.
+
+PHASE 1 CORE PARAMETERS (6 essential):
+1. toneDescription (baseline communication style)
+2. audienceDescription (who they serve)
+3. avatarObjective (primary goals)
+4. boundaries (topics to avoid)
+5. fallbackReply (boundary response)
+6. communicationPrefs (verbosity, formality)
 
 CONVERSATION STATE:
 - Stage: ${stage}
 - User messages: ${userMessageCount}
-- Fields collected: ${fieldsCollected}/6
+- Core fields collected: ${fieldsCollected}/6
 - Missing: ${missingFields.join(', ')}
 - Has confirmed traits: ${hasConfirmedTraits}
 
 INSTRUCTIONS: ${stageInstructions}
 
-PERSONA FIELDS TO EXTRACT:
-- toneDescription: Their overall communication style and voice
-- styleTags: Specific style descriptors (humorous, professional, etc.)
-- allowedTopics: Topics they discuss with their audience
-- restrictedTopics: Topics they avoid or handle carefully
-- avatarObjective: What they want their avatar to accomplish
-- audienceDescription: Who their audience is
+EXTRACTION STRATEGY:
+- Validate every 2 parameters (simplified from 3)
+- Focus on core fields only - no advanced features yet
+- Build confidence through systematic collection
+- Use fallback questions for GPT errors
 
 RESPONSE RULES:
-1. Ask ONE specific, contextual question that builds on their previous answers
-2. Extract data naturally from their responses - don't force unnatural JSON
-3. Never repeat previous questions or responses
-4. Focus on missing fields: ${missingFields.slice(0, 2).join(', ')}
-5. Keep responses under 150 words
+1. Ask ONE targeted question about missing core parameters
+2. Extract data systematically - prioritize missing fields
+3. Keep responses under 120 words for focus
+4. Avoid repetition and generic questions
+5. Build toward chip validation every 2 parameters
 
 Respond with JSON:
 {
-  "response": "Your contextual question or response",
-  "extractedData": {extracted persona fields from their answers},
+  "response": "Your targeted question focusing on: ${missingFields.slice(0, 1).join('')}",
+  "extractedData": {core persona fields only},
   ${responseFormat}
   "personaMode": "${stage === 'persona_preview' || stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "isComplete": ${stage === 'completion'},
@@ -798,34 +832,68 @@ Respond with JSON:
   }
 
   /**
-   * Handles extraction errors with contextual fallbacks
+   * Handles extraction errors with robust Phase 1 fallbacks
    */
   private handleExtractionError(error: any, state: any): any {
+    console.error('[PERSONA-ERROR] Phase 1 extraction error:', error.message)
+    
+    // API-specific error handling
     if (error.status === 401 || error.message?.includes('401')) {
       return this.createFallbackResponse(
-        "I'm having trouble with my AI connection. Let's try a simple question - what's your main goal: building community, educating people, or entertaining your audience?"
+        "I'm having connection issues. Let's focus on basics - what's your main communication goal with your audience?",
+        'guidance',
+        true // fallbackUsed flag
       )
     }
 
     if (error.status === 429 || error.message?.includes('429')) {
       return this.createFallbackResponse(
-        "I need to slow down a bit. While I reset, tell me - how would you describe your communication style in one word?"
+        "Taking a moment to reset. While I do, describe your communication style in just a few words.",
+        'guidance', 
+        true
       )
     }
 
-    // Contextual fallback based on missing fields
+    // Phase 1 core parameter fallbacks
     const missingField = state.missingFields[0]
-    const fallbackQuestions = {
-      toneDescription: "How would you describe your communication style with your audience?",
-      allowedTopics: "What topics do you love discussing with your audience?",
-      restrictedTopics: "Are there any topics you prefer to avoid or handle carefully?",
-      avatarObjective: "What's the main goal you want your avatar to accomplish?",
-      audienceDescription: "Who is your typical audience?"
+    const coreQuestions = {
+      toneDescription: "Describe your natural communication style - are you more casual and friendly, or professional and formal?",
+      audienceDescription: "Who typically follows your content? What age group or interests do they have?",
+      avatarObjective: "What's the main goal for your AI avatar - educate, entertain, build community, or promote your work?",
+      boundaries: "Are there any sensitive topics you prefer your avatar avoid discussing?",
+      fallbackReply: "When someone asks about topics you don't discuss, how should your avatar respond?",
+      communicationPrefs: "Do you prefer short, direct responses or detailed, explanatory ones?"
     }
 
-    const fallbackResponse = fallbackQuestions[missingField] || "Tell me more about your communication preferences."
+    const fallbackResponse = coreQuestions[missingField] || 
+      "Let's focus on the basics - how would you describe your communication style?"
     
-    return this.createFallbackResponse(fallbackResponse)
+    return this.createFallbackResponse(fallbackResponse, 'guidance', true)
+  }
+
+  /**
+   * Creates fallback responses with error tracking
+   */
+  private createFallbackResponse(
+    responseText: string, 
+    personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance',
+    fallbackUsed: boolean = false
+  ): any {
+    return {
+      response: responseText,
+      extractedData: {},
+      isComplete: false,
+      personaMode,
+      confidenceScore: 0,
+      showChipSelector: false,
+      suggestedTraits: [],
+      reflectionCheckpoint: false,
+      sessionState: {
+        fallbackUsed,
+        errorRecovery: true,
+        timestamp: new Date().toISOString()
+      }
+    }
   }
 
   /**

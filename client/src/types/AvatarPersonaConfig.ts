@@ -1,6 +1,26 @@
-// See CHANGELOG.md for 2025-06-18 [Added]
+
+/**
+ * Core persona context for Phase 1 implementation
+ */
+export interface CorePersonaContext {
+  toneProfile: {
+    baseline: string;
+    whenTeaching: string;
+    whenChallenged: string;
+  };
+  communicationPrefs: {
+    verbosity: 'concise' | 'detailed' | 'balanced';
+    formality: 'formal' | 'casual' | 'mixed';
+  };
+  boundaries: string[];
+  audienceDescription: string;
+  avatarObjective: string[];
+  fallbackReply: string;
+}
+
 /**
  * Configuration describing an avatar's persona.
+ * Updated for Phase 1 core implementation
  */
 export interface AvatarPersonaConfig {
   /**
@@ -31,4 +51,34 @@ export interface AvatarPersonaConfig {
    * Description of the target audience for the avatar.
    */
   audienceDescription: string
+  /**
+   * Core persona context with structured tone profiles
+   */
+  corePersona?: CorePersonaContext
+}
+
+/**
+ * State management for persona sessions
+ */
+export interface PersonaState {
+  sessionId: string;
+  userId: string;
+  phase: 'core' | 'enhanced' | 'completed';
+  parameters: Partial<CorePersonaContext>;
+  confidenceScores: Record<string, number>;
+  conversationHistory: Array<{role: string, content: string, timestamp: Date}>;
+  checkpoints: Array<{timestamp: Date, parameters: Partial<CorePersonaContext>, confidence: number}>;
+  completedAt?: Date;
+  version: number;
+}
+
+/**
+ * Error handling result structure
+ */
+export interface ExtractionResult {
+  success: boolean;
+  confidence: number;
+  fallbackUsed: boolean;
+  parameters: Partial<CorePersonaContext>;
+  errors?: string[];
 }

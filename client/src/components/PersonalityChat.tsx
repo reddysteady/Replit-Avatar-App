@@ -262,10 +262,17 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       setIsFinished(aiResponse.isFinished || false)
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
-      // Handle chip selector display
+      // Phase 1: Show chip selector every 2 parameters (simplified validation)
+      const configCount = Object.keys(extractedConfig).length + (aiResponse.extractedData ? Object.keys(aiResponse.extractedData).length : 0)
+      
       if (aiResponse.showChipSelector && aiResponse.suggestedTraits) {
         setShowChipSelector(true)
         setSuggestedTraits(aiResponse.suggestedTraits)
+        setReflectionActive(true)
+      } else if (configCount > 0 && configCount % 2 === 0 && !aiResponse.isComplete && !showChipSelector) {
+        // Auto-trigger chip selector every 2 parameters for Phase 1
+        setShowChipSelector(true)
+        setSuggestedTraits(aiResponse.suggestedTraits || [])
         setReflectionActive(true)
       }
 
@@ -327,18 +334,18 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
     }
 
-    // Simplified completion logic
-    const configCount = Object.keys(extractedConfig).length + (result.extractedData ? Object.keys(result.extractedData).length : 0)
+    // Phase 1: Completion logic for 6 core parameters
+    const coreParamCount = this.countCoreParameters(extractedConfig, result.extractedData)
     const messageCount = messages.length
 
-    // Show Complete Setup button when we have enough data AND are in persona preview mode
-    if (configCount >= 4 && newPersonaMode === 'persona_preview' && messageCount >= 10) {
+    // Show Complete Setup button when we have 6 core parameters OR are in completion stage
+    if (coreParamCount >= 6 || (coreParamCount >= 4 && newPersonaMode === 'persona_preview' && messageCount >= 8)) {
       setShowCompleteButton(true)
       setIsComplete(true)
     }
 
-    // Update progress bar
-    const newProgress = Math.min(95, (configCount / 6) * 100)
+    // Update progress bar based on core parameters (out of 6)
+    const newProgress = Math.min(95, (coreParamCount / 6) * 100)
     setProgress(newProgress)
 
     // Show pulsing box when progress reaches 100%
@@ -553,3 +560,16 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     </div>
   )
 }
+  // Helper method to count core parameters for Phase 1
+  const countCoreParameters = (config: Partial<AvatarPersonaConfig>, newData?: any): number => {
+    const combined = { ...config, ...newData }
+    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply']
+    
+    return coreFields.filter(field => {
+      const value = combined[field]
+      if (!value) return false
+      if (typeof value === 'string') return value.length > 3
+      if (Array.isArray(value)) return value.length > 0
+      return true
+    }).length
+  }
