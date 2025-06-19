@@ -520,23 +520,30 @@ export class AIService {
         messages: [
           { 
             role: 'system', 
-            content: `Generate a warm, engaging opening question (under 50 words) that:
-            1. Feels conversational and personal
-            2. Gets them talking about their specific communication style
-            3. Avoids generic personality trait questions
-            4. Focuses on their authentic voice with their audience` 
+            content: `Generate a warm, engaging opening question that feels like starting a conversation with a friend. Choose from these approaches:
+
+            1. SCENARIO: "Imagine your best follower just asked..."
+            2. STORY PROMPT: "Tell me about a time when..."
+            3. COMPARISON: "How would you describe the difference between..."
+            4. DIRECT CURIOSITY: "What's something people always notice about..."
+            5. EXAMPLE-DRIVEN: "Give me an example of how you usually..."
+
+            Keep it under 40 words, make it feel natural and conversational, and focus on getting them talking about how they naturally communicate with their audience.` 
           }
         ],
-        temperature: 0.7,
-        max_tokens: 100,
+        temperature: 0.8, // Increased for more variety
+        max_tokens: 80,
       })
 
-      return this.createFallbackResponse(
-        response.choices[0]?.message?.content || "Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them."
-      )
+      const initialQuestion = response.choices[0]?.message?.content || 
+        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
+
+      return this.createFallbackResponse(initialQuestion)
     } catch (error) {
       console.error('Error generating initial message:', error)
-      return this.createFallbackResponse("Picture your most engaged follower asking for advice - walk me through how you'd naturally respond to them.")
+      return this.createFallbackResponse(
+        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?"
+      )
     }
   }
 
@@ -547,13 +554,16 @@ export class AIService {
     const userMessages = messages.filter(m => m.role === 'user')
     const fieldsCollected = this.countMeaningfulFields(currentConfig)
     
-    // Stage determination with simplified logic
+    // Extract conversation context for better flow
+    const conversationContext = this.extractConversationContext(messages)
+    
+    // Stage determination with more natural flow
     const stage = this.determineConversationStage(userMessages.length, fieldsCollected, confirmedTraits)
     
-    // Missing field analysis - ordered by priority
+    // Missing field analysis - ordered by priority and conversation flow
     const missingFields = this.identifyMissingFields(currentConfig)
     
-    // Clear state tracking
+    // Enhanced state tracking
     const state = {
       userMessageCount: userMessages.length,
       fieldsCollected,
@@ -561,21 +571,96 @@ export class AIService {
       missingFields,
       hasConfirmedTraits: Boolean(confirmedTraits),
       currentConfig,
+      conversationContext, // Add context for better flow
       shouldShowChipCloud: stage === 'reflection_checkpoint',
-      shouldComplete: stage === 'completion'
+      shouldComplete: stage === 'completion',
+      lastUserMessage: userMessages[userMessages.length - 1]?.content || '',
+      conversationTone: this.assessConversationTone(messages)
     }
     
     if (process.env.DEBUG_AI) {
-      console.log('[PERSONALITY-DEBUG] Conversation state:', {
+      console.log('[PERSONALITY-DEBUG] Enhanced conversation state:', {
         userMessages: userMessages.length,
         fieldsCollected,
         stage,
+        conversationTone: state.conversationTone,
         missingFields: missingFields.slice(0, 2),
         hasConfirmedTraits: Boolean(confirmedTraits)
       })
     }
     
     return state
+  }
+
+  /**
+   * Extracts conversation context for better flow
+   */
+  private extractConversationContext(messages: any[]): any {
+    const recentMessages = messages.slice(-4) // Last 4 messages for context
+    
+    return {
+      topics: this.extractMentionedTopics(recentMessages),
+      examples: this.extractUserExamples(recentMessages),
+      tone: this.detectUserTone(recentMessages),
+      interests: this.extractInterests(recentMessages)
+    }
+  }
+
+  /**
+   * Assesses the conversation tone for matching
+   */
+  private assessConversationTone(messages: any[]): string {
+    const userMessages = messages.filter(m => m.role === 'user').slice(-3)
+    if (userMessages.length === 0) return 'neutral'
+    
+    const combinedText = userMessages.map(m => m.content).join(' ').toLowerCase()
+    
+    if (combinedText.includes('!') || combinedText.includes('haha') || combinedText.includes('lol')) {
+      return 'enthusiastic'
+    } else if (combinedText.length > 100) {
+      return 'detailed'
+    } else if (combinedText.split(' ').length < 10) {
+      return 'concise'
+    }
+    return 'balanced'
+  }
+
+  /**
+   * Extracts mentioned topics from recent messages
+   */
+  private extractMentionedTopics(messages: any[]): string[] {
+    const topics = []
+    const combinedText = messages.filter(m => m.role === 'user')
+      .map(m => m.content).join(' ').toLowerCase()
+    
+    const commonTopics = ['fitness', 'health', 'business', 'tech', 'creative', 'education', 'lifestyle']
+    commonTopics.forEach(topic => {
+      if (combinedText.includes(topic)) topics.push(topic)
+    })
+    
+    return topics
+  }
+
+  /**
+   * Extracts user examples from conversation
+   */
+  private extractUserExamples(messages: any[]): string[] {
+    return messages
+      .filter(m => m.role === 'user' && (m.content.includes('like') || m.content.includes('example')))
+      .map(m => m.content.substring(0, 50))
+  }
+
+  /**
+   * Detects user's communication tone
+   */
+  private detectUserTone(messages: any[]): string {
+    const userText = messages.filter(m => m.role === 'user').map(m => m.content).join(' ')
+    
+    if (userText.includes('!') && userText.includes('love')) return 'enthusiastic'
+    if (userText.includes('professional') || userText.includes('business')) return 'professional'
+    if (userText.includes('casual') || userText.includes('fun')) return 'casual'
+    
+    return 'balanced'
   }
 
   /**
@@ -652,66 +737,72 @@ export class AIService {
   private buildPersonalityExtractionPrompt(state: any): string {
     const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits } = state
     
+    // Create more engaging, varied question approaches
+    const questionStyles = [
+      "scenario-based", "direct-curious", "story-prompt", "comparison", "example-driven"
+    ]
+    const currentStyle = questionStyles[userMessageCount % questionStyles.length]
+    
     let stageInstructions = ''
     let responseFormat = ''
     
     switch (stage) {
       case 'introduction':
-        stageInstructions = 'Ask ONE warm, engaging question about their baseline communication style.'
+        stageInstructions = `Ask an engaging ${currentStyle} question that gets them talking naturally about their voice and style. Make it feel like a conversation, not an interview.`
         break
       case 'core_collection':
-        stageInstructions = `Continue collecting core parameters systematically. Focus on missing field: ${missingFields.slice(0, 1).join('')}. Ask ONE specific question.`
+        const nextField = missingFields[0] || 'communication style'
+        stageInstructions = `Continue the natural conversation flow while learning about "${nextField}". Use ${currentStyle} approach. Build on what they've shared already. Make it conversational and engaging.`
         break
       case 'reflection_checkpoint':
-        stageInstructions = 'REFLECTION PHASE: Show chip selector for validation. Summarize collected traits and ask for confirmation.'
+        stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned in a personal way, then show chip selector for validation.'
         responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
         break
       case 'completion':
-        stageInstructions = 'All core parameters collected and validated. Speak in their voice and show Complete Setup button.'
+        stageInstructions = 'Transition to their voice naturally. Show excitement about capturing their personality.'
         responseFormat = '"isComplete": true, "isFinished": true,'
         break
       default:
-        stageInstructions = 'Continue gathering core communication details systematically.'
+        stageInstructions = `Keep the conversation flowing naturally while learning about ${missingFields[0] || 'their style'}. Use ${currentStyle} approach.`
     }
 
-    return `You are extracting Phase 1 core personality data through natural conversation.
+    return `You are learning someone's communication personality through natural, engaging conversation. This should feel like chatting with a friend who's genuinely curious about how they express themselves.
 
-PHASE 1 CORE PARAMETERS (6 essential):
-1. toneDescription (baseline communication style)
-2. audienceDescription (who they serve)
-3. avatarObjective (primary goals)
-4. boundaries (topics to avoid)
-5. fallbackReply (boundary response)
-6. communicationPrefs (verbosity, formality)
+CONVERSATION APPROACH:
+- ${currentStyle} style for this interaction
+- Build on previous responses naturally
+- Ask follow-up questions that show you're listening
+- Use their own words and examples back to them
+- Make each question feel different and engaging
 
-CONVERSATION STATE:
-- Stage: ${stage}
-- User messages: ${userMessageCount}
-- Core fields collected: ${fieldsCollected}/6
-- Missing: ${missingFields.join(', ')}
-- Has confirmed traits: ${hasConfirmedTraits}
+CORE AREAS TO EXPLORE (organically):
+1. toneDescription - How they naturally sound when talking
+2. audienceDescription - Who they're speaking to
+3. avatarObjective - What they want to achieve
+4. boundaries - What they prefer not to discuss
+5. fallbackReply - How they handle sensitive topics
+6. communicationPrefs - Their natural style preferences
 
-INSTRUCTIONS: ${stageInstructions}
+CURRENT STATE:
+- Conversation style: ${currentStyle}
+- Questions asked: ${userMessageCount}
+- Areas explored: ${fieldsCollected}/6
+- Still learning about: ${missingFields.slice(0, 2).join(', ')}
+- Ready for validation: ${hasConfirmedTraits ? 'Yes' : 'No'}
 
-EXTRACTION STRATEGY:
-- Validate every 2 parameters (simplified from 3)
-- Focus on core fields only - no advanced features yet
-- Build confidence through systematic collection
-- Use fallback questions for GPT errors
+${stageInstructions}
 
-RESPONSE RULES:
-1. Ask ONE targeted question about the next missing core parameter
-2. Extract meaningful data from user responses
-3. Keep responses under 100 words for focus
-4. NEVER end conversation until completion stage
-5. NEVER set isComplete or isFinished to true unless stage is 'completion'
-6. Only show chip selector during reflection_checkpoint stage
-7. Always continue the conversation with a question
+RESPONSE STYLE GUIDELINES:
+- Vary your question formats (scenarios, examples, comparisons, stories)
+- Reference what they've already shared to show you're listening
+- Keep it conversational and warm, not clinical
+- Ask follow-ups that dive deeper into interesting details
+- Use their energy level and match their communication style
 
-REQUIRED JSON RESPONSE:
+REQUIRED JSON FORMAT:
 {
-  "response": "Your next question about: ${missingFields[0] || 'communication style'}",
-  "extractedData": {extracted fields from user response},
+  "response": "Your engaging, conversational question or reflection",
+  "extractedData": {fields you can infer from their latest response},
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
