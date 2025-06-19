@@ -2023,25 +2023,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req, res) => {
+    console.log('[PERSONALITY-ENDPOINT] Request received:', {
+      hasMessages: !!req.body.messages,
+      messageCount: req.body.messages?.length || 0,
+      hasCurrentConfig: !!req.body.currentConfig,
+      initialMessage: req.body.initialMessage,
+      hasConfirmedTraits: !!req.body.confirmedTraits,
+      sessionId: req.body.sessionId
+    })
+
     try {
       const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
 
       // Handle session state for Phase 1
       let session = null
       if (sessionId) {
+        console.log('[PERSONALITY-ENDPOINT] Restoring session:', sessionId)
         session = await personaStateManager.restoreSession(sessionId)
       }
 
       if (!session && !initialMessage) {
+        console.log('[PERSONALITY-ENDPOINT] Creating new session')
         // Create new session for ongoing conversations
         session = await personaStateManager.createSession('1') // MVP: assume user ID 1
       }
 
+      console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
       const result = await aiService.extractPersonalityFromConversation(
         messages || [],
         currentConfig || {},
         initialMessage || false
       )
+
+      console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
+        personaMode: result.personaMode,
+        isComplete: result.isComplete,
+        showChipSelector: result.showChipSelector,
+        hasResponse: !!result.response,
+        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0
+      })
 
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] Personality extract result:', {
@@ -2053,7 +2073,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result)
     } catch (error: any) {
-      console.error('Error in personality extraction:', error.message || error)
+      console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        status: error.status
+      })
 
       // Return a proper fallback response instead of just an error
       const fallbackResult = {
@@ -2069,7 +2094,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errorMessage: error.message
       }
 
-      res.json(fallbackResult)
+      console.log('[PERSONALITY-ENDPOINT] Returning fallback result')
+      res.status(500).json(fallbackResult)
     }
   })
 

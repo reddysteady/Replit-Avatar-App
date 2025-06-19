@@ -451,8 +451,17 @@ export class AIService {
   reflectionCheckpoint?: boolean
   sessionState?: any
 }> {
+    console.log('[PERSONALITY-EXTRACT] Starting extraction with:', {
+      messageCount: messages?.length || 0,
+      initialMessage,
+      hasCurrentConfig: !!currentConfig,
+      confirmedTraits: confirmedTraits?.length || 0
+    })
+
     try {
       const { client, hasKey, keySource } = await this.getClient()
+      
+      console.log('[PERSONALITY-EXTRACT] API key check:', { hasKey, keySource })
       
       if (!hasKey) {
         console.error('[PERSONALITY-ERROR] No OpenAI API key available')
@@ -467,7 +476,10 @@ export class AIService {
       const settings = await storage.getSettings(1)
       const currentKey = keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
       if (currentKey && !this.isValidKeyFormat(currentKey)) {
-        console.error('[PERSONALITY-ERROR] Invalid API key format')
+        console.error('[PERSONALITY-ERROR] Invalid API key format:', {
+          keySource,
+          keyPrefix: currentKey.substring(0, 10) + '...'
+        })
         return this.createFallbackResponse(
           "There's an issue with the API key format. Please check your OpenAI API key in Settings.",
           'guidance',
@@ -477,14 +489,24 @@ export class AIService {
 
       // Handle initial message generation
       if (initialMessage || (messages.length === 0) || (messages.length === 1 && messages[0].role === 'system')) {
+        console.log('[PERSONALITY-EXTRACT] Generating initial message')
         return this.generateInitialMessage(client)
       }
 
       // Calculate conversation state
+      console.log('[PERSONALITY-EXTRACT] Analyzing conversation state')
       const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
+      
+      console.log('[PERSONALITY-EXTRACT] Conversation state:', {
+        stage: conversationState.stage,
+        fieldsCollected: conversationState.fieldsCollected,
+        missingFields: conversationState.missingFields?.slice(0, 3)
+      })
       
       // Generate contextual system prompt
       const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
+
+      console.log('[PERSONALITY-EXTRACT] System prompt generated, length:', systemPrompt.length)
 
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] Personality extraction request:', {
@@ -494,6 +516,7 @@ export class AIService {
         })
       }
 
+      console.log('[PERSONALITY-EXTRACT] Making OpenAI API call')
       const response = await client.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -507,14 +530,31 @@ export class AIService {
 
       const content = response.choices[0]?.message?.content || '{}'
       
+      console.log('[PERSONALITY-EXTRACT] OpenAI response received, length:', content.length)
+      
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
       }
 
-      return this.processExtractionResponse(content, conversationState)
+      console.log('[PERSONALITY-EXTRACT] Processing response')
+      const result = this.processExtractionResponse(content, conversationState)
+      
+      console.log('[PERSONALITY-EXTRACT] Extraction completed successfully:', {
+        personaMode: result.personaMode,
+        isComplete: result.isComplete,
+        showChipSelector: result.showChipSelector
+      })
+
+      return result
 
     } catch (error: any) {
-      console.error('[PERSONALITY-ERROR] Extraction failed:', error.message || error)
+      console.error('[PERSONALITY-ERROR] Extraction failed with error:', {
+        message: error.message,
+        status: error.status,
+        type: error.constructor.name,
+        stack: error.stack?.split('\n').slice(0, 3)
+      })
+      
       return this.handleExtractionError(error, { stage: 'core_collection', fieldsCollected: 0, missingFields: ['toneDescription'] })
     }
   }

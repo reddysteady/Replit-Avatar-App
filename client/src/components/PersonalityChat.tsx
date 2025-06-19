@@ -89,29 +89,46 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   // Generate dynamic initial message
   useEffect(() => {
     const generateInitialMessage = async () => {
+      console.log('[PERSONALITY-FRONTEND] Starting initial message generation')
+      
       try {
+        const requestBody = {
+          messages: [
+            {
+              role: 'system',
+              content: 'Generate an engaging opening question to start persona discovery. Make it warm, specific, and designed to capture the creator\'s communication style and goals.'
+            }
+          ],
+          currentConfig: {},
+          initialMessage: true
+        }
+
+        console.log('[PERSONALITY-FRONTEND] Making request to /api/ai/personality-extract with:', requestBody)
+
         const response = await fetch('/api/ai/personality-extract', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: 'system',
-                content: 'Generate an engaging opening question to start persona discovery. Make it warm, specific, and designed to capture the creator\'s communication style and goals.'
-              }
-            ],
-            currentConfig: {},
-            initialMessage: true
-          })
+          body: JSON.stringify(requestBody)
         })
 
+        console.log('[PERSONALITY-FRONTEND] Response status:', response.status, response.statusText)
+
         if (!response.ok) {
-          throw new Error('Failed to generate initial message')
+          const errorText = await response.text()
+          console.error('[PERSONALITY-FRONTEND] Response not ok:', errorText)
+          throw new Error(`Failed to generate initial message: ${response.status} ${response.statusText}`)
         }
 
         const aiResponse: PersonalityExtractionResponse = await response.json()
+        
+        console.log('[PERSONALITY-FRONTEND] AI response received:', {
+          hasResponse: !!aiResponse.response,
+          personaMode: aiResponse.personaMode,
+          isComplete: aiResponse.isComplete,
+          error: aiResponse.error
+        })
 
         const initialMessage: ChatMessage = {
           id: '1',
@@ -122,8 +139,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         }
 
         setMessages([initialMessage])
+        console.log('[PERSONALITY-FRONTEND] Initial message set successfully')
       } catch (error) {
-        console.error('Error generating initial message:', error)
+        console.error('[PERSONALITY-FRONTEND] Error generating initial message:', {
+          message: error.message,
+          stack: error.stack
+        })
         // Fallback to improved static message
         const fallbackMessage: ChatMessage = {
           id: '1',
@@ -133,8 +154,10 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           personaMode: 'guidance'
         }
         setMessages([fallbackMessage])
+        console.log('[PERSONALITY-FRONTEND] Using fallback message')
       } finally {
         setIsInitializing(false)
+        console.log('[PERSONALITY-FRONTEND] Initial message generation completed')
       }
     }
 
@@ -207,6 +230,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || isFinished || reflectionActive) return
 
+    console.log('[PERSONALITY-FRONTEND] Sending message:', inputValue.trim())
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -219,25 +244,46 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     setIsLoading(true)
 
     try {
+      const requestBody = {
+        messages: [...messages, userMessage].map(msg => ({
+          role: msg.role,
+          content: msg.content
+        })),
+        currentConfig: extractedConfig
+      }
+
+      console.log('[PERSONALITY-FRONTEND] Making request with:', {
+        messageCount: requestBody.messages.length,
+        hasCurrentConfig: !!requestBody.currentConfig,
+        configKeys: Object.keys(requestBody.currentConfig || {})
+      })
+
       const response = await fetch('/api/ai/personality-extract', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map(msg => ({
-            role: msg.role,
-            content: msg.content
-          })),
-          currentConfig: extractedConfig
-        })
+        body: JSON.stringify(requestBody)
       })
 
+      console.log('[PERSONALITY-FRONTEND] Response received:', response.status, response.statusText)
+
       if (!response.ok) {
-        throw new Error('Failed to get AI response')
+        const errorText = await response.text()
+        console.error('[PERSONALITY-FRONTEND] Response error:', errorText)
+        throw new Error(`Failed to get AI response: ${response.status} ${response.statusText}`)
       }
 
       const aiResponse: PersonalityExtractionResponse = await response.json()
+
+      console.log('[PERSONALITY-FRONTEND] AI response parsed:', {
+        hasResponse: !!aiResponse.response,
+        personaMode: aiResponse.personaMode,
+        isComplete: aiResponse.isComplete,
+        showChipSelector: aiResponse.showChipSelector,
+        hasExtractedData: !!aiResponse.extractedData && Object.keys(aiResponse.extractedData).length > 0,
+        error: aiResponse.error
+      })
 
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -264,11 +310,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       // Phase 1: Show chip selector every 3 parameters as per spec
       const mergedConfig = { ...extractedConfig, ...aiResponse.extractedData }
-      const configCount = this.countMeaningfulFields(mergedConfig)
+      const configCount = countMeaningfulFields(mergedConfig)
       
       console.log('[PERSONALITY-DEBUG] Config count:', configCount, 'Stage:', aiResponse.personaMode)
       
       if (aiResponse.showChipSelector || aiResponse.reflectionCheckpoint) {
+        console.log('[PERSONALITY-FRONTEND] Showing chip selector')
         setShowChipSelector(true)
         setSuggestedTraits(aiResponse.suggestedTraits || [])
         setReflectionActive(true)
@@ -291,7 +338,10 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
 
     } catch (error) {
-      console.error('Error in personality chat:', error)
+      console.error('[PERSONALITY-FRONTEND] Error in personality chat:', {
+        message: error.message,
+        stack: error.stack
+      })
       toast({
         title: 'Error',
         description: 'Failed to get AI response. Please try again.',
@@ -300,6 +350,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
 
     setIsLoading(false)
+    console.log('[PERSONALITY-FRONTEND] Message handling completed')
   }
   // Handle extraction result and update state
   const handleExtractionResult = (result: any) => {
