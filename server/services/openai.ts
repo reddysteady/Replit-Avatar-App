@@ -547,24 +547,35 @@ export class AIService {
     const userMessages = messages.filter(m => m.role === 'user')
     const fieldsCollected = this.countMeaningfulFields(currentConfig)
     
-    // Get the last few user messages to check for repetition
-    const recentUserMessages = userMessages.slice(-3).map(m => m.content?.toLowerCase() || '')
-    
-    // Stage determination with clearer logic
+    // Stage determination with simplified logic
     const stage = this.determineConversationStage(userMessages.length, fieldsCollected, confirmedTraits)
     
-    // Missing field analysis
+    // Missing field analysis - ordered by priority
     const missingFields = this.identifyMissingFields(currentConfig)
     
-    return {
+    // Clear state tracking
+    const state = {
       userMessageCount: userMessages.length,
       fieldsCollected,
       stage,
       missingFields,
-      recentUserMessages,
       hasConfirmedTraits: Boolean(confirmedTraits),
-      currentConfig
+      currentConfig,
+      shouldShowChipCloud: stage === 'reflection_checkpoint',
+      shouldComplete: stage === 'completion'
     }
+    
+    if (process.env.DEBUG_AI) {
+      console.log('[PERSONALITY-DEBUG] Conversation state:', {
+        userMessages: userMessages.length,
+        fieldsCollected,
+        stage,
+        missingFields: missingFields.slice(0, 2),
+        hasConfirmedTraits: Boolean(confirmedTraits)
+      })
+    }
+    
+    return state
   }
 
   /**
@@ -597,11 +608,20 @@ export class AIService {
    * Determines the current conversation stage for Phase 1 simplified flow
    */
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
-    // Phase 1: Show chip selector every 3 parameters collected
+    // Simple linear progression - never jump stages prematurely
     if (userMessages <= 1) return 'introduction'
-    if (fieldsCollected >= 3 && fieldsCollected % 3 === 0 && !confirmedTraits) return 'reflection_checkpoint'
-    if (fieldsCollected >= 5) return 'persona_preview'
-    if (userMessages <= 4) return 'discovery'
+    
+    // Show chip validation after every 2 parameters collected (simplified from 3)
+    if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) {
+      return 'reflection_checkpoint'
+    }
+    
+    // Only move to completion after ALL 6 core parameters + chip validation
+    if (fieldsCollected >= 6 && confirmedTraits) {
+      return 'completion'
+    }
+    
+    // Stay in core collection until requirements are met
     return 'core_collection'
   }
 
@@ -637,23 +657,18 @@ export class AIService {
     
     switch (stage) {
       case 'introduction':
-        stageInstructions = 'Focus on baseline tone and audience. Ask warm, engaging questions about their communication style.'
-        break
-      case 'discovery':
-        stageInstructions = 'Gather core communication patterns: tone, audience, and objectives. Be specific but conversational.'
+        stageInstructions = 'Ask ONE warm, engaging question about their baseline communication style.'
         break
       case 'core_collection':
-        stageInstructions = 'Continue collecting core parameters systematically. Focus on missing essential fields.'
+        stageInstructions = `Continue collecting core parameters systematically. Focus on missing field: ${missingFields.slice(0, 1).join('')}. Ask ONE specific question.`
         break
       case 'reflection_checkpoint':
-        stageInstructions = 'REFLECTION PHASE: Validate collected data every 2 parameters via chip selector. Summarize findings.'
+        stageInstructions = 'REFLECTION PHASE: Show chip selector for validation. Summarize collected traits and ask for confirmation.'
         responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
         break
-      case 'persona_preview':
-        stageInstructions = 'Demonstrate their voice while collecting final core parameters. Show personality in action.'
-        break
       case 'completion':
-        stageInstructions = 'Core parameters complete. Speak fully in their voice and offer to finish setup.'
+        stageInstructions = 'All core parameters collected and validated. Speak in their voice and show Complete Setup button.'
+        responseFormat = '"isComplete": true, "isFinished": true,'
         break
       default:
         stageInstructions = 'Continue gathering core communication details systematically.'
@@ -685,22 +700,20 @@ EXTRACTION STRATEGY:
 - Use fallback questions for GPT errors
 
 RESPONSE RULES:
-1. Ask ONE targeted question about missing core parameters
-2. Extract data systematically - prioritize missing fields
-3. Keep responses under 120 words for focus
-4. Avoid repetition and generic questions
-5. NEVER end conversation - always ask follow-up questions
-6. NEVER set isComplete or isFinished to true unless explicitly in completion stage
-7. Only trigger chip validation at reflection_checkpoint stage
+1. Ask ONE targeted question about the next missing core parameter
+2. Extract meaningful data from user responses
+3. Keep responses under 100 words for focus
+4. NEVER end conversation until completion stage
+5. NEVER set isComplete or isFinished to true unless stage is 'completion'
+6. Only show chip selector during reflection_checkpoint stage
+7. Always continue the conversation with a question
 
-Respond with JSON:
+REQUIRED JSON RESPONSE:
 {
-  "response": "Your targeted question focusing on missing field: ${missingFields.slice(0, 1).join('')}",
-  "extractedData": {core persona fields only},
+  "response": "Your next question about: ${missingFields[0] || 'communication style'}",
+  "extractedData": {extracted fields from user response},
   ${responseFormat}
-  "personaMode": "${stage === 'persona_preview' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
-  "isComplete": false,
-  "isFinished": false,
+  "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
 }`
   }
@@ -726,17 +739,26 @@ Respond with JSON:
     // Generate suggested traits for chip selector
     const suggestedTraits = this.generateSuggestedTraits(extractedData, state.currentConfig)
     
+    // Calculate total fields after extraction
+    const totalFields = state.fieldsCollected + Object.keys(extractedData).length
+    
     const finalResult = {
       response: responseText,
       extractedData,
       personaMode: result.personaMode || 'guidance',
-      isComplete: result.isComplete || false,
-      isFinished: result.isFinished || (state.fieldsCollected + Object.keys(extractedData).length >= 5),
-      confidenceScore: Math.min(0.95, (state.fieldsCollected + Object.keys(extractedData).length) / 6),
+      isComplete: false, // Never complete until explicitly in completion stage
+      isFinished: false, // Never finished until explicitly in completion stage
+      confidenceScore: Math.min(0.95, totalFields / 6),
       transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
       showChipSelector: result.showChipSelector || false,
       suggestedTraits,
       reflectionCheckpoint: result.reflectionCheckpoint || false
+    }
+    
+    // Only set completion flags if we're actually in completion stage
+    if (state.stage === 'completion') {
+      finalResult.isComplete = true
+      finalResult.isFinished = true
     }
 
     if (process.env.DEBUG_AI) {
