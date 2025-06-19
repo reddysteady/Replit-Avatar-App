@@ -1266,12 +1266,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Messages must be an array' })
       }
 
+      const { confirmedTraits } = req.body
       const result = await aiService.extractPersonalityFromConversation(
         messages,
         currentConfig || {},
         enablePersonaPreview || false,
         transitionThreshold || 4,
         initialMessage || false,
+        confirmedTraits,
       )
       res.json(result)
     } catch (error: any) {

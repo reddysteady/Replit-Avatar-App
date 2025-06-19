@@ -433,19 +433,32 @@ export class AIService {
     }
   }
 
-  async extractPersonalityFromConversation(
-    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
-    currentConfig: any = {},
-    enablePersonaPreview: boolean = false,
-    transitionThreshold: number = 4,
-    initialMessage: boolean = false
-  ): Promise<{ response: string; extractedData: any; isComplete: boolean; personaMode?: string; confidenceScore?: number; transitionMessage?: string; isFinished?: boolean }> {
+  export async function extractPersonalityFromConversation(
+  messages: any[],
+  currentConfig: Partial<AvatarPersonaConfig> = {},
+  initialMessage = false,
+  confirmedTraits?: string[]
+): Promise<{
+  response: string
+  extractedData: Partial<AvatarPersonaConfig>
+  isComplete: boolean
+  personaMode: 'guidance' | 'blended' | 'persona_preview'
+  confidenceScore: number
+  transitionMessage?: string
+  isFinished?: boolean
+  showChipSelector?: boolean
+  suggestedTraits?: Array<{id: string, label: string, selected: boolean}>
+  reflectionCheckpoint?: boolean
+}> {
     const { client, hasKey } = await this.getClient()
     if (!hasKey) {
       return {
         response: "I'm having trouble processing right now. Could you try again?",
         extractedData: {},
-        isComplete: false
+        isComplete: false,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false
       }
     }
 
@@ -494,7 +507,10 @@ Generate ONE opening question in this style that will reveal their authentic com
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
-          confidenceScore: 0
+          confidenceScore: 0,
+          showChipSelector: false,
+          suggestedTraits: [],
+          reflectionCheckpoint: false
         }
       } catch (error) {
         console.error('Error generating initial message:', error)
@@ -503,7 +519,10 @@ Generate ONE opening question in this style that will reveal their authentic com
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
-          confidenceScore: 0
+          confidenceScore: 0,
+          showChipSelector: false,
+          suggestedTraits: [],
+          reflectionCheckpoint: false
         }
       }
     }
@@ -518,196 +537,66 @@ Generate ONE opening question in this style that will reveal their authentic com
       personaMode = fieldsCollected >= 5 ? 'persona_preview' : 'blended'
     }
 
-    let systemPrompt = ''
+    // Check for reflection checkpoint (messages 7-10)
+  const isReflectionCheckpoint = messages.length >= 7 && messages.length <= 10 && !confirmedTraits
 
-    if (personaMode === 'guidance') {
-      systemPrompt = `You are an AI assistant helping a content creator configure their AI avatar's personality. Your goal is to extract specific configuration data through natural conversation.
+  const systemPrompt = `You are an AI assistant helping to extract personality information from a conversation.
 
-CRITICAL: Always respond with valid JSON in this exact format:
+Your job is to:
+1. Engage in natural conversation to learn about the user's communication style
+2. Extract key personality traits, tone, and preferences
+3. Gradually transition from guidance mode to speaking in their voice
+4. Provide JSON data for persona configuration
+5. At reflection checkpoints (messages 7-10), show chip selector for trait confirmation
+
+CONVERSATION FLOW:
+- Messages 1-6: Ask engaging questions to learn their style (guidance mode)
+- Messages 7-10: REFLECTION CHECKPOINT - Present chip selector with discovered traits
+- Messages 7-12: Start blending - mix guidance with their emerging voice (blended mode)  
+- Messages 13+: Speak primarily in their voice while gathering final details (persona_preview mode)
+
+REFLECTION CHECKPOINT BEHAVIOR:
+${isReflectionCheckpoint ? `
+IMPORTANT: This is a reflection checkpoint! You should:
+1. Summarize what you've learned about their communication style
+2. Set "showChipSelector": true 
+3. Provide "suggestedTraits" array with discovered personality traits
+4. Ask them to confirm/modify the traits before continuing
+5. Set "reflectionCheckpoint": true
+` : ''}
+
+PERSONA MODES:
+- "guidance": You're helping them discover their voice
+- "blended": You're starting to mirror their style while still guiding
+- "persona_preview": You're speaking as their avatar would, showing them how you sound
+
+Always end every message with a curiosity-driven question to keep the conversation flowing.
+
+Current conversation length: ${messages.length} messages
+Current config extracted so far: ${JSON.stringify(currentConfig, null, 2)}
+${confirmedTraits ? `Confirmed traits from user: ${confirmedTraits.join(', ')}` : ''}
+
+Respond with valid JSON in this exact format:
 {
-  "response": "your conversational response text here",
+  "response": "Your conversational response with a question at the end",
   "extractedData": {
     "toneDescription": "extracted tone if found",
-    "styleTags": ["array", "of", "style", "tags"],
-    "allowedTopics": ["topics", "they", "want", "to", "discuss"],
-    "restrictedTopics": ["topics", "to", "avoid"],
-    "fallbackReply": "what to say for restricted topics",
-    "avatarObjective": ["their", "main", "goals"],
-    "audienceDescription": "description of their audience"
+    "styleTags": ["tag1", "tag2"],
+    "allowedTopics": ["topic1", "topic2"],  
+    "restrictedTopics": ["topic1", "topic2"],
+    "fallbackReply": "extracted fallback if found",
+    "avatarObjective": ["objective1", "objective2"],
+    "audienceDescription": "extracted audience if found"
   },
   "isComplete": false,
-  "isFinished": false
-}
-
-Only include fields in extractedData if you have confident information. Use empty arrays [] for array fields if no data found.
-
-Current conversation context:
-- Message count: ${messages.length}
-- Configuration fields collected: ${fieldsCollected}
-- Completion status: ${isNearComplete ? 'Near complete' : 'In progress'}
-
-${messages.length <= 2 ? `
-OPENING APPROACH: Start with an engaging, specific question that gets them talking about their communication style naturally. Make it personal and relatable.
-` : ''}
-
-${messages.length > 2 && messages.length <= 5 ? `
-FOLLOW-UP STRATEGY: Build on what they've shared. Ask follow-up questions that dig deeper into their communication patterns, audience, and goals.
-` : ''}
-
-${messages.length > 5 && messages.length <= 15 ? `
-DEEPER EXPLORATION: You have good foundational data. Now explore nuances - their tone variations, specific topics they love/avoid, communication objectives, and audience interaction style. Ask about:
-- How they handle different types of questions (technical vs personal)
-- Their approach to controversial or sensitive topics
-- What makes their communication unique vs others in their field
-- How they want to be perceived by their audience
-` : ''}
-
-${messages.length > 15 && messages.length <= 25 ? `
-ADVANCED REFINEMENT: Focus on subtleties and edge cases. Ask about:
-- Their communication style in different moods or contexts
-- How they adapt their message for different audience segments
-- Their boundaries and comfort zones
-- What they never want their avatar to say or do
-` : ''}
-
-${messages.length > 20 ? `
-CONVERSATION WIND-DOWN: You have extensive data. Focus on final refinements and prepare to conclude. If asked another question, consider whether you truly need more information or if you should gracefully wrap up.
-` : ''}
-
-${messages.length > 25 ? `
-CONVERSATION COMPLETION: You should have comprehensive data by now. You may gracefully conclude, but ONLY if you have data for ALL 7 configuration fields. If missing any fields, continue asking curiosity-driven questions. When truly finishing, say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." Only end without a question if you have ALL required data.
-` : ''}
-
-CONFIGURATION TARGETS to extract:
-1. toneDescription: Transform user responses into a rich description of their communication style (e.g., "Warm and approachable with casual, conversational energy. Uses humor and self-deprecation to connect authentically with audience.")
-2. styleTags: Extract style characteristics from how they communicate (e.g., ["Casual", "Humorous", "Self-deprecating", "Conversational"])
-3. allowedTopics: Topics they enjoy discussing or are passionate about
-4. restrictedTopics: Topics they want to avoid or handle carefully
-5. fallbackReply: How they prefer to handle sensitive topics
-6. avatarObjective: Their main goals (Educate, Entertain, Build Community, etc.)
-7. audienceDescription: Who they're trying to reach and connect with
-
-CRITICAL EXTRACTION RULES:
-- NEVER copy user responses verbatim into toneDescription
-- ANALYZE their communication style and CREATE a professional description
-- INFER styleTags from how they express themselves, not just what they say
-- BUILD comprehensive persona data from multiple interactions
-- EXTRACT underlying personality traits from their responses
-
-EXAMPLE PROPER EXTRACTION:
-User says: "I'm pretty casual and make fun of myself a lot"
-CORRECT toneDescription: "Relaxed and approachable communicator who uses self-deprecating humor to create authentic connections. Maintains a down-to-earth, conversational style that makes others feel comfortable."
-CORRECT styleTags: ["Casual", "Self-deprecating", "Humorous", "Authentic", "Conversational"]
-
-QUESTION STRATEGY - Ask questions that reveal personality patterns:
-- "When someone disagrees with your content, how do you typically respond?"
-- "What's your natural reaction when someone asks you something you're not sure about?"
-- "Describe a time when you had to explain something complex - what's your approach?"
-- "How do you want your audience to feel after interacting with you?"
-- "What would be completely out of character for you to say or do?"
-
-RESPONSE BEHAVIOR:
-- CRITICAL: Every response MUST end with a curiosity-driven question unless you are gracefully ending the conversation
-- When isComplete is true but isFinished is false: Say something like "Perfect! I've captured your personality. Keep chatting to help me fine-tune your persona or click Complete Setup to move to the next step." Then ask a detailed follow-up question about their communication style, audience interaction preferences, or content approach.
-- When isFinished is true: Only end without a question when you have 25+ messages AND comprehensive data. Say something like "That's wonderful! I think I've gathered enough information to create a robust persona. Click the Complete Setup button to review your configuration." This should be RARE.
-- Set isComplete to true when you have captured solid personality information (tone, style, topics, objectives) - usually around 6-8 exchanges AND after 10+ messages
-- Set isFinished to true only after 25+ exchanges AND when you have comprehensive data for ALL fields AND you are ready to stop asking questions
-- Ask ONE clear, specific, curiosity-driven question per response that builds naturally from their answer
-- Focus on gathering nuanced details through engaging questions about their unique communication style
-- Examples of good curiosity-driven questions that reveal communication style:
-  * "What's the one thing you never want to sound like when talking to your audience?"
-  * "If your audience had to describe your energy in one word, what would you want it to be?"
-  * "What's a topic you could talk about for hours without getting bored?"
-  * "How do you handle it when someone asks you something you're not comfortable discussing?"
-  * "When you're explaining something complex, do you tend to use analogies, step-by-step breakdowns, or storytelling?"
-  * "What's your instinct when someone shares something personal with you - do you offer advice, ask questions, or share your own experience?"
-  * "If you had to choose between being seen as the expert or the relatable friend, which feels more natural?"
-  * "What would completely shock your audience if you said it - what's totally against your usual style?"
-  * "When you're passionate about something, how does that show up in how you communicate?"
-- Build on their previous answers naturally and ask deeper follow-ups
-- Use their own words and examples when possible
-- Keep responses conversational and encouraging
-- Extract data incrementally without being obvious about it
-- IMPORTANT: Always include a question unless you are at 25+ messages and truly finishing
-
-CURRENT CONFIGURATION STATE:
-${Object.keys(currentConfig).length > 0 ? JSON.stringify(currentConfig, null, 2) : 'No configuration data collected yet'}`
-    } else {
-      // Persona preview mode - blend captured personality with guidance
-      const toneDesc = currentConfig.toneDescription || 'friendly and conversational'
-      const styleInfo = currentConfig.styleTags?.length > 0 ? ` Style: ${currentConfig.styleTags.join(', ')}.` : ''
-      const topicInfo = currentConfig.allowedTopics?.length > 0 ? ` Topics I love: ${currentConfig.allowedTopics.slice(0, 3).join(', ')}.` : ''
-      const audienceInfo = currentConfig.audienceDescription ? ` My audience: ${currentConfig.audienceDescription}.` : ''
-
-      systemPrompt = `You are demonstrating the creator's captured personality while continuing to gather configuration data. 
-
-PERSONA TO ADOPT:
-- Tone: ${toneDesc}${styleInfo}${topicInfo}${audienceInfo}
-- Speak AS the creator, using their voice and personality
-- ${personaMode === 'persona_preview' ? 'Fully embody their personality while asking questions' : 'Blend their emerging personality with guidance questions'}
-
-IMPORTANT TRANSITION MESSAGING:
-- When first entering persona mode (blended or persona_preview), START your response by indicating you're now speaking in their voice
-- Use phrases like "Now I'm speaking in your voice!" or "Here's how I'll sound as your avatar:" or "Listen to how this sounds in your style:"
-- Then mention they can keep chatting to see how you sound OR click Complete Setup
-- After the transition acknowledgment, continue with your question
-
-DUAL PURPOSE:
-1. DEMONSTRATE their captured personality by speaking in their voice
-2. CONTINUE gathering missing configuration data: ${7 - fieldsCollected} fields remaining
-
-GUIDANCE OBJECTIVES (ask about these while in persona):
-${!currentConfig.toneDescription ? '- More details about their communication tone and style\n' : ''}
-${!currentConfig.styleTags?.length ? '- Specific style characteristics (casual, professional, humorous, etc.)\n' : ''}
-${!currentConfig.allowedTopics?.length ? '- Topics they want to discuss with their audience\n' : ''}
-${!currentConfig.restrictedTopics?.length ? '- Topics they want to avoid or handle carefully\n' : ''}
-${!currentConfig.fallbackReply ? '- How they prefer to handle sensitive topics\n' : ''}
-${!currentConfig.avatarObjective?.length ? '- Their main goals and objectives\n' : ''}
-${!currentConfig.audienceDescription ? '- More details about their target audience\n' : ''}
-
-CRITICAL: Always respond with valid JSON in this exact format:
-{
-  "response": "your response in the creator's voice",
-  "extractedData": {
-    "toneDescription": "more details about tone if found",
-    "styleTags": ["additional", "style", "characteristics"],
-    "allowedTopics": ["more", "topics", "discovered"],
-    "restrictedTopics": ["topics", "to", "avoid"],
-    "fallbackReply": "preferred way to handle sensitive topics",
-    "avatarObjective": ["clarified", "goals"],
-    "audienceDescription": "refined audience description"
-  },
-  "isComplete": false,
-  "isFinished": false
-}
-
-CRITICAL EXTRACTION INSTRUCTIONS:
-- Transform user responses into professional persona descriptions
-- For toneDescription: Create rich, descriptive text that captures their communication essence
-- For styleTags: Extract style characteristics from HOW they communicate, not just what they say
-- Build upon previous data to create comprehensive persona profiles
-- Only include fields if you have NEW or REFINED information
-- Use empty arrays [] for array fields if no new data
-
-TRANSFORMATION EXAMPLES:
-User: "I'm pretty sarcastic and joke around a lot"
-Extract: {
-  "toneDescription": "Uses wit and sarcasm as primary communication tools, creating engagement through humor and playful banter. Maintains lighthearted approach while still being informative.",
-  "styleTags": ["Sarcastic", "Humorous", "Playful", "Witty"]
-}
-
-BEHAVIOR RULES:
-- Speak in first person as the creator ("I", "my audience", "when I...")
-- Use their captured tone and style in your response
-- ALWAYS ask follow-up questions IN THEIR VOICE - this is critical for persona demonstration
-- Show enthusiasm about the persona development using their style
-- Keep the dual purpose: demonstrate personality + gather data
-- Every response must end with a curiosity-driven question that sounds like something the creator would ask
-- ${personaMode === 'persona_preview' ? 'Add confidence and personality to questions, making them sound like the creator speaking' : 'Gradually transition to their voice while maintaining question-asking'}
-
-CURRENT CONFIGURATION STATE:
-${JSON.stringify(currentConfig, null, 2)}`
-    }
+  "personaMode": "guidance|blended|persona_preview",
+  "confidenceScore": 0.7,
+  "transitionMessage": "optional message when switching modes",
+  "isFinished": false,
+  "showChipSelector": ${isReflectionCheckpoint},
+  "suggestedTraits": [{"id": "1", "label": "Friendly", "selected": true}],
+  "reflectionCheckpoint": ${isReflectionCheckpoint}
+}`
 
     try {
       if (process.env.DEBUG_AI) {
@@ -733,7 +622,7 @@ ${JSON.stringify(currentConfig, null, 2)}`
       if (process.env.DEBUG_AI) {
         console.debug('[DEBUG-AI] OpenAI raw response:', content)
       }
-      
+
       // Always log personality extraction responses for debugging
       console.log('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
 
@@ -750,14 +639,17 @@ ${JSON.stringify(currentConfig, null, 2)}`
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
-          confidenceScore: 0
+          confidenceScore: 0,
+          showChipSelector: false,
+          suggestedTraits: [],
+          reflectionCheckpoint: false
         }
       }
 
       // Handle different response formats from OpenAI
       let extractedData = {}
       let responseText = ""
-      
+
       // Check if result has the expected structure (response + extractedData)
       if (result.response && result.extractedData) {
         responseText = result.response
@@ -770,7 +662,7 @@ ${JSON.stringify(currentConfig, null, 2)}`
                result.audienceDescription !== undefined) {
         // This is extracted configuration data, we need to generate a response
         extractedData = result
-        
+
         // Generate appropriate response based on what we extracted and persona mode
         if (personaMode === 'guidance') {
           if (fieldsCollected < 2) {
@@ -808,7 +700,7 @@ ${JSON.stringify(currentConfig, null, 2)}`
       // Check if response contains a question mark - if so, don't mark as finished
       const hasQuestion = responseText.includes('?')
       const shouldFinish = messages.length > 25 && !hasQuestion && Object.keys(cleanExtractedData).length >= 6
-      
+
       const finalResult = {
         response: responseText,
         extractedData: cleanExtractedData,
@@ -816,9 +708,12 @@ ${JSON.stringify(currentConfig, null, 2)}`
         isComplete: isComplete,
         isFinished: result.isFinished || shouldFinish,
         confidenceScore: (fieldsCollected + Object.keys(cleanExtractedData).length) / 7,
-        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined
+        transitionMessage: personaMode !== 'guidance' && fieldsCollected === 4 ? 'Now speaking in your captured personality! 🎭' : undefined,
+        showChipSelector: isReflectionCheckpoint,
+        suggestedTraits: [{"id": "1", "label": "Friendly", "selected": true}],
+        reflectionCheckpoint: isReflectionCheckpoint
       }
-      
+
       console.log('[PERSONALITY-DEBUG] Final result:', {
         responseLength: finalResult.response.length,
         extractedDataKeys: Object.keys(finalResult.extractedData),
@@ -827,9 +722,12 @@ ${JSON.stringify(currentConfig, null, 2)}`
         isComplete: finalResult.isComplete,
         isFinished: finalResult.isFinished,
         fieldsCollectedBefore: fieldsCollected,
-        newFieldsFound: Object.keys(cleanExtractedData).length
+        newFieldsFound: Object.keys(cleanExtractedData).length,
+        showChipSelector: finalResult.showChipSelector,
+        suggestedTraits: finalResult.suggestedTraits,
+        reflectionCheckpoint: finalResult.reflectionCheckpoint
       })
-      
+
       return finalResult
     } catch (error: any) {
       console.error('Error extracting personality:', error)
@@ -842,7 +740,10 @@ ${JSON.stringify(currentConfig, null, 2)}`
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
-          confidenceScore: 0
+          confidenceScore: 0,
+          showChipSelector: false,
+          suggestedTraits: [],
+          reflectionCheckpoint: false
         }
       }
 
@@ -852,7 +753,10 @@ ${JSON.stringify(currentConfig, null, 2)}`
           extractedData: {},
           isComplete: false,
           personaMode: 'guidance',
-          confidenceScore: 0
+          confidenceScore: 0,
+          showChipSelector: false,
+          suggestedTraits: [],
+          reflectionCheckpoint: false
         }
       }
 
@@ -861,7 +765,10 @@ ${JSON.stringify(currentConfig, null, 2)}`
         extractedData: {},
         isComplete: false,
         personaMode: 'guidance',
-        confidenceScore: 0
+        confidenceScore: 0,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false
       }
     }
   }

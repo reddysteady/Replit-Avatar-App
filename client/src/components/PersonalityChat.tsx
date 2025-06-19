@@ -9,6 +9,7 @@ import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles } fro
 import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
+import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -32,6 +33,9 @@ interface PersonalityExtractionResponse {
   confidenceScore?: number
   transitionMessage?: string
   isFinished?: boolean
+  showChipSelector?: boolean
+  suggestedTraits?: PersonalityTrait[]
+  reflectionCheckpoint?: boolean
 }
 
 export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatProps) {
@@ -47,6 +51,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const [glowingMessageId, setGlowingMessageId] = useState<string | null>(null)
+  const [showChipSelector, setShowChipSelector] = useState(false)
+  const [suggestedTraits, setSuggestedTraits] = useState<PersonalityTrait[]>([])
+  const [reflectionActive, setReflectionActive] = useState(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -125,8 +132,71 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     generateInitialMessage()
   }, [])
 
+  const handleChipConfirmation = async (selectedTraits: PersonalityTrait[]) => {
+    setShowChipSelector(false)
+    setReflectionActive(false)
+    
+    // Create a confirmation message
+    const confirmationMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: `I've confirmed these traits: ${selectedTraits.map(t => t.label).join(', ')}`,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, confirmationMessage])
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/ai/personality-extract', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messages: [...messages, confirmationMessage].map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
+          currentConfig: extractedConfig,
+          confirmedTraits: selectedTraits.map(t => t.label)
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response')
+      }
+
+      const aiResponse: PersonalityExtractionResponse = await response.json()
+      
+      const aiMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: aiResponse.response,
+        timestamp: new Date(),
+        personaMode: aiResponse.personaMode || 'guidance'
+      }
+
+      setMessages(prev => [...prev, aiMessage])
+      setExtractedConfig(prev => ({ ...prev, ...aiResponse.extractedData }))
+      setIsComplete(aiResponse.isComplete)
+      setIsFinished(aiResponse.isFinished || false)
+      setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
+
+    } catch (error) {
+      console.error('Error in chip confirmation:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to process trait confirmation. Please try again.',
+        variant: 'destructive'
+      })
+    }
+
+    setIsLoading(false)
+  }
+
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading || isFinished) return
+    if (!inputValue.trim() || isLoading || isFinished || reflectionActive) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -182,6 +252,13 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       setIsComplete(aiResponse.isComplete)
       setIsFinished(aiResponse.isFinished || false)
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
+
+      // Handle chip selector display
+      if (aiResponse.showChipSelector && aiResponse.suggestedTraits) {
+        setShowChipSelector(true)
+        setSuggestedTraits(aiResponse.suggestedTraits)
+        setReflectionActive(true)
+      }
 
       if (aiResponse.transitionMessage) {
         toast({
@@ -344,6 +421,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     </div>
                   </div>
                 )}
+                
+                {showChipSelector && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4" />
+                    </div>
+                    <PersonalityTraitCloud
+                      initialTraits={suggestedTraits}
+                      onConfirm={handleChipConfirmation}
+                      className="max-w-full"
+                    />
+                  </div>
+                )}
               </div>
               <div ref={messagesEndRef} />
             </ScrollArea>
@@ -357,13 +447,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={isFinished ? "Chat completed" : "Share your thoughts about your communication style..."}
-                  disabled={isLoading || isFinished}
-                  className={`flex-1 ${isFinished ? 'bg-gray-100 text-gray-500' : ''}`}
+                  placeholder={
+                    isFinished 
+                      ? "Chat completed" 
+                      : reflectionActive 
+                        ? "Please confirm your traits above first..."
+                        : "Share your thoughts about your communication style..."
+                  }
+                  disabled={isLoading || isFinished || reflectionActive}
+                  className={`flex-1 ${isFinished || reflectionActive ? 'bg-gray-100 text-gray-500' : ''}`}
                 />
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={!inputValue.trim() || isLoading || isFinished}
+                  disabled={!inputValue.trim() || isLoading || isFinished || reflectionActive}
                   size="icon"
                 >
                   <Send className="h-4 w-4" />
