@@ -9,7 +9,7 @@ interface BadgeEarnedToastProps {
   triggerContext?: string
 }
 
-export const BadgeEarnedToast: React.FC<BadgeEarnedToastProps> = ({ badge, onClose, triggerContext }) => {
+const BadgeEarnedToast: React.FC<BadgeEarnedToastProps> = ({ badge, onClose, triggerContext }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose()
@@ -78,3 +78,5 @@ export const BadgeEarnedToast: React.FC<BadgeEarnedToastProps> = ({ badge, onClo
     </AnimatePresence>
   )
 }
+
+export default BadgeEarnedToast

@@ -8,7 +8,7 @@ interface SpecialBadgeAnimationProps {
   onComplete: () => void
 }
 
-export const SpecialBadgeAnimation: React.FC<SpecialBadgeAnimationProps> = ({ type, onComplete }) => {
+const SpecialBadgeAnimation: React.FC<SpecialBadgeAnimationProps> = ({ type, onComplete }) => {
   const config = {
     preview_unlocked: {
       title: 'Persona Preview Unlocked!',
@@ -106,3 +106,5 @@ export const SpecialBadgeAnimation: React.FC<SpecialBadgeAnimationProps> = ({ ty
     </motion.div>
   )
 }
+
+export default SpecialBadgeAnimation
