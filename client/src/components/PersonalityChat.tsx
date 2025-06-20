@@ -422,7 +422,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Badge Animations */}
       {showBadgeAnimation && animatingBadge && (
         <BadgeAnimation
@@ -459,7 +459,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       )}
 
       {/* Sticky Header with Progress */}
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+      <div className="sticky top-0 z-10 bg-white border-b shadow-sm shrink-0">
         <div className="container mx-auto p-3 max-w-4xl md:p-4">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
@@ -488,9 +488,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       </div>
 
       {/* Chat Container */}
-      <div className="container mx-auto p-0 max-w-4xl md:p-6">
-        <Card className="flex flex-col h-screen md:h-[calc(100vh-200px)] md:rounded-lg rounded-none border-0 md:border">
-          <CardContent className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+      <div className="flex-1 flex flex-col bg-white md:container md:mx-auto md:p-6 md:max-w-4xl">
+        <div className="flex-1 flex flex-col md:rounded-lg md:border md:bg-white">
+          <div className="flex-1 flex flex-col p-4 md:p-6 min-h-0">
             <ScrollArea className="flex-1 pr-4 mb-4">
               <div className="space-y-4 min-h-0">
                 {messages.map((message) => (
@@ -553,7 +553,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
             <Separator className="mb-4" />
 
-            <div className="space-y-4 pb-safe">
+            <div className="space-y-4 pb-safe shrink-0">
               <div className="flex gap-2">
                 <Input
                   ref={inputRef}
@@ -596,8 +596,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 </motion.div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )
