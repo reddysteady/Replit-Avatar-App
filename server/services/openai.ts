@@ -451,17 +451,21 @@ export class AIService {
   reflectionCheckpoint?: boolean
   sessionState?: any
 }> {
-    console.log('[PERSONALITY-EXTRACT] Starting extraction with:', {
-      messageCount: messages?.length || 0,
-      initialMessage,
-      hasCurrentConfig: !!currentConfig,
-      confirmedTraits: confirmedTraits?.length || 0
-    })
+    if (process.env.DEBUG_AI) {
+      console.debug('[PERSONALITY-EXTRACT] Starting extraction with:', {
+        messageCount: messages?.length || 0,
+        initialMessage,
+        hasCurrentConfig: !!currentConfig,
+        confirmedTraits: confirmedTraits?.length || 0
+      })
+    }
 
     try {
       const { client, hasKey, keySource } = await this.getClient()
 
-      console.log('[PERSONALITY-EXTRACT] API key check:', { hasKey, keySource })
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] API key check:', { hasKey, keySource })
+      }
 
       if (!hasKey) {
         console.error('[PERSONALITY-ERROR] No OpenAI API key available')
@@ -485,36 +489,37 @@ export class AIService {
         )
       }
 
-      // Handle initial message generation
-      if (initialMessage || (messages.length === 0) || (messages.length === 1 && messages[0].role === 'system')) {
-        console.log('[PERSONALITY-EXTRACT] Generating initial message')
+      // Handle initial message generation - only if truly initial
+      const userMessages = messages.filter(m => m.role === 'user')
+      if (initialMessage || userMessages.length === 0) {
+        if (process.env.DEBUG_AI) {
+          console.debug('[PERSONALITY-EXTRACT] Generating initial message')
+        }
         return await this.generateInitialMessage(client)
       }
 
       // Calculate conversation state
-      console.log('[PERSONALITY-EXTRACT] Analyzing conversation state')
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] Analyzing conversation state')
+      }
       const conversationState = this.analyzeConversationState(messages, currentConfig, confirmedTraits)
 
-      console.log('[PERSONALITY-EXTRACT] Conversation state:', {
-        stage: conversationState.stage,
-        fieldsCollected: conversationState.fieldsCollected,
-        missingFields: conversationState.missingFields?.slice(0, 3)
-      })
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] Conversation state:', {
+          stage: conversationState.stage,
+          fieldsCollected: conversationState.fieldsCollected,
+          userMessages: userMessages.length,
+          missingFields: conversationState.missingFields?.slice(0, 3)
+        })
+      }
 
       // Generate contextual system prompt
       const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
 
-      console.log('[PERSONALITY-EXTRACT] System prompt generated, length:', systemPrompt.length)
-
       if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] Personality extraction request:', {
-          messageCount: messages.length,
-          stage: conversationState.stage,
-          fieldsCollected: conversationState.fieldsCollected
-        })
+        console.debug('[PERSONALITY-EXTRACT] Making OpenAI API call with prompt length:', systemPrompt.length)
       }
 
-      console.log('[PERSONALITY-EXTRACT] Making OpenAI API call')
       const response = await client.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -528,32 +533,36 @@ export class AIService {
 
       const content = response.choices[0]?.message?.content || '{}'
 
-      console.log('[PERSONALITY-EXTRACT] OpenAI response received, length:', content.length)
-
       if (process.env.DEBUG_AI) {
-        console.debug('[PERSONALITY-DEBUG] Raw OpenAI response:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
+        console.debug('[PERSONALITY-EXTRACT] OpenAI response received, length:', content.length)
+        console.debug('[PERSONALITY-DEBUG] Raw OpenAI response preview:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
       }
 
-      console.log('[PERSONALITY-EXTRACT] Processing response')
       const result = this.processExtractionResponse(content, conversationState)
 
-      console.log('[PERSONALITY-EXTRACT] Extraction completed successfully:', {
-        personaMode: result.personaMode,
-        isComplete: result.isComplete,
-        showChipSelector: result.showChipSelector
-      })
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] Extraction completed:', {
+          personaMode: result.personaMode,
+          isComplete: result.isComplete,
+          showChipSelector: result.showChipSelector,
+          extractedFields: Object.keys(result.extractedData)
+        })
+      }
 
       return result
 
     } catch (error: any) {
-      console.error('[PERSONALITY-ERROR] Extraction failed with error:', {
+      console.error('[PERSONALITY-ERROR] Extraction failed:', {
         message: error.message,
         status: error.status,
-        type: error.constructor.name,
-        stack: error.stack?.split('\n').slice(0, 3)
+        type: error.constructor.name
       })
 
-      return this.handleExtractionError(error, { stage: 'core_collection', fieldsCollected: 0, missingFields: ['toneDescription'] })
+      return this.handleExtractionError(error, { 
+        stage: 'core_collection', 
+        fieldsCollected: this.countMeaningfulFields(currentConfig), 
+        missingFields: this.identifyMissingFields(currentConfig)
+      })
     }
   }
 
@@ -777,12 +786,23 @@ export class AIService {
     return 'balanced'
   }
 
+  // Core fields for Phase 1 persona configuration
+  private readonly CORE_PERSONA_FIELDS = [
+    'toneDescription',
+    'audienceDescription', 
+    'avatarObjective',
+    'boundaries',
+    'communicationPrefs',
+    'fallbackReply'
+  ] as const;
+
+  private readonly TARGET_FIELD_COUNT = this.CORE_PERSONA_FIELDS.length;
+
   /**
    * Counts meaningful fields in the configuration for Phase 1 core parameters
    */
   private countMeaningfulFields(config: Partial<AvatarPersonaConfig>): number {
-    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'communicationPrefs', 'fallbackReply'];
-    return coreFields.filter(key => {
+    return this.CORE_PERSONA_FIELDS.filter(key => {
       const value = config[key];
       if (!value) return false;
 
@@ -798,9 +818,8 @@ export class AIService {
    * Calculates confidence score based on core parameter completeness
    */
   private calculateConfidence(config: Partial<AvatarPersonaConfig>, extractedData: any): number {
-    const totalCoreParams = 4; // Reduced for Phase 1
     const filledParams = this.countMeaningfulFields({...config, ...extractedData});
-    return Math.min(0.95, filledParams / totalCoreParams);
+    return Math.min(0.95, filledParams / this.TARGET_FIELD_COUNT);
   }
 
   /**
@@ -810,13 +829,13 @@ export class AIService {
     // Simple linear progression - never jump stages prematurely
     if (userMessages <= 1) return 'introduction'
 
-    // Show chip validation after every 2 parameters collected (simplified from 3)
+    // Show chip validation after every 2 parameters collected
     if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) {
       return 'reflection_checkpoint'
     }
 
-    // Only move to completion after ALL 6 core parameters + chip validation
-    if (fieldsCollected >= 6 && confirmedTraits) {
+    // Only move to completion after ALL core parameters + chip validation
+    if (fieldsCollected >= this.TARGET_FIELD_COUNT && confirmedTraits) {
       return 'completion'
     }
 
@@ -828,15 +847,7 @@ export class AIService {
    * Identifies which Phase 1 core fields are still missing
    */
   private identifyMissingFields(config: Partial<AvatarPersonaConfig>): string[] {
-    const coreFields = [
-      'toneDescription', // baseline tone
-      'audienceDescription', // audience understanding
-      'avatarObjective', // primary goals
-      'boundaries', // restricted topics/boundaries
-      'fallbackReply' // fallback response
-    ];
-
-    return coreFields.filter(field => {
+    return this.CORE_PERSONA_FIELDS.filter(field => {
       const value = config[field];
       if (!value) return true;
       if (Array.isArray(value) && value.length === 0) return true;
@@ -930,15 +941,28 @@ REQUIRED JSON FORMAT:
     let result
     try {
       result = JSON.parse(content)
+      
+      // Validate required fields exist
+      if (typeof result !== 'object' || result === null) {
+        throw new Error('Response is not a valid object')
+      }
+      
     } catch (parseError) {
-      console.error('JSON parse error, content was:', content)
+      console.error('[PERSONALITY-ERROR] JSON parse failed:', {
+        error: parseError.message,
+        contentPreview: content.substring(0, 100) + '...',
+        contentLength: content.length
+      })
+      
       return this.createFallbackResponse(
-        "Let me try a different approach - what's the most important thing your audience values about how you communicate?"
+        "Let me try a different approach - what's the most important thing your audience values about how you communicate?",
+        'guidance',
+        true // Mark as fallback for debugging
       )
     }
 
-    // Validate response structure and extract data
-    const responseText = result.response || "Tell me more about your communication style."
+    // Validate and extract response components with defaults
+    const responseText = this.validateStringField(result.response, "Tell me more about your communication style.")
     const extractedData = this.cleanExtractedData(result.extractedData || {})
 
     // Generate suggested traits for chip selector
@@ -950,14 +974,14 @@ REQUIRED JSON FORMAT:
     const finalResult = {
       response: responseText,
       extractedData,
-      personaMode: result.personaMode || 'guidance',
+      personaMode: this.validatePersonaMode(result.personaMode),
       isComplete: false, // Never complete until explicitly in completion stage
       isFinished: false, // Never finished until explicitly in completion stage
-      confidenceScore: Math.min(0.95, totalFields / 6),
+      confidenceScore: Math.min(0.95, totalFields / this.TARGET_FIELD_COUNT),
       transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
-      showChipSelector: result.showChipSelector || false,
+      showChipSelector: Boolean(result.showChipSelector),
       suggestedTraits,
-      reflectionCheckpoint: result.reflectionCheckpoint || false
+      reflectionCheckpoint: Boolean(result.reflectionCheckpoint)
     }
 
     // Only set completion flags if we're actually in completion stage
@@ -967,15 +991,37 @@ REQUIRED JSON FORMAT:
     }
 
     if (process.env.DEBUG_AI) {
-      console.log('[PERSONALITY-DEBUG] Processed result:', {
+      console.debug('[PERSONALITY-DEBUG] Processed result:', {
         stage: state.stage,
         newFieldsExtracted: Object.keys(extractedData),
         personaMode: finalResult.personaMode,
-        showChipSelector: finalResult.showChipSelector
+        showChipSelector: finalResult.showChipSelector,
+        confidenceScore: finalResult.confidenceScore
       })
     }
 
     return finalResult
+  }
+
+  /**
+   * Validates string fields with fallback
+   */
+  private validateStringField(value: any, fallback: string): string {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim()
+    }
+    return fallback
+  }
+
+  /**
+   * Validates persona mode with fallback
+   */
+  private validatePersonaMode(mode: any): 'guidance' | 'blended' | 'persona_preview' {
+    const validModes = ['guidance', 'blended', 'persona_preview']
+    if (typeof mode === 'string' && validModes.includes(mode)) {
+      return mode as 'guidance' | 'blended' | 'persona_preview'
+    }
+    return 'guidance'
   }
 
   /**
