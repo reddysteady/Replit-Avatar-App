@@ -12,6 +12,10 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dial
 import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
 import { motion } from 'framer-motion'
 import { PersonaChatStateManager, ExtractionResult } from '../lib/PersonaChatStateManager'
+import BadgeHeader from './ui/badge-header'
+import BadgeAnimation from './ui/badge-animation'
+import BadgeEarnedToast from './ui/badge-earned-toast'
+import SpecialBadgeAnimation from './ui/special-badge-animation'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -52,6 +56,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const { toast } = useToast()
   const [glowingMessageId, setGlowingMessageId] = useState<string | null>(null)
   const [suggestedTraits, setSuggestedTraits] = useState<PersonalityTrait[]>([])
+
+  // Badge animation states
+  const [showBadgeAnimation, setShowBadgeAnimation] = useState(false)
+  const [animatingBadge, setAnimatingBadge] = useState<any>(null)
+  const [showBadgeToast, setShowBadgeToast] = useState(false)
+  const [toastBadge, setToastBadge] = useState<any>(null)
+  const [showSpecialAnimation, setShowSpecialAnimation] = useState(false)
+  const [specialAnimationType, setSpecialAnimationType] = useState<'preview_unlocked' | 'completion'>('preview_unlocked')
 
   // State Manager Instance
   const [stateManager] = useState(() => new PersonaChatStateManager())
@@ -197,6 +209,15 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       )
       setChatState(updatedState)
 
+      // Handle badge animations
+      if (updatedState.pendingBadgeAnimation) {
+        const badgeConfig = updatedState.badgeSystem.badges.find(b => b.id === updatedState.pendingBadgeAnimation)
+        if (badgeConfig) {
+          setAnimatingBadge(badgeConfig)
+          setShowBadgeAnimation(true)
+        }
+      }
+
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
     } catch (error) {
@@ -277,8 +298,26 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         fieldsCollected: updatedState.fieldsCollected,
         showChipSelector: updatedState.showChipSelector,
         showCompleteButton: updatedState.showCompleteButton,
-        progress: updatedState.progressPercentage
+        badgeCount: updatedState.badgeSystem.totalEarned
       })
+
+      // Handle badge animations
+      if (updatedState.pendingBadgeAnimation) {
+        const badgeConfig = updatedState.badgeSystem.badges.find(b => b.id === updatedState.pendingBadgeAnimation)
+        if (badgeConfig) {
+          setAnimatingBadge(badgeConfig)
+          setShowBadgeAnimation(true)
+        }
+      }
+
+      // Check for special milestone animations
+      if (updatedState.badgeSystem.canActivatePreview && !chatState.badgeSystem.canActivatePreview) {
+        setSpecialAnimationType('preview_unlocked')
+        setShowSpecialAnimation(true)
+      } else if (updatedState.badgeSystem.canComplete && !chatState.badgeSystem.canComplete) {
+        setSpecialAnimationType('completion')
+        setShowSpecialAnimation(true)
+      }
 
       // Handle UI updates based on new state
       if (updatedState.showChipSelector) {
@@ -334,6 +373,29 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     onComplete(finalConfig)
   }
 
+  const handleBadgeAnimationComplete = () => {
+    setShowBadgeAnimation(false)
+    if (animatingBadge) {
+      setToastBadge(animatingBadge)
+      setShowBadgeToast(true)
+    }
+    setAnimatingBadge(null)
+    
+    // Clear pending animation from state
+    const newState = { ...chatState }
+    newState.pendingBadgeAnimation = undefined
+    setChatState(newState)
+  }
+
+  const handleBadgeToastClose = () => {
+    setShowBadgeToast(false)
+    setToastBadge(null)
+  }
+
+  const handleSpecialAnimationComplete = () => {
+    setShowSpecialAnimation(false)
+  }
+
   const getPersonaModeIndicator = (mode?: string) => {
     switch (mode) {
       case 'blended':
@@ -355,6 +417,28 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Badge Animations */}
+      {showBadgeAnimation && animatingBadge && (
+        <BadgeAnimation
+          badge={animatingBadge}
+          onComplete={handleBadgeAnimationComplete}
+        />
+      )}
+      
+      {showBadgeToast && toastBadge && (
+        <BadgeEarnedToast
+          badge={toastBadge}
+          onClose={handleBadgeToastClose}
+        />
+      )}
+
+      {showSpecialAnimation && (
+        <SpecialBadgeAnimation
+          type={specialAnimationType}
+          onComplete={handleSpecialAnimationComplete}
+        />
+      )}
+
       {/* Sticky Header with Progress */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
         <div className="container mx-auto p-3 max-w-4xl md:p-4">
@@ -380,19 +464,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             </Button>
           </div>
 
-          {chatState.progressPercentage > 0 && (
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Personality Discovery Progress</span>
-                <span>{Math.round(chatState.progressPercentage)}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${chatState.progressPercentage}%` }}
-                />
-              </div>
-            </div>
+          {chatState.badgeSystem.totalEarned > 0 && (
+            <BadgeHeader badges={chatState.badgeSystem.badges} />
           )}
         </div>
       </div>

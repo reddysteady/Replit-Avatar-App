@@ -8,7 +8,9 @@ import {
   shouldTriggerChipValidation,
   ProgressionStage, 
   UIState,
-  ChipValidationHistory
+  ChipValidationHistory,
+  BadgeSystemState,
+  calculateBadgeProgress
 } from '../../../shared/persona-validation'
 
 export interface PersonaChatState {
@@ -31,6 +33,10 @@ export interface PersonaChatState {
   // Progress calculation
   progressPercentage: number
   confidenceScore: number
+
+  // Badge system
+  badgeSystem: BadgeSystemState
+  pendingBadgeAnimation?: string
 
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>
@@ -63,6 +69,8 @@ export class PersonaChatStateManager {
       readyForCompletion: false,
       progressPercentage: 0,
       confidenceScore: 0,
+      badgeSystem: calculateBadgeProgress({}),
+      pendingBadgeAnimation: undefined,
       extractedConfig: {}
     }
   }
@@ -84,6 +92,19 @@ export class PersonaChatStateManager {
     this.state.messageCount = newMessageCount
     this.state.extractedConfig = mergedConfig
     this.state.progressPercentage = calculateProgress(mergedConfig)
+
+    // Update badge system
+    const previousBadgeState = this.state.badgeSystem
+    this.state.badgeSystem = calculateBadgeProgress(mergedConfig)
+
+    // Check for newly earned badges
+    const newlyEarnedBadges = this.state.badgeSystem.badges.filter(badge => 
+      badge.earned && !previousBadgeState.badges.find(prev => prev.id === badge.id && prev.earned)
+    )
+
+    if (newlyEarnedBadges.length > 0) {
+      this.state.pendingBadgeAnimation = newlyEarnedBadges[0].id
+    }
 
     // Handle chip validation triggers
     if (needsChipValidation || result.reflectionCheckpoint) {
@@ -162,6 +183,8 @@ export class PersonaChatStateManager {
       readyForCompletion: false,
       progressPercentage: 0,
       confidenceScore: 0,
+      badgeSystem: calculateBadgeProgress({}),
+      pendingBadgeAnimation: undefined,
       extractedConfig: {}
     }
   }

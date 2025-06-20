@@ -137,3 +137,88 @@ export function shouldTriggerChipValidation(
   // Only trigger if we crossed a milestone and haven't validated recently
   return newMilestone > previousMilestone && !hasValidatedRecently
 }
+
+// Badge System Types and Logic
+export interface BadgeConfig {
+  id: string
+  category: keyof AvatarPersonaConfig
+  label: string
+  threshold: number
+  priority: number
+}
+
+export interface BadgeState {
+  id: string
+  earned: boolean
+  earnedAt?: Date
+  animationPlayed: boolean
+  category: string
+  threshold: number
+}
+
+export interface BadgeSystemState {
+  badges: BadgeState[]
+  totalEarned: number
+  canActivatePreview: boolean
+  canComplete: boolean
+  pendingAnimation?: string
+}
+
+export const BADGE_CONFIGS: BadgeConfig[] = [
+  { id: 'tone', category: 'toneDescription', label: 'Tone Master', threshold: 1, priority: 1 },
+  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2 },
+  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 3 },
+  { id: 'objective', category: 'avatarObjective', label: 'Goal Setter', threshold: 1, priority: 4 },
+  { id: 'boundaries', category: 'boundaries', label: 'Boundary Keeper', threshold: 1, priority: 5 },
+  { id: 'communication', category: 'communicationPrefs', label: 'Communication Pro', threshold: 1, priority: 6 }
+]
+
+export const PERSONA_PREVIEW_THRESHOLD = 4
+export const COMPLETION_THRESHOLD = 6
+
+export function checkParameterThreshold(
+  config: Partial<AvatarPersonaConfig>, 
+  category: keyof AvatarPersonaConfig, 
+  threshold: number
+): boolean {
+  const value = config[category]
+
+  if (Array.isArray(value)) {
+    return value.length >= threshold
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return Object.keys(value).length > 0
+  }
+
+  return false
+}
+
+export function calculateBadgeProgress(extractedConfig: Partial<AvatarPersonaConfig>): BadgeSystemState {
+  const badges = BADGE_CONFIGS.map(config => ({
+    id: config.id,
+    earned: checkParameterThreshold(extractedConfig, config.category, config.threshold),
+    earnedAt: undefined,
+    animationPlayed: false,
+    category: config.category,
+    threshold: config.threshold
+  }))
+
+  const totalEarned = badges.filter(b => b.earned).length
+
+  return {
+    badges,
+    totalEarned,
+    canActivatePreview: totalEarned >= PERSONA_PREVIEW_THRESHOLD,
+    canComplete: totalEarned >= COMPLETION_THRESHOLD,
+    pendingAnimation: undefined
+  }
+}
+
+export function getBadgeConfigs(): BadgeConfig[] {
+  return BADGE_CONFIGS
+}
