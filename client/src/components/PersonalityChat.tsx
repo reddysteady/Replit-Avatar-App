@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles } from 'lucide-react'
+import { MessageCircle, Send, User, Bot, ArrowRight, SkipForward, Sparkles, CheckCircle2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
@@ -64,6 +64,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [toastBadge, setToastBadge] = useState<any>(null)
   const [showSpecialAnimation, setShowSpecialAnimation] = useState(false)
   const [specialAnimationType, setSpecialAnimationType] = useState<'preview_unlocked' | 'completion'>('preview_unlocked')
+  const [showPersonalityUpdated, setShowPersonalityUpdated] = useState(false)
 
   // State Manager Instance
   const [stateManager] = useState(() => new PersonaChatStateManager())
@@ -376,6 +377,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const handleBadgeAnimationComplete = () => {
     setShowBadgeAnimation(false)
     if (animatingBadge) {
+      // Show green "Personality Updated" notification first
+      setShowPersonalityUpdated(true)
+      setTimeout(() => setShowPersonalityUpdated(false), 3000)
+      
+      // Then show badge toast
       setToastBadge(animatingBadge)
       setShowBadgeToast(true)
     }
@@ -439,6 +445,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         />
       )}
 
+      {/* Green Personality Updated Notification */}
+      {showPersonalityUpdated && (
+        <motion.div
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -50 }}
+          className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2"
+        >
+          <CheckCircle2 size={16} />
+          <span className="text-sm font-medium">Personality Updated!</span>
+        </motion.div>
+      )}
+
       {/* Sticky Header with Progress */}
       <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
         <div className="container mx-auto p-3 max-w-4xl md:p-4">
@@ -464,9 +483,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             </Button>
           </div>
 
-          {chatState.badgeSystem.totalEarned > 0 && (
-            <BadgeHeader badges={chatState.badgeSystem.badges} />
-          )}
+          <BadgeHeader badges={chatState.badgeSystem.badges} />
         </div>
       </div>
 

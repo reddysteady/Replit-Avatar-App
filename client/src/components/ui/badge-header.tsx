@@ -10,7 +10,7 @@ import {
   MessageSquare, 
   Award 
 } from 'lucide-react'
-import { BadgeState } from '../../../../shared/persona-validation'
+import { BadgeState, BADGE_CONFIGS } from '../../../../shared/persona-validation'
 
 interface BadgeHeaderProps {
   badges: BadgeState[]
@@ -26,16 +26,29 @@ const iconMap = {
 }
 
 export const BadgeHeader: React.FC<BadgeHeaderProps> = ({ badges }) => {
-  const earnedBadges = badges.filter(badge => badge.earned)
+  // Always show all badges, create missing ones
+  const allBadges = BADGE_CONFIGS.map(config => {
+    const existingBadge = badges.find(b => b.id === config.id)
+    return existingBadge || {
+      id: config.id,
+      earned: false,
+      earnedAt: undefined,
+      animationPlayed: false,
+      category: config.category,
+      threshold: config.threshold
+    }
+  })
+
+  const earnedBadges = allBadges.filter(badge => badge.earned)
 
   return (
     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 p-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-700">Progress</h3>
-        <span className="text-xs text-gray-500">{earnedBadges.length}/6 Badges</span>
+        <h3 className="text-sm font-semibold text-gray-700">Badge Progress</h3>
+        <span className="text-xs text-gray-500">{earnedBadges.length}/6 Badges Earned</span>
       </div>
       <div className="flex flex-wrap gap-2">
-        {badges.map((badge) => {
+        {allBadges.map((badge) => {
           const IconComponent = iconMap[badge.category as keyof typeof iconMap] || Award
 
           return (

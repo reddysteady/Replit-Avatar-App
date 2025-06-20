@@ -1,4 +1,3 @@
-
 /**
  * Shared validation logic for persona configuration
  * Used by both frontend and backend to ensure consistency
@@ -183,18 +182,28 @@ export function checkParameterThreshold(
 ): boolean {
   const value = config[category]
 
+  console.log(`[BADGE-CHECK] Category: ${category}, Value:`, value, `Threshold: ${threshold}`)
+
   if (Array.isArray(value)) {
-    return value.length >= threshold
+    const result = value.length >= threshold
+    console.log(`[BADGE-CHECK] Array check: ${value.length} >= ${threshold} = ${result}`)
+    return result
   }
 
   if (typeof value === 'string') {
-    return value.trim().length > 0
+    const result = value.trim().length > 0
+    console.log(`[BADGE-CHECK] String check: "${value}" length > 0 = ${result}`)
+    return result
   }
 
   if (typeof value === 'object' && value !== null) {
-    return Object.keys(value).length > 0
+    const keys = Object.keys(value)
+    const result = keys.length > 0
+    console.log(`[BADGE-CHECK] Object check: ${keys.length} keys = ${result}`)
+    return result
   }
 
+  console.log(`[BADGE-CHECK] Default false for:`, value)
   return false
 }
 
