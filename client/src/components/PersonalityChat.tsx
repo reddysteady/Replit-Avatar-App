@@ -66,6 +66,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [specialAnimationType, setSpecialAnimationType] = useState<'preview_unlocked' | 'completion'>('preview_unlocked')
   const [showPersonalityUpdated, setShowPersonalityUpdated] = useState(false)
 
+  // Add state variables for stage and stage transition
+  const [currentStage, setCurrentStage] = useState(0)
+  const [showStageTransition, setShowStageTransition] = useState(false)
+  const [stageTransition, setStageTransition] = useState<{ from: number; to: number } | null>(null)
+
   // State Manager Instance
   const [stateManager] = useState(() => new PersonaChatStateManager())
   const [chatState, setChatState] = useState(() => stateManager.getState())
@@ -219,6 +224,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         }
       }
 
+      // Check for stage transitions
+      const newStage = calculateCurrentStage(updatedState.badgeSystem.totalEarned)
+      if (newStage !== currentStage) {
+        setStageTransition({ from: currentStage, to: newStage })
+        setShowStageTransition(true)
+        setCurrentStage(newStage)
+      }
+
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
     } catch (error) {
@@ -311,6 +324,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         }
       }
 
+      // Check for stage transitions
+      const newStage = calculateCurrentStage(updatedState.badgeSystem.totalEarned)
+      if (newStage !== currentStage) {
+        setStageTransition({ from: currentStage, to: newStage })
+        setShowStageTransition(true)
+        setCurrentStage(newStage)
+      }
+
       // Check for special milestone animations
       if (updatedState.badgeSystem.canActivatePreview && !chatState.badgeSystem.canActivatePreview) {
         setSpecialAnimationType('preview_unlocked')
@@ -380,13 +401,13 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       // Show green "Personality Updated" notification first
       setShowPersonalityUpdated(true)
       setTimeout(() => setShowPersonalityUpdated(false), 3000)
-      
+
       // Then show badge toast
       setToastBadge(animatingBadge)
       setShowBadgeToast(true)
     }
     setAnimatingBadge(null)
-    
+
     // Clear pending animation from state
     const newState = { ...chatState }
     newState.pendingBadgeAnimation = undefined
@@ -421,6 +442,21 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     })
   }
 
+  // Function to calculate the current stage based on total earned badges
+  const calculateCurrentStage = (totalEarned: number): number => {
+    if (totalEarned >= 10) {
+      return 4 // Legend
+    } else if (totalEarned >= 7) {
+      return 3 // Hero
+    } else if (totalEarned >= 4) {
+      return 2 // Pro
+    } else if (totalEarned >= 1) {
+      return 1 // Noob
+    } else {
+      return 0 // NPC
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Badge Animations */}
@@ -430,7 +466,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           onComplete={handleBadgeAnimationComplete}
         />
       )}
-      
+
       {showBadgeToast && toastBadge && (
         <BadgeEarnedToast
           badge={toastBadge}

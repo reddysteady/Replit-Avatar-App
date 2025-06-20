@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { motion } from 'framer-motion'
 import { 
@@ -40,11 +39,24 @@ export const BadgeHeader: React.FC<BadgeHeaderProps> = ({ badges }) => {
   })
 
   const earnedBadges = allBadges.filter(badge => badge.earned)
+  const currentStage = calculateCurrentStage(earnedBadges.length)
+  const stageConfig = getStageConfig(currentStage)
+  const nextStage = PERSONA_STAGES.find(s => s.badgeRequirement > earnedBadges.length)
 
   return (
     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-b border-yellow-200 p-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-700">Badge Progress</h3>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{stageConfig.icon}</span>
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700">{stageConfig.name}</h3>
+            {nextStage && (
+              <p className="text-xs text-gray-500">
+                {nextStage.badgeRequirement - earnedBadges.length} badges to {nextStage.name}
+              </p>
+            )}
+          </div>
+        </div>
         <span className="text-xs text-gray-500">{earnedBadges.length}/6 Badges Earned</span>
       </div>
       <div className="flex flex-wrap gap-2">

@@ -10,7 +10,10 @@ import {
   UIState,
   ChipValidationHistory,
   BadgeSystemState,
-  calculateBadgeProgress
+  calculateBadgeProgress,
+  PersonaStage,
+  calculateCurrentStage,
+  getStageConfig
 } from '../../../shared/persona-validation'
 
 export interface PersonaChatState {
@@ -37,6 +40,10 @@ export interface PersonaChatState {
   // Badge system
   badgeSystem: BadgeSystemState
   pendingBadgeAnimation?: string
+
+  // Stage progression
+  personaStage: PersonaStage
+  stageJustAdvanced: boolean
 
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>

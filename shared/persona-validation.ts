@@ -144,6 +144,90 @@ export interface BadgeConfig {
   label: string
   threshold: number
   priority: number
+  stage: PersonaStage
+  icon: string
+}
+
+export type PersonaStage = 'npc' | 'noob' | 'pro' | 'hero' | 'legend'
+
+export interface StageConfig {
+  id: PersonaStage
+  name: string
+  badgeRequirement: number
+  unlockedParameters: (keyof AvatarPersonaConfig)[]
+  questionStyle: 'direct' | 'scenario' | 'reflective' | 'advanced'
+  icon: string
+  celebrationCopy: string
+}
+
+export const PERSONA_STAGES: StageConfig[] = [
+  {
+    id: 'npc',
+    name: 'NPC',
+    badgeRequirement: 0,
+    unlockedParameters: ['toneDescription'],
+    questionStyle: 'direct',
+    icon: '⬛',
+    celebrationCopy: "You're a blank slate... but greatness is loading."
+  },
+  {
+    id: 'noob',
+    name: 'Noob',
+    badgeRequirement: 1,
+    unlockedParameters: ['toneDescription', 'styleTags'],
+    questionStyle: 'direct',
+    icon: '🐣',
+    celebrationCopy: "You've cracked the shell — now we find your voice."
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    badgeRequirement: 3,
+    unlockedParameters: ['allowedTopics', 'restrictedTopics', 'fallbackReply'],
+    questionStyle: 'scenario',
+    icon: '🚀',
+    celebrationCopy: "Blast off. You've got a voice, and you're moving with purpose."
+  },
+  {
+    id: 'hero',
+    name: 'Hero',
+    badgeRequirement: 5,
+    unlockedParameters: ['audienceDescription', 'avatarObjective'],
+    questionStyle: 'reflective',
+    icon: '🎖️',
+    celebrationCopy: "You've earned your badge. This persona's got presence."
+  },
+  {
+    id: 'legend',
+    name: 'Legend',
+    badgeRequirement: 6,
+    unlockedParameters: ['audienceDescription', 'avatarObjective', 'styleTags'],
+    questionStyle: 'advanced',
+    icon: '🐐',
+    celebrationCopy: "Legend unlocked. You've built something legendary."
+  }
+]
+
+export const STAGE_AWARE_BADGES: BadgeConfig[] = [
+  { id: 'tone', category: 'toneDescription', label: 'Voice Finder', threshold: 1, priority: 1, stage: 'noob', icon: '🎭' },
+  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2, stage: 'noob', icon: '✨' },
+  { id: 'topics', category: 'allowedTopics', label: 'Topic Expert', threshold: 1, priority: 3, stage: 'pro', icon: '💬' },
+  { id: 'boundaries', category: 'restrictedTopics', label: 'Boundary Guardian', threshold: 1, priority: 4, stage: 'pro', icon: '🛡️' },
+  { id: 'fallback', category: 'fallbackReply', label: 'Safety Net', threshold: 1, priority: 5, stage: 'pro', icon: '🔄' },
+  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 6, stage: 'hero', icon: '👥' },
+  { id: 'objective', category: 'avatarObjective', label: 'Mission Master', threshold: 1, priority: 7, stage: 'hero', icon: '🎯' }
+]
+
+export function calculateCurrentStage(totalEarnedBadges: number): PersonaStage {
+  if (totalEarnedBadges >= 6) return 'legend'
+  if (totalEarnedBadges >= 5) return 'hero'
+  if (totalEarnedBadges >= 3) return 'pro'
+  if (totalEarnedBadges >= 1) return 'noob'
+  return 'npc'
+}
+
+export function getStageConfig(stage: PersonaStage): StageConfig {
+  return PERSONA_STAGES.find(s => s.id === stage) || PERSONA_STAGES[0]
 }
 
 export interface BadgeState {
