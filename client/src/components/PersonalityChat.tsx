@@ -16,6 +16,7 @@ import BadgeHeader from './ui/badge-header'
 import BadgeAnimation from './ui/badge-animation'
 import BadgeEarnedToast from './ui/badge-earned-toast'
 import SpecialBadgeAnimation from './ui/special-badge-animation'
+import { PERSONA_STAGES } from '../lib/constants'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -225,11 +226,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       // Check for stage transitions
-      const newStage = calculateCurrentStage(updatedState.badgeSystem.totalEarned)
-      if (newStage !== currentStage) {
-        setStageTransition({ from: currentStage, to: newStage })
+      if (updatedState.stageJustAdvanced && updatedState.previousPersonaStage) {
+        setStageTransition({ 
+          from: PERSONA_STAGES.findIndex(s => s.id === updatedState.previousPersonaStage), 
+          to: PERSONA_STAGES.findIndex(s => s.id === updatedState.personaStage) 
+        })
         setShowStageTransition(true)
-        setCurrentStage(newStage)
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
@@ -325,11 +327,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       // Check for stage transitions
-      const newStage = calculateCurrentStage(updatedState.badgeSystem.totalEarned)
-      if (newStage !== currentStage) {
-        setStageTransition({ from: currentStage, to: newStage })
+      if (updatedState.stageJustAdvanced && updatedState.previousPersonaStage) {
+        setStageTransition({ 
+          from: PERSONA_STAGES.findIndex(s => s.id === updatedState.previousPersonaStage), 
+          to: PERSONA_STAGES.findIndex(s => s.id === updatedState.personaStage) 
+        })
         setShowStageTransition(true)
-        setCurrentStage(newStage)
       }
 
       // Check for special milestone animations
@@ -440,21 +443,6 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       minute: '2-digit',
       timeZoneName: 'short'
     })
-  }
-
-  // Function to calculate the current stage based on total earned badges
-  const calculateCurrentStage = (totalEarned: number): number => {
-    if (totalEarned >= 10) {
-      return 4 // Legend
-    } else if (totalEarned >= 7) {
-      return 3 // Hero
-    } else if (totalEarned >= 4) {
-      return 2 // Pro
-    } else if (totalEarned >= 1) {
-      return 1 // Noob
-    } else {
-      return 0 // NPC
-    }
   }
 
   return (

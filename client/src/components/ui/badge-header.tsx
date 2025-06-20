@@ -9,7 +9,13 @@ import {
   MessageSquare, 
   Award 
 } from 'lucide-react'
-import { BadgeState, BADGE_CONFIGS } from '../../../../shared/persona-validation'
+import { 
+  BadgeState, 
+  BADGE_CONFIGS, 
+  calculateCurrentStage, 
+  getStageConfig, 
+  PERSONA_STAGES 
+} from '../../../../shared/persona-validation'
 
 interface BadgeHeaderProps {
   badges: BadgeState[]

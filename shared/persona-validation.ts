@@ -248,12 +248,12 @@ export interface BadgeSystemState {
 }
 
 export const BADGE_CONFIGS: BadgeConfig[] = [
-  { id: 'tone', category: 'toneDescription', label: 'Tone Master', threshold: 1, priority: 1 },
-  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2 },
-  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 3 },
-  { id: 'objective', category: 'avatarObjective', label: 'Goal Setter', threshold: 1, priority: 4 },
-  { id: 'boundaries', category: 'boundaries', label: 'Boundary Keeper', threshold: 1, priority: 5 },
-  { id: 'communication', category: 'communicationPrefs', label: 'Communication Pro', threshold: 1, priority: 6 }
+  { id: 'tone', category: 'toneDescription', label: 'Tone Master', threshold: 1, priority: 1, stage: 'noob', icon: '🎭' },
+  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2, stage: 'noob', icon: '✨' },
+  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 3, stage: 'hero', icon: '👥' },
+  { id: 'objective', category: 'avatarObjective', label: 'Goal Setter', threshold: 1, priority: 4, stage: 'hero', icon: '🎯' },
+  { id: 'boundaries', category: 'boundaries', label: 'Boundary Keeper', threshold: 1, priority: 5, stage: 'pro', icon: '🛡️' },
+  { id: 'communication', category: 'communicationPrefs', label: 'Communication Pro', threshold: 1, priority: 6, stage: 'pro', icon: '🔄' }
 ]
 
 export const PERSONA_PREVIEW_THRESHOLD = 4

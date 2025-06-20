@@ -13,7 +13,8 @@ import {
   calculateBadgeProgress,
   PersonaStage,
   calculateCurrentStage,
-  getStageConfig
+  getStageConfig,
+  STAGE_REQUIREMENTS
 } from '../../../shared/persona-validation'
 
 export interface PersonaChatState {
@@ -44,6 +45,7 @@ export interface PersonaChatState {
   // Stage progression
   personaStage: PersonaStage
   stageJustAdvanced: boolean
+  previousPersonaStage?: PersonaStage
 
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>
@@ -78,6 +80,9 @@ export class PersonaChatStateManager {
       confidenceScore: 0,
       badgeSystem: calculateBadgeProgress({}),
       pendingBadgeAnimation: undefined,
+      personaStage: 'npc',
+      stageJustAdvanced: false,
+      previousPersonaStage: undefined,
       extractedConfig: {}
     }
   }
@@ -111,6 +116,16 @@ export class PersonaChatStateManager {
 
     if (newlyEarnedBadges.length > 0) {
       this.state.pendingBadgeAnimation = newlyEarnedBadges[0].id
+    }
+
+    // Update persona stage progression
+    const newPersonaStage = calculateCurrentStage(this.state.badgeSystem.totalEarned)
+    if (newPersonaStage !== this.state.personaStage) {
+      this.state.previousPersonaStage = this.state.personaStage
+      this.state.personaStage = newPersonaStage
+      this.state.stageJustAdvanced = true
+    } else {
+      this.state.stageJustAdvanced = false
     }
 
     // Handle chip validation triggers
