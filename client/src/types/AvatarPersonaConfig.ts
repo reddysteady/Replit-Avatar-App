@@ -52,6 +52,17 @@ export interface AvatarPersonaConfig {
    */
   audienceDescription: string
   /**
+   * Boundaries for the avatar's interactions.
+   */
+  boundaries?: string[]
+  /**
+   * Communication preferences for tone and style.
+   */
+  communicationPrefs?: {
+    verbosity: 'concise' | 'detailed' | 'balanced'
+    formality: 'formal' | 'casual' | 'mixed'
+  }
+  /**
    * Core persona context with structured tone profiles
    */
   corePersona?: CorePersonaContext

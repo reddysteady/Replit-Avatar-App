@@ -11,6 +11,7 @@ import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
 import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
 import { motion } from 'framer-motion'
+import { PersonaChatStateManager, ExtractionResult } from '../lib/PersonaChatStateManager'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -44,32 +45,24 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [isInitializing, setIsInitializing] = useState(true)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [extractedConfig, setExtractedConfig] = useState<Partial<AvatarPersonaConfig>>({})
-  const [isComplete, setIsComplete] = useState(false)
   const [isFinished, setIsFinished] = useState(false)
   const [currentPersonaMode, setCurrentPersonaMode] = useState<'guidance' | 'blended' | 'persona_preview'>('guidance')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
   const [glowingMessageId, setGlowingMessageId] = useState<string | null>(null)
-  const [showChipSelector, setShowChipSelector] = useState(false)
   const [suggestedTraits, setSuggestedTraits] = useState<PersonalityTrait[]>([])
-  const [reflectionActive, setReflectionActive] = useState(false)
 
-  // New State Variables
-  const [personaMode, setPersonaMode] = useState<'guidance' | 'blended' | 'persona_preview'>('guidance')
-  const [showPersonaPreview, setShowPersonaPreview] = useState(false)
-  const [personaPulse, setPersonaPulse] = useState(false)
-  const [hasShownPersonaPulse, setHasShownPersonaPulse] = useState(false)
-  const [showCompleteButton, setShowCompleteButton] = useState(false)
-  const [progress, setProgress] = useState(0)
+  // State Manager Instance
+  const [stateManager] = useState(() => new PersonaChatStateManager())
+  const [chatState, setChatState] = useState(() => stateManager.getState())
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const focusInput = () => {
-    if (inputRef.current && !isFinished) {
+    if (inputRef.current && !isFinished && !chatState.reflectionActive) {
       inputRef.current.focus()
     }
   }
@@ -78,18 +71,17 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     scrollToBottom()
   }, [messages])
 
-  // Focus input on mount and after each message
   useEffect(() => {
     const timer = setTimeout(() => {
       focusInput()
     }, 100)
     return () => clearTimeout(timer)
-  }, [messages, isFinished])
+  }, [messages, isFinished, chatState.reflectionActive])
 
   // Generate dynamic initial message
   useEffect(() => {
     const generateInitialMessage = async () => {
-      console.log('[PERSONALITY-FRONTEND] Starting initial message generation')
+      console.log('[PERSONALITY-STATE] Starting initial message generation')
 
       try {
         const requestBody = {
@@ -103,7 +95,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           initialMessage: true
         }
 
-        console.log('[PERSONALITY-FRONTEND] Making request to /api/ai/personality-extract with:', requestBody)
+        console.log('[PERSONALITY-STATE] Making request to /api/ai/personality-extract')
 
         const response = await fetch('/api/ai/personality-extract', {
           method: 'POST',
@@ -113,22 +105,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           body: JSON.stringify(requestBody)
         })
 
-        console.log('[PERSONALITY-FRONTEND] Response status:', response.status, response.statusText)
-
         if (!response.ok) {
-          const errorText = await response.text()
-          console.error('[PERSONALITY-FRONTEND] Response not ok:', errorText)
-          throw new Error(`Failed to generate initial message: ${response.status} ${response.statusText}`)
+          throw new Error(`Failed to generate initial message: ${response.status}`)
         }
 
         const aiResponse: PersonalityExtractionResponse = await response.json()
-
-        console.log('[PERSONALITY-FRONTEND] AI response received:', {
-          hasResponse: !!aiResponse.response,
-          personaMode: aiResponse.personaMode,
-          isComplete: aiResponse.isComplete,
-          error: aiResponse.error
-        })
 
         const initialMessage: ChatMessage = {
           id: '1',
@@ -139,12 +120,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         }
 
         setMessages([initialMessage])
-        console.log('[PERSONALITY-FRONTEND] Initial message set successfully')
+        console.log('[PERSONALITY-STATE] Initial message set successfully')
       } catch (error) {
-        console.error('[PERSONALITY-FRONTEND] Error generating initial message:', {
-          message: error.message,
-          stack: error.stack
-        })
+        console.error('[PERSONALITY-STATE] Error generating initial message:', error)
         // Fallback to improved static message
         const fallbackMessage: ChatMessage = {
           id: '1',
@@ -154,10 +132,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           personaMode: 'guidance'
         }
         setMessages([fallbackMessage])
-        console.log('[PERSONALITY-FRONTEND] Using fallback message')
       } finally {
         setIsInitializing(false)
-        console.log('[PERSONALITY-FRONTEND] Initial message generation completed')
       }
     }
 
@@ -165,8 +141,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   }, [])
 
   const handleChipConfirmation = async (selectedTraits: PersonalityTrait[]) => {
-    setShowChipSelector(false)
-    setReflectionActive(false)
+    console.log('[PERSONALITY-STATE] Chip validation completed')
+
+    // Update state manager
+    const newState = stateManager.completeChipValidation()
+    setChatState(newState)
 
     // Create a confirmation message
     const confirmationMessage: ChatMessage = {
@@ -190,7 +169,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             role: msg.role,
             content: msg.content
           })),
-          currentConfig: extractedConfig,
+          currentConfig: newState.extractedConfig,
           confirmedTraits: selectedTraits.map(t => t.label)
         })
       })
@@ -210,13 +189,18 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       setMessages(prev => [...prev, aiMessage])
-      setExtractedConfig(prev => ({ ...prev, ...aiResponse.extractedData }))
-      setIsComplete(aiResponse.isComplete)
-      setIsFinished(aiResponse.isFinished || false)
+
+      // Update state manager with new extraction
+      const updatedState = stateManager.updateFromExtraction(
+        aiResponse as ExtractionResult, 
+        messages.length + 2
+      )
+      setChatState(updatedState)
+
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
     } catch (error) {
-      console.error('Error in chip confirmation:', error)
+      console.error('[PERSONALITY-STATE] Error in chip confirmation:', error)
       toast({
         title: 'Error',
         description: 'Failed to process trait confirmation. Please try again.',
@@ -228,9 +212,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   }
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading || isFinished || reflectionActive) return
+    if (!inputValue.trim() || isLoading || isFinished || chatState.reflectionActive) return
 
-    console.log('[PERSONALITY-FRONTEND] Sending message:', inputValue.trim())
+    console.log('[PERSONALITY-STATE] Sending message:', inputValue.trim())
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -239,24 +223,21 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
     setInputValue('')
     setIsLoading(true)
 
     try {
       const requestBody = {
-        messages: [...messages, userMessage].map(msg => ({
+        messages: newMessages.map(msg => ({
           role: msg.role,
           content: msg.content
         })),
-        currentConfig: extractedConfig
+        currentConfig: chatState.extractedConfig
       }
 
-      console.log('[PERSONALITY-FRONTEND] Making request with:', {
-        messageCount: requestBody.messages.length,
-        hasCurrentConfig: !!requestBody.currentConfig,
-        configKeys: Object.keys(requestBody.currentConfig || {})
-      })
+      console.log('[PERSONALITY-STATE] Making request with message count:', newMessages.length)
 
       const response = await fetch('/api/ai/personality-extract', {
         method: 'POST',
@@ -266,24 +247,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         body: JSON.stringify(requestBody)
       })
 
-      console.log('[PERSONALITY-FRONTEND] Response received:', response.status, response.statusText)
-
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('[PERSONALITY-FRONTEND] Response error:', errorText)
-        throw new Error(`Failed to get AI response: ${response.status} ${response.statusText}`)
+        throw new Error(`Failed to get AI response: ${response.status}`)
       }
 
       const aiResponse: PersonalityExtractionResponse = await response.json()
-
-      console.log('[PERSONALITY-FRONTEND] AI response parsed:', {
-        hasResponse: !!aiResponse.response,
-        personaMode: aiResponse.personaMode,
-        isComplete: aiResponse.isComplete,
-        showChipSelector: aiResponse.showChipSelector,
-        hasExtractedData: !!aiResponse.extractedData && Object.keys(aiResponse.extractedData).length > 0,
-        error: aiResponse.error
-      })
 
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -291,34 +259,38 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         content: aiResponse.response,
         timestamp: new Date(),
         personaMode: aiResponse.personaMode || 'guidance',
-        isSpecial: aiResponse.isComplete && !aiResponse.isFinished
+        isSpecial: aiResponse.personaMode === 'persona_preview'
       }
 
-      setMessages(prev => [...prev, aiMessage])
+      const finalMessages = [...newMessages, aiMessage]
+      setMessages(finalMessages)
 
-      // Debug log for configuration updates
-      console.log('[PERSONALITY-FRONTEND] Merging config:', {
-        previousConfig: extractedConfig,
-        newData: aiResponse.extractedData,
-        mergedConfig: { ...extractedConfig, ...aiResponse.extractedData }
+      // Update state manager with extraction result
+      const updatedState = stateManager.updateFromExtraction(
+        aiResponse as ExtractionResult,
+        finalMessages.length
+      )
+      setChatState(updatedState)
+
+      console.log('[PERSONALITY-STATE] State updated:', {
+        stage: updatedState.currentStage,
+        fieldsCollected: updatedState.fieldsCollected,
+        showChipSelector: updatedState.showChipSelector,
+        showCompleteButton: updatedState.showCompleteButton,
+        progress: updatedState.progressPercentage
       })
 
-      setExtractedConfig(prev => ({ ...prev, ...aiResponse.extractedData }))
-      setIsComplete(aiResponse.isComplete)
-      setIsFinished(aiResponse.isFinished || false)
+      // Handle UI updates based on new state
+      if (updatedState.showChipSelector) {
+        setSuggestedTraits(aiResponse.suggestedTraits || [])
+      }
+
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
 
-      // Phase 1: Show chip selector every 3 parameters as per spec
-      const mergedConfig = { ...extractedConfig, ...aiResponse.extractedData }
-      const configCount = countMeaningfulFields(mergedConfig)
-
-      console.log('[PERSONALITY-DEBUG] Config count:', configCount, 'Stage:', aiResponse.personaMode)
-
-      if (aiResponse.showChipSelector || aiResponse.reflectionCheckpoint) {
-        console.log('[PERSONALITY-FRONTEND] Showing chip selector')
-        setShowChipSelector(true)
-        setSuggestedTraits(aiResponse.suggestedTraits || [])
-        setReflectionActive(true)
+      // Trigger visual effects for persona mode changes
+      if (aiResponse.personaMode === 'blended' || aiResponse.personaMode === 'persona_preview') {
+        setGlowingMessageId(aiMessage.id)
+        setTimeout(() => setGlowingMessageId(null), 5000)
       }
 
       if (aiResponse.transitionMessage) {
@@ -328,20 +300,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         })
       }
 
-      // Trigger green pulse on first "blended" or "persona_preview" mode message
-      if (aiResponse.personaMode === 'blended' || aiResponse.personaMode === 'persona_preview') {
-        setGlowingMessageId(aiMessage.id);
-        setTimeout(() => {
-          setGlowingMessageId(null);
-        }, 5000);
-      }
-
-
     } catch (error) {
-      console.error('[PERSONALITY-FRONTEND] Error in personality chat:', {
-        message: error.message,
-        stack: error.stack
-      })
+      console.error('[PERSONALITY-STATE] Error in personality chat:', error)
       toast({
         title: 'Error',
         description: 'Failed to get AI response. Please try again.',
@@ -350,59 +310,6 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
 
     setIsLoading(false)
-    console.log('[PERSONALITY-FRONTEND] Message handling completed')
-  }
-  // Handle extraction result and update state
-  const handleExtractionResult = (result: any) => {
-    console.log('[PERSONALITY-DEBUG] Handling extraction result:', result)
-
-    if (result.extractedData && Object.keys(result.extractedData).length > 0) {
-      setExtractedConfig(prev => ({ ...prev, ...result.extractedData }))
-    }
-
-    // Handle chip selector - only show during reflection checkpoint
-    if (result.reflectionCheckpoint && result.showChipSelector) {
-      setShowChipSelector(true)
-      setSuggestedTraits(result.suggestedTraits || [])
-    }
-
-    // Handle persona mode changes with simpler logic
-    const newPersonaMode = result.personaMode || 'guidance'
-    if (newPersonaMode !== personaMode) {
-      setPersonaMode(newPersonaMode)
-
-      if (newPersonaMode === 'persona_preview') {
-        setShowPersonaPreview(true)
-
-        // Only pulse once when first entering persona preview
-        if (!hasShownPersonaPulse) {
-          setPersonaPulse(true)
-          setHasShownPersonaPulse(true)
-          setTimeout(() => setPersonaPulse(false), 2000)
-        }
-      }
-    }
-
-    // Phase 1: Completion logic for 6 core parameters
-    const coreParamCount = this.countCoreParameters(extractedConfig, result.extractedData)
-    const messageCount = messages.length
-
-    // Show Complete Setup button when we have 6 core parameters OR are in completion stage
-    if (coreParamCount >= 6 || (coreParamCount >= 4 && newPersonaMode === 'persona_preview' && messageCount >= 8)) {
-      setShowCompleteButton(true)
-      setIsComplete(true)
-    }
-
-    // Update progress bar based on core parameters (out of 6)
-    const newProgress = Math.min(95, (coreParamCount / 6) * 100)
-    setProgress(newProgress)
-
-    // Show pulsing box when progress reaches 100%
-    if (newProgress >= 95 && !hasShownPersonaPulse) {
-      setPersonaPulse(true)
-      setHasShownPersonaPulse(true)
-      setTimeout(() => setPersonaPulse(false), 2000)
-    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -415,13 +322,13 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const handleComplete = () => {
     // Ensure we have a complete config before completing
     const finalConfig: AvatarPersonaConfig = {
-      toneDescription: extractedConfig.toneDescription || "Friendly and approachable",
-      styleTags: extractedConfig.styleTags || ["Friendly"],
-      allowedTopics: extractedConfig.allowedTopics || ["General topics"],
-      restrictedTopics: extractedConfig.restrictedTopics || [],
-      fallbackReply: extractedConfig.fallbackReply || "I'd prefer not to discuss that topic.",
-      avatarObjective: extractedConfig.avatarObjective || ["Engage with audience"],
-      audienceDescription: extractedConfig.audienceDescription || "General audience"
+      toneDescription: chatState.extractedConfig.toneDescription || "Friendly and approachable",
+      styleTags: chatState.extractedConfig.styleTags || ["Friendly"],
+      allowedTopics: chatState.extractedConfig.allowedTopics || ["General topics"],
+      restrictedTopics: chatState.extractedConfig.restrictedTopics || [],
+      fallbackReply: chatState.extractedConfig.fallbackReply || "I'd prefer not to discuss that topic.",
+      avatarObjective: chatState.extractedConfig.avatarObjective || ["Engage with audience"],
+      audienceDescription: chatState.extractedConfig.audienceDescription || "General audience"
     }
 
     onComplete(finalConfig)
@@ -445,48 +352,6 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       timeZoneName: 'short'
     })
   }
-
-  const generateDefaultTraits = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
-    const traits: PersonalityTrait[] = []
-    let idCounter = 1
-
-    // Extract traits from tone description
-    if (config.toneDescription) {
-      const toneText = config.toneDescription.toLowerCase()
-      const commonTraits = ['friendly', 'professional', 'casual', 'humorous', 'analytical', 'creative', 'empathetic', 'direct']
-
-      commonTraits.forEach(trait => {
-        if (toneText.includes(trait)) {
-          traits.push({
-            id: (idCounter++).toString(),
-            label: trait.charAt(0).toUpperCase() + trait.slice(1),
-            selected: true
-          })
-        }
-      })
-    }
-
-    // Add some common unselected options if we don't have enough
-    const additionalTraits = ['Supportive', 'Curious', 'Patient', 'Enthusiastic', 'Thoughtful']
-    additionalTraits.forEach(trait => {
-      if (!traits.some(t => t.label.toLowerCase() === trait.toLowerCase()) && traits.length < 8) {
-        traits.push({
-          id: (idCounter++).toString(),
-          label: trait,
-          selected: false
-        })
-      }
-    })
-
-    return traits.slice(0, 8)
-  }
-
-  const progressPercentage = Math.min((Object.keys(extractedConfig).filter(key => 
-    extractedConfig[key as keyof AvatarPersonaConfig] && 
-    (Array.isArray(extractedConfig[key as keyof AvatarPersonaConfig]) 
-      ? (extractedConfig[key as keyof AvatarPersonaConfig] as any[]).length > 0
-      : (extractedConfig[key as keyof AvatarPersonaConfig] as string).length > 0)
-  ).length / 7) * 100, 100)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -515,33 +380,21 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
             </Button>
           </div>
 
-          {progressPercentage > 0 && (
+          {chatState.progressPercentage > 0 && (
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Personality Discovery Progress</span>
-                <span>{Math.round(progressPercentage)}%</span>
+                <span>{Math.round(chatState.progressPercentage)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${progressPercentage}%` }}
+                  style={{ width: `${chatState.progressPercentage}%` }}
                 />
               </div>
             </div>
           )}
         </div>
-      </div>
-
-      {/* Mobile Skip Button - Top Right Corner */}
-      <div className="md:hidden fixed top-4 right-4 z-20">
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={onSkip} 
-          className="h-8 w-8 bg-white shadow-sm"
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Chat Container */}
@@ -592,7 +445,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   </div>
                 )}
 
-                {showChipSelector && (
+                {chatState.showChipSelector && (
                   <div className="flex gap-3 justify-start">
                     <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
                       <Bot className="h-4 w-4" />
@@ -620,28 +473,24 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   placeholder={
                     isFinished 
                       ? "Chat completed" 
-                      : reflectionActive 
+                      : chatState.reflectionActive 
                         ? "Please confirm your traits above first..."
                         : "Share your thoughts about your communication style..."
                   }
-                  disabled={isLoading || isFinished || reflectionActive}
-                  className={`flex-1 ${isFinished || reflectionActive ? 'bg-gray-100 text-gray-500' : ''}`}
+                  disabled={isLoading || isFinished || chatState.reflectionActive}
+                  className={`flex-1 ${isFinished || chatState.reflectionActive ? 'bg-gray-100 text-gray-500' : ''}`}
                 />
                 <Button 
                   onClick={handleSendMessage} 
-                  disabled={!inputValue.trim() || isLoading || isFinished || reflectionActive}
+                  disabled={!inputValue.trim() || isLoading || isFinished || chatState.reflectionActive}
                   size="icon"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
 
-              {/* Complete Setup Button - show when we have sufficient core data and not in active flow */}
-              {Object.keys(extractedConfig).length >= 4 && 
-               messages.filter(m => m.role === 'user').length >= 6 && 
-               !showChipSelector && 
-               !reflectionActive && 
-               !isFinished && (
+              {/* Complete Setup Button - controlled by state manager */}
+              {chatState.showCompleteButton && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -663,16 +512,3 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     </div>
   )
 }
-  // Helper method to count meaningful fields for Phase 1
-  const countMeaningfulFields = (config: Partial<AvatarPersonaConfig>): number => {
-    const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply', 'communicationPrefs']
-
-    return coreFields.filter(field => {
-      const value = config[field]
-      if (!value) return false
-      if (typeof value === 'string') return value.length > 3
-      if (Array.isArray(value)) return value.length > 0
-      if (typeof value === 'object') return Object.keys(value).length > 0
-      return true
-    }).length
-  }

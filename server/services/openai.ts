@@ -51,6 +51,29 @@ interface DetectSensitiveResult {
   category: string
 }
 
+// Shared validation logic
+const CORE_PERSONA_FIELDS = [
+  'toneDescription',
+  'audienceDescription',
+  'avatarObjective',
+  'boundaries',
+  'communicationPrefs',
+  'fallbackReply',
+] as const;
+
+function countValidFields(config: Partial<AvatarPersonaConfig>): number {
+  return CORE_PERSONA_FIELDS.filter(key => {
+    const value = config[key];
+    if (!value) return false;
+
+    if (typeof value === 'string') return value.length > 3;
+    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'object') return Object.keys(value).length > 0;
+
+    return false;
+  }).length;
+}
+
 export class AIService {
   private systemPromptCache: Map<number, { prompt: string; timestamp: number }> = new Map()
   private readonly CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -787,31 +810,13 @@ export class AIService {
   }
 
   // Core fields for Phase 1 persona configuration
-  private readonly CORE_PERSONA_FIELDS = [
-    'toneDescription',
-    'audienceDescription', 
-    'avatarObjective',
-    'boundaries',
-    'communicationPrefs',
-    'fallbackReply'
-  ] as const;
-
-  private readonly TARGET_FIELD_COUNT = this.CORE_PERSONA_FIELDS.length;
+  private readonly TARGET_FIELD_COUNT = CORE_PERSONA_FIELDS.length;
 
   /**
    * Counts meaningful fields in the configuration for Phase 1 core parameters
    */
   private countMeaningfulFields(config: Partial<AvatarPersonaConfig>): number {
-    return this.CORE_PERSONA_FIELDS.filter(key => {
-      const value = config[key];
-      if (!value) return false;
-
-      if (typeof value === 'string') return value.length > 3;
-      if (Array.isArray(value)) return value.length > 0;
-      if (typeof value === 'object') return Object.keys(value).length > 0;
-
-      return false;
-    }).length;
+    return countValidFields(config);
   }
 
   /**
@@ -847,7 +852,7 @@ export class AIService {
    * Identifies which Phase 1 core fields are still missing
    */
   private identifyMissingFields(config: Partial<AvatarPersonaConfig>): string[] {
-    return this.CORE_PERSONA_FIELDS.filter(field => {
+    return CORE_PERSONA_FIELDS.filter(field => {
       const value = config[field];
       if (!value) return true;
       if (Array.isArray(value) && value.length === 0) return true;
@@ -873,7 +878,7 @@ export class AIService {
 
     switch (stage) {
       case 'introduction':
-        stageInstructions = `Ask an engaging ${currentStyle} question that gets them talking naturally about their voice and style. Make it feel like a conversation, not an interview.`
+        stageInstructions =`Ask an engaging ${currentStyle} question that gets them talking naturally about their voice and style. Make it feel like a conversation, not an interview.`
         break
       case 'core_collection':
         const nextField = missingFields[0] || 'communication style'
@@ -941,19 +946,19 @@ REQUIRED JSON FORMAT:
     let result
     try {
       result = JSON.parse(content)
-      
+
       // Validate required fields exist
       if (typeof result !== 'object' || result === null) {
         throw new Error('Response is not a valid object')
       }
-      
+
     } catch (parseError) {
       console.error('[PERSONALITY-ERROR] JSON parse failed:', {
         error: parseError.message,
         contentPreview: content.substring(0, 100) + '...',
         contentLength: content.length
       })
-      
+
       return this.createFallbackResponse(
         "Let me try a different approach - what's the most important thing your audience values about how you communicate?",
         'guidance',
