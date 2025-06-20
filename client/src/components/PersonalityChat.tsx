@@ -90,7 +90,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   useEffect(() => {
     const generateInitialMessage = async () => {
       console.log('[PERSONALITY-FRONTEND] Starting initial message generation')
-      
+
       try {
         const requestBody = {
           messages: [
@@ -122,7 +122,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         }
 
         const aiResponse: PersonalityExtractionResponse = await response.json()
-        
+
         console.log('[PERSONALITY-FRONTEND] AI response received:', {
           hasResponse: !!aiResponse.response,
           personaMode: aiResponse.personaMode,
@@ -311,9 +311,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       // Phase 1: Show chip selector every 3 parameters as per spec
       const mergedConfig = { ...extractedConfig, ...aiResponse.extractedData }
       const configCount = countMeaningfulFields(mergedConfig)
-      
+
       console.log('[PERSONALITY-DEBUG] Config count:', configCount, 'Stage:', aiResponse.personaMode)
-      
+
       if (aiResponse.showChipSelector || aiResponse.reflectionCheckpoint) {
         console.log('[PERSONALITY-FRONTEND] Showing chip selector')
         setShowChipSelector(true)
@@ -454,7 +454,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     if (config.toneDescription) {
       const toneText = config.toneDescription.toLowerCase()
       const commonTraits = ['friendly', 'professional', 'casual', 'humorous', 'analytical', 'creative', 'empathetic', 'direct']
-      
+
       commonTraits.forEach(trait => {
         if (toneText.includes(trait)) {
           traits.push({
@@ -490,26 +490,28 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Desktop Header with Progress - Hidden on Mobile */}
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm hidden md:block">
-        <div className="container mx-auto p-4 max-w-4xl">
-          <div className="flex items-center justify-between mb-4">
+      {/* Sticky Header with Progress */}
+      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+        <div className="container mx-auto p-3 max-w-4xl md:p-4">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <MessageCircle className="h-6 w-6" />
-                AI Voice Setup
+              <h1 className="text-lg font-semibold flex items-center gap-2 md:text-2xl md:font-bold">
+                <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
+                <span className="md:hidden">AI Voice Setup</span>
+                <span className="hidden md:inline">AI Voice Setup Chat</span>
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground hidden md:block">
                 Let's discover your unique communication style through conversation
               </p>
             </div>
             <Button 
               variant="outline" 
+              size="icon"
               onClick={onSkip} 
-              className="flex items-center gap-2"
+              className="h-8 w-8 md:h-10 md:w-auto md:flex md:items-center md:gap-2 md:px-4"
             >
               <SkipForward className="h-4 w-4" />
-              Skip to Form
+              <span className="hidden md:inline">Skip to Form</span>
             </Button>
           </div>
 
@@ -664,7 +666,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   // Helper method to count meaningful fields for Phase 1
   const countMeaningfulFields = (config: Partial<AvatarPersonaConfig>): number => {
     const coreFields = ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply', 'communicationPrefs']
-    
+
     return coreFields.filter(field => {
       const value = config[field]
       if (!value) return false
