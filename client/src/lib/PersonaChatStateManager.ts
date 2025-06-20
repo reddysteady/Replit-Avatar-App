@@ -92,6 +92,9 @@ export class PersonaChatStateManager {
     const mergedConfig = { ...this.state.extractedConfig, ...result.extractedData }
     const newFieldCount = countValidFields(mergedConfig)
 
+    // Persist state to prevent accidental resets
+    const persistedState = { ...this.state }
+
     // Check if chip validation is required
     const needsChipValidation = shouldTriggerChipValidation(
       previousFieldCount, 
@@ -109,12 +112,12 @@ export class PersonaChatStateManager {
     const previousBadgeState = this.state.badgeSystem
     this.state.badgeSystem = calculateBadgeProgress(mergedConfig)
 
-    // Check for newly earned badges
+    // Check for newly earned badges (prevent duplicates)
     const newlyEarnedBadges = this.state.badgeSystem.badges.filter(badge => 
       badge.earned && !previousBadgeState.badges.find(prev => prev.id === badge.id && prev.earned)
     )
 
-    if (newlyEarnedBadges.length > 0) {
+    if (newlyEarnedBadges.length > 0 && !this.state.pendingBadgeAnimation) {
       this.state.pendingBadgeAnimation = newlyEarnedBadges[0].id
     }
 

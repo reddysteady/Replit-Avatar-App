@@ -970,8 +970,18 @@ REQUIRED JSON FORMAT:
     const responseText = this.validateStringField(result.response, "Tell me more about your communication style.")
     const extractedData = this.cleanExtractedData(result.extractedData || {})
 
-    // Generate suggested traits for chip selector
-    const suggestedTraits = this.generateSuggestedTraits(extractedData, state.currentConfig)
+    // Generate traits based on conversation context - ensure they're meaningful
+    const contextualTraits = this.extractTraitsFromConversation(messages)
+    const suggestedTraits = result.suggestedTraits || contextualTraits
+
+    finalResult.suggestedTraits = suggestedTraits
+      .filter((trait: string) => trait && trait.length > 2) // Remove empty/short traits
+      .slice(0, 8) // Limit to 8 traits max
+      .map((trait: string, index: number) => ({
+        id: `trait-${Date.now()}-${index}`,
+        label: trait,
+        selected: false
+      }))
 
     // Calculate total fields after extraction
     const totalFields = state.fieldsCollected + Object.keys(extractedData).length
@@ -1047,6 +1057,49 @@ REQUIRED JSON FORMAT:
     })
 
     return cleaned
+  }
+
+  /**
+   * Extracts meaningful traits from conversation context
+   */
+  private extractTraitsFromConversation(messages: ChatMessage[]): string[] {
+    const userMessages = messages
+      .filter(msg => msg.role === 'user')
+      .map(msg => msg.content.toLowerCase())
+      .join(' ')
+
+    // Enhanced trait extraction with better context analysis
+    const traitMap: Record<string, string[]> = {
+      'friendly': ['friend', 'nice', 'kind', 'warm', 'welcoming'],
+      'professional': ['work', 'business', 'formal', 'serious', 'corporate'],
+      'creative': ['creative', 'art', 'design', 'innovative', 'original'],
+      'analytical': ['analyze', 'think', 'logic', 'reason', 'data'],
+      'humorous': ['funny', 'joke', 'laugh', 'humor', 'witty'],
+      'direct': ['direct', 'straight', 'clear', 'honest', 'blunt'],
+      'supportive': ['help', 'support', 'care', 'encourage', 'assist'],
+      'enthusiastic': ['excited', 'energy', 'passionate', 'love', 'amazing'],
+      'empathetic': ['understand', 'feel', 'empathy', 'caring', 'compassionate'],
+      'confident': ['confident', 'sure', 'strong', 'bold', 'assertive']
+    }
+
+    const extractedTraits: string[] = []
+    for (const [trait, keywords] of Object.entries(traitMap)) {
+      const score = keywords.filter(keyword => userMessages.includes(keyword)).length
+      if (score > 0) {
+        extractedTraits.push(trait)
+      }
+    }
+
+    // Return extracted traits or fallback to context-appropriate defaults
+    return extractedTraits.length >= 3 ? extractedTraits : 
+           ['Engaging', 'Thoughtful', 'Authentic', 'Responsive']
+  }
+
+  /**
+   * Generates traits from conversation context (legacy method)
+   */
+  private generateTraitsFromContext(messages: ChatMessage[]): string[] {
+    return this.extractTraitsFromConversation(messages)
   }
 
   /**

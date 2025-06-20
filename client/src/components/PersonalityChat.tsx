@@ -265,6 +265,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     setInputValue('')
     setIsLoading(true)
 
+    // Clear any pending badge animations to prevent duplicates
+    if (showBadgeAnimation) {
+      setShowBadgeAnimation(false)
+      setAnimatingBadge(null)
+    }
+
     try {
       const requestBody = {
         messages: newMessages.map(msg => ({
@@ -345,8 +351,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       // Handle UI updates based on new state
-      if (updatedState.showChipSelector) {
-        setSuggestedTraits(aiResponse.suggestedTraits || [])
+      if (updatedState.showChipSelector && aiResponse.suggestedTraits) {
+        // Only use AI-generated traits, not defaults
+        setSuggestedTraits(aiResponse.suggestedTraits)
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
@@ -515,7 +522,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       <div className="flex-1 flex flex-col bg-white md:container md:mx-auto md:p-6 md:max-w-4xl">
         <div className="flex-1 flex flex-col md:rounded-lg md:border md:bg-white">
           <div className="flex-1 flex flex-col p-4 md:p-6 min-h-0">
-            <ScrollArea className="flex-1 pr-4 mb-4">
+            <ScrollArea className="flex-1 pr-4 mb-4" style={{ minHeight: '300px', maxHeight: '70vh' }}>
               <div className="space-y-4 min-h-0">
                 {messages.map((message) => (
                   <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
