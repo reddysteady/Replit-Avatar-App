@@ -13,7 +13,6 @@ import {
   BadgeState, 
   BADGE_CONFIGS, 
   calculateCurrentStage, 
-  getStageConfig, 
   PERSONA_STAGES 
 } from '../../../../shared/persona-validation'
 
@@ -45,8 +44,13 @@ export const BadgeHeader: React.FC<BadgeHeaderProps> = ({ badges }) => {
   })
 
   const earnedBadges = allBadges.filter(badge => badge.earned)
-  const currentStage = calculateCurrentStage(earnedBadges.length)
-  const stageConfig = getStageConfig(currentStage)
+  const currentStageType = calculateCurrentStage(earnedBadges.length)
+  const stageConfig = PERSONA_STAGES.find(s => {
+    if (earnedBadges.length >= 6) return s.id === 'mastered'
+    if (earnedBadges.length >= 4) return s.id === 'adapting'
+    if (earnedBadges.length >= 2) return s.id === 'learning'
+    return s.id === 'discovering'
+  }) || PERSONA_STAGES[0]
   const nextStage = PERSONA_STAGES.find(s => s.badgeRequirement > earnedBadges.length)
 
   return (

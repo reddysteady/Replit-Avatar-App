@@ -1,3 +1,6 @@
+// Import AvatarPersonaConfig type
+import type { AvatarPersonaConfig } from '../client/src/types/AvatarPersonaConfig'
+
 // Badge state interface
 export interface BadgeState {
   id: string
@@ -127,20 +130,9 @@ export const STAGE_REQUIREMENTS: Record<ProgressionStage, { minFields: number; m
   completion: { minFields: 6, minMessages: 10, requiresChipValidation: true }
 }
 
-// Note: AvatarPersonaConfig is imported from client/src/types/AvatarPersonaConfig.ts
-
 // Helper functions
-export function calculateCurrentStage(earnedBadgesCount: number): PersonaStage {
-  if (earnedBadgesCount >= 6) return 'persona'
-  if (earnedBadgesCount >= 4) return 'assistant'
-  if (earnedBadgesCount >= 2) return 'character'
-  return 'npc'
-}
 
-export function getStageConfig(stageIndex: number): PersonaStage {
-  const stages: PersonaStage[] = ['npc', 'character', 'assistant', 'persona']
-  return stages[stageIndex] || 'npc'
-}
+
 
 export function countValidFields(config: Partial<AvatarPersonaConfig>): number {
   let count = 0
@@ -178,10 +170,9 @@ export function shouldTriggerChipValidation(previousFields: number, newFields: n
 }
 
 export function calculateCurrentStage(badgeCount: number): PersonaStage {
-  if (badgeCount >= 6) return 'legend'
-  if (badgeCount >= 5) return 'hero'
-  if (badgeCount >= 3) return 'pro'
-  if (badgeCount >= 1) return 'noob'
+  if (badgeCount >= 6) return 'persona'
+  if (badgeCount >= 4) return 'assistant'
+  if (badgeCount >= 2) return 'character'
   return 'npc'
 }
 
