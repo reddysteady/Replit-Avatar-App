@@ -177,6 +177,14 @@ export function shouldTriggerChipValidation(previousFields: number, newFields: n
   return newFields >= 4 && previousFields < 4 && !validationComplete
 }
 
+export function calculateCurrentStage(badgeCount: number): PersonaStage {
+  if (badgeCount >= 6) return 'legend'
+  if (badgeCount >= 5) return 'hero'
+  if (badgeCount >= 3) return 'pro'
+  if (badgeCount >= 1) return 'noob'
+  return 'npc'
+}
+
 export function calculateBadgeProgress(config: Partial<AvatarPersonaConfig>): BadgeSystemState {
   const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
     let earned = false
