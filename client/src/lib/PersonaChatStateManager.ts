@@ -1,6 +1,6 @@
 
+import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { 
-  AvatarPersonaConfig, 
   countValidFields, 
   calculateProgress, 
   determineStage, 
@@ -207,6 +207,9 @@ export class PersonaChatStateManager {
       confidenceScore: 0,
       badgeSystem: calculateBadgeProgress({}),
       pendingBadgeAnimation: undefined,
+      personaStage: 'npc',
+      stageJustAdvanced: false,
+      previousPersonaStage: undefined,
       extractedConfig: {}
     }
   }

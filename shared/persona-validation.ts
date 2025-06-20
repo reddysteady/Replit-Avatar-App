@@ -1,235 +1,4 @@
-/**
- * Shared validation logic for persona configuration
- * Used by both frontend and backend to ensure consistency
- */
-
-export const CORE_PERSONA_FIELDS = [
-  'toneDescription',
-  'audienceDescription', 
-  'avatarObjective',
-  'boundaries',
-  'communicationPrefs',
-  'fallbackReply'
-] as const
-
-export type CorePersonaField = typeof CORE_PERSONA_FIELDS[number]
-
-export interface AvatarPersonaConfig {
-  toneDescription?: string
-  styleTags?: string[]
-  allowedTopics?: string[]
-  restrictedTopics?: string[]
-  fallbackReply?: string
-  avatarObjective?: string[]
-  audienceDescription?: string
-  boundaries?: string[]
-  communicationPrefs?: {
-    verbosity: 'concise' | 'detailed' | 'balanced'
-    formality: 'formal' | 'casual' | 'mixed'
-  }
-}
-
-export function countValidFields(config: Partial<AvatarPersonaConfig>): number {
-  return CORE_PERSONA_FIELDS.filter(field => {
-    const value = config[field]
-    if (!value) return false
-    if (typeof value === 'string') return value.length > 3
-    if (Array.isArray(value)) return value.length > 0
-    if (typeof value === 'object') return Object.keys(value).length > 0
-    return false
-  }).length
-}
-
-export function calculateProgress(config: Partial<AvatarPersonaConfig>): number {
-  const validFields = countValidFields(config)
-  return Math.min(95, (validFields / CORE_PERSONA_FIELDS.length) * 100)
-}
-
-export type ProgressionStage = 'introduction' | 'core_collection' | 'reflection_checkpoint' | 'completion'
-
-export interface StageRequirements {
-  minFields: number
-  minMessages: number
-  requiresChipValidation: boolean
-  allowsCompletion: boolean
-}
-
-export const STAGE_REQUIREMENTS: Record<ProgressionStage, StageRequirements> = {
-  introduction: { minFields: 0, minMessages: 0, requiresChipValidation: false, allowsCompletion: false },
-  core_collection: { minFields: 0, minMessages: 1, requiresChipValidation: false, allowsCompletion: false },
-  reflection_checkpoint: { minFields: 2, minMessages: 3, requiresChipValidation: true, allowsCompletion: false },
-  completion: { minFields: 4, minMessages: 6, requiresChipValidation: true, allowsCompletion: true }
-}
-
-export function determineStage(
-  messageCount: number, 
-  fieldsCollected: number, 
-  chipValidationComplete: boolean
-): ProgressionStage {
-  // Never allow backward progression
-  // Only advance when ALL requirements for next stage are met
-
-  if (fieldsCollected >= 4 && messageCount >= 6 && chipValidationComplete) {
-    return 'completion'
-  }
-
-  if (fieldsCollected >= 2 && messageCount >= 3 && (fieldsCollected % 2 === 0)) {
-    return 'reflection_checkpoint'
-  }
-
-  if (messageCount >= 1) {
-    return 'core_collection'
-  }
-
-  return 'introduction'
-}
-
-export interface UIState {
-  showCompleteButton: boolean
-  showChipSelector: boolean
-  inputDisabled: boolean
-  personaMode: 'guidance' | 'blended' | 'persona_preview'
-}
-
-export function calculateUIState(stage: ProgressionStage, reflectionActive: boolean): UIState {
-  switch (stage) {
-    case 'reflection_checkpoint':
-      return {
-        showCompleteButton: false,
-        showChipSelector: true,
-        inputDisabled: true, // Force chip interaction first
-        personaMode: 'blended'
-      }
-
-    case 'completion':
-      return {
-        showCompleteButton: true,
-        showChipSelector: false,
-        inputDisabled: false,
-        personaMode: 'persona_preview'
-      }
-
-    default:
-      return {
-        showCompleteButton: false,
-        showChipSelector: false,
-        inputDisabled: false,
-        personaMode: 'guidance'
-      }
-  }
-}
-
-export interface ChipValidationHistory {
-  lastValidatedAt: number // field count when last validated
-  validationCount: number
-}
-
-export function shouldTriggerChipValidation(
-  previousFieldCount: number, 
-  newFieldCount: number,
-  hasValidatedRecently: boolean
-): boolean {
-  // Trigger chip validation every 2 fields collected
-  const previousMilestone = Math.floor(previousFieldCount / 2)
-  const newMilestone = Math.floor(newFieldCount / 2)
-
-  // Only trigger if we crossed a milestone and haven't validated recently
-  return newMilestone > previousMilestone && !hasValidatedRecently
-}
-
-// Badge System Types and Logic
-export interface BadgeConfig {
-  id: string
-  category: keyof AvatarPersonaConfig
-  label: string
-  threshold: number
-  priority: number
-  stage: PersonaStage
-  icon: string
-}
-
-export type PersonaStage = 'npc' | 'noob' | 'pro' | 'hero' | 'legend'
-
-export interface StageConfig {
-  id: PersonaStage
-  name: string
-  badgeRequirement: number
-  unlockedParameters: (keyof AvatarPersonaConfig)[]
-  questionStyle: 'direct' | 'scenario' | 'reflective' | 'advanced'
-  icon: string
-  celebrationCopy: string
-}
-
-export const PERSONA_STAGES: StageConfig[] = [
-  {
-    id: 'npc',
-    name: 'NPC',
-    badgeRequirement: 0,
-    unlockedParameters: ['toneDescription'],
-    questionStyle: 'direct',
-    icon: '⬛',
-    celebrationCopy: "You're a blank slate... but greatness is loading."
-  },
-  {
-    id: 'noob',
-    name: 'Noob',
-    badgeRequirement: 1,
-    unlockedParameters: ['toneDescription', 'styleTags'],
-    questionStyle: 'direct',
-    icon: '🐣',
-    celebrationCopy: "You've cracked the shell — now we find your voice."
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    badgeRequirement: 3,
-    unlockedParameters: ['allowedTopics', 'restrictedTopics', 'fallbackReply'],
-    questionStyle: 'scenario',
-    icon: '🚀',
-    celebrationCopy: "Blast off. You've got a voice, and you're moving with purpose."
-  },
-  {
-    id: 'hero',
-    name: 'Hero',
-    badgeRequirement: 5,
-    unlockedParameters: ['audienceDescription', 'avatarObjective'],
-    questionStyle: 'reflective',
-    icon: '🎖️',
-    celebrationCopy: "You've earned your badge. This persona's got presence."
-  },
-  {
-    id: 'legend',
-    name: 'Legend',
-    badgeRequirement: 6,
-    unlockedParameters: ['audienceDescription', 'avatarObjective', 'styleTags'],
-    questionStyle: 'advanced',
-    icon: '🐐',
-    celebrationCopy: "Legend unlocked. You've built something legendary."
-  }
-]
-
-export const STAGE_AWARE_BADGES: BadgeConfig[] = [
-  { id: 'tone', category: 'toneDescription', label: 'Voice Finder', threshold: 1, priority: 1, stage: 'noob', icon: '🎭' },
-  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2, stage: 'noob', icon: '✨' },
-  { id: 'topics', category: 'allowedTopics', label: 'Topic Expert', threshold: 1, priority: 3, stage: 'pro', icon: '💬' },
-  { id: 'boundaries', category: 'restrictedTopics', label: 'Boundary Guardian', threshold: 1, priority: 4, stage: 'pro', icon: '🛡️' },
-  { id: 'fallback', category: 'fallbackReply', label: 'Safety Net', threshold: 1, priority: 5, stage: 'pro', icon: '🔄' },
-  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 6, stage: 'hero', icon: '👥' },
-  { id: 'objective', category: 'avatarObjective', label: 'Mission Master', threshold: 1, priority: 7, stage: 'hero', icon: '🎯' }
-]
-
-export function calculateCurrentStage(totalEarnedBadges: number): PersonaStage {
-  if (totalEarnedBadges >= 6) return 'legend'
-  if (totalEarnedBadges >= 5) return 'hero'
-  if (totalEarnedBadges >= 3) return 'pro'
-  if (totalEarnedBadges >= 1) return 'noob'
-  return 'npc'
-}
-
-export function getStageConfig(stage: PersonaStage): StageConfig {
-  return PERSONA_STAGES.find(s => s.id === stage) || PERSONA_STAGES[0]
-}
-
+// Badge state interface
 export interface BadgeState {
   id: string
   earned: boolean
@@ -239,79 +8,216 @@ export interface BadgeState {
   threshold: number
 }
 
+// Badge configurations
+export interface BadgeConfig {
+  id: string
+  category: string
+  threshold: number
+  name: string
+  description: string
+}
+
+export const BADGE_CONFIGS: BadgeConfig[] = [
+  {
+    id: 'tone',
+    category: 'toneDescription',
+    threshold: 1,
+    name: 'Tone Master',
+    description: 'Defined communication tone'
+  },
+  {
+    id: 'style',
+    category: 'styleTags',
+    threshold: 2,
+    name: 'Style Curator',
+    description: 'Selected style tags'
+  },
+  {
+    id: 'audience',
+    category: 'audienceDescription',
+    threshold: 1,
+    name: 'Audience Expert',
+    description: 'Described target audience'
+  },
+  {
+    id: 'objective',
+    category: 'avatarObjective',
+    threshold: 1,
+    name: 'Goal Setter',
+    description: 'Set avatar objectives'
+  },
+  {
+    id: 'boundaries',
+    category: 'boundaries',
+    threshold: 1,
+    name: 'Boundary Keeper',
+    description: 'Established boundaries'
+  },
+  {
+    id: 'communication',
+    category: 'communicationPrefs',
+    threshold: 1,
+    name: 'Communication Pro',
+    description: 'Communication preferences set'
+  }
+]
+
+// Persona stages
+export interface PersonaStage {
+  id: string
+  name: string
+  icon: string
+  badgeRequirement: number
+  description: string
+}
+
+export const PERSONA_STAGES: PersonaStage[] = [
+  {
+    id: 'discovering',
+    name: 'Discovering',
+    icon: '🔍',
+    badgeRequirement: 0,
+    description: 'Starting to learn about your personality'
+  },
+  {
+    id: 'learning',
+    name: 'Learning',
+    icon: '📚',
+    badgeRequirement: 2,
+    description: 'Understanding your communication style'
+  },
+  {
+    id: 'adapting',
+    name: 'Adapting',
+    icon: '🎭',
+    badgeRequirement: 4,
+    description: 'Adapting to your preferences'
+  },
+  {
+    id: 'mastered',
+    name: 'Mastered',
+    icon: '✨',
+    badgeRequirement: 6,
+    description: 'Fully configured persona'
+  }
+]
+
+// Additional types needed by PersonaChatStateManager
+export type ProgressionStage = 'introduction' | 'discovery' | 'refinement' | 'reflection_checkpoint' | 'completion'
+export type UIState = { showCompleteButton: boolean }
+export type PersonaStage = 'npc' | 'character' | 'assistant' | 'persona'
+
+export interface ChipValidationHistory {
+  lastValidatedAt: number
+  validationCount: number
+}
+
 export interface BadgeSystemState {
   badges: BadgeState[]
   totalEarned: number
   canActivatePreview: boolean
   canComplete: boolean
-  pendingAnimation?: string
 }
 
-export const BADGE_CONFIGS: BadgeConfig[] = [
-  { id: 'tone', category: 'toneDescription', label: 'Tone Master', threshold: 1, priority: 1, stage: 'noob', icon: '🎭' },
-  { id: 'style', category: 'styleTags', label: 'Style Curator', threshold: 2, priority: 2, stage: 'noob', icon: '✨' },
-  { id: 'audience', category: 'audienceDescription', label: 'Audience Expert', threshold: 1, priority: 3, stage: 'hero', icon: '👥' },
-  { id: 'objective', category: 'avatarObjective', label: 'Goal Setter', threshold: 1, priority: 4, stage: 'hero', icon: '🎯' },
-  { id: 'boundaries', category: 'boundaries', label: 'Boundary Keeper', threshold: 1, priority: 5, stage: 'pro', icon: '🛡️' },
-  { id: 'communication', category: 'communicationPrefs', label: 'Communication Pro', threshold: 1, priority: 6, stage: 'pro', icon: '🔄' }
-]
-
-export const PERSONA_PREVIEW_THRESHOLD = 4
-export const COMPLETION_THRESHOLD = 6
-
-export function checkParameterThreshold(
-  config: Partial<AvatarPersonaConfig>, 
-  category: keyof AvatarPersonaConfig, 
-  threshold: number
-): boolean {
-  const value = config[category]
-
-  console.log(`[BADGE-CHECK] Category: ${category}, Value:`, value, `Threshold: ${threshold}`)
-
-  if (Array.isArray(value)) {
-    const result = value.length >= threshold
-    console.log(`[BADGE-CHECK] Array check: ${value.length} >= ${threshold} = ${result}`)
-    return result
-  }
-
-  if (typeof value === 'string') {
-    const result = value.trim().length > 0
-    console.log(`[BADGE-CHECK] String check: "${value}" length > 0 = ${result}`)
-    return result
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    const keys = Object.keys(value)
-    const result = keys.length > 0
-    console.log(`[BADGE-CHECK] Object check: ${keys.length} keys = ${result}`)
-    return result
-  }
-
-  console.log(`[BADGE-CHECK] Default false for:`, value)
-  return false
+export const STAGE_REQUIREMENTS: Record<ProgressionStage, { minFields: number; minMessages: number; requiresChipValidation?: boolean }> = {
+  introduction: { minFields: 0, minMessages: 0 },
+  discovery: { minFields: 1, minMessages: 2 },
+  refinement: { minFields: 3, minMessages: 5 },
+  reflection_checkpoint: { minFields: 4, minMessages: 8, requiresChipValidation: true },
+  completion: { minFields: 6, minMessages: 10, requiresChipValidation: true }
 }
 
-export function calculateBadgeProgress(extractedConfig: Partial<AvatarPersonaConfig>): BadgeSystemState {
-  const badges = BADGE_CONFIGS.map(config => ({
-    id: config.id,
-    earned: checkParameterThreshold(extractedConfig, config.category, config.threshold),
-    earnedAt: undefined,
-    animationPlayed: false,
-    category: config.category,
-    threshold: config.threshold
-  }))
+// Note: AvatarPersonaConfig is imported from client/src/types/AvatarPersonaConfig.ts
 
+// Helper functions
+export function calculateCurrentStage(earnedBadgesCount: number): PersonaStage {
+  if (earnedBadgesCount >= 6) return 'persona'
+  if (earnedBadgesCount >= 4) return 'assistant'
+  if (earnedBadgesCount >= 2) return 'character'
+  return 'npc'
+}
+
+export function getStageConfig(stageIndex: number): PersonaStage {
+  const stages: PersonaStage[] = ['npc', 'character', 'assistant', 'persona']
+  return stages[stageIndex] || 'npc'
+}
+
+export function countValidFields(config: Partial<AvatarPersonaConfig>): number {
+  let count = 0
+  if (config.toneDescription && config.toneDescription.length > 0) count++
+  if (config.styleTags && config.styleTags.length > 0) count++
+  if (config.audienceDescription && config.audienceDescription.length > 0) count++
+  if (config.avatarObjective && config.avatarObjective.length > 0) count++
+  if (config.boundaries && config.boundaries.length > 0) count++
+  if (config.communicationPrefs && config.communicationPrefs.length > 0) count++
+  return count
+}
+
+export function calculateProgress(config: Partial<AvatarPersonaConfig>): number {
+  const totalFields = 6 // Total number of fields we track
+  const validFields = countValidFields(config)
+  return Math.round((validFields / totalFields) * 100)
+}
+
+export function determineStage(messageCount: number, fieldCount: number, chipValidationComplete: boolean): ProgressionStage {
+  if (fieldCount >= 6 && chipValidationComplete) return 'completion'
+  if (fieldCount >= 4 && messageCount >= 8) return 'reflection_checkpoint'
+  if (fieldCount >= 3 && messageCount >= 5) return 'refinement'
+  if (fieldCount >= 1 && messageCount >= 2) return 'discovery'
+  return 'introduction'
+}
+
+export function calculateUIState(stage: ProgressionStage, reflectionActive: boolean): UIState {
+  return {
+    showCompleteButton: stage === 'completion' && !reflectionActive
+  }
+}
+
+export function shouldTriggerChipValidation(previousFields: number, newFields: number, validationComplete: boolean): boolean {
+  return newFields >= 4 && previousFields < 4 && !validationComplete
+}
+
+export function calculateBadgeProgress(config: Partial<AvatarPersonaConfig>): BadgeSystemState {
+  const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
+    let earned = false
+    
+    switch (badgeConfig.category) {
+      case 'toneDescription':
+        earned = Boolean(config.toneDescription && config.toneDescription.length > 0)
+        break
+      case 'styleTags':
+        earned = Boolean(config.styleTags && config.styleTags.length >= badgeConfig.threshold)
+        break
+      case 'audienceDescription':
+        earned = Boolean(config.audienceDescription && config.audienceDescription.length > 0)
+        break
+      case 'avatarObjective':
+        earned = Boolean(config.avatarObjective && config.avatarObjective.length > 0)
+        break
+      case 'boundaries':
+        earned = Boolean(config.boundaries && config.boundaries.length > 0)
+        break
+      case 'communicationPrefs':
+        earned = Boolean(config.communicationPrefs && config.communicationPrefs.length > 0)
+        break
+    }
+    
+    return {
+      id: badgeConfig.id,
+      earned,
+      earnedAt: earned ? new Date() : undefined,
+      animationPlayed: false,
+      category: badgeConfig.category,
+      threshold: badgeConfig.threshold
+    }
+  })
+  
   const totalEarned = badges.filter(b => b.earned).length
-
+  
   return {
     badges,
     totalEarned,
-    canActivatePreview: totalEarned >= PERSONA_PREVIEW_THRESHOLD,
-    canComplete: totalEarned >= COMPLETION_THRESHOLD,
-    pendingAnimation: undefined
+    canActivatePreview: totalEarned >= 3,
+    canComplete: totalEarned >= 6
   }
-}
-
-export function getBadgeConfigs(): BadgeConfig[] {
-  return BADGE_CONFIGS
 }
