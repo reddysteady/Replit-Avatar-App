@@ -1,0 +1,149 @@
+Persona Stage
+
+Parameter
+
+Description / Purpose
+
+Recommended Question Types
+
+Sample Questions
+
+NPC
+
+Initial Context
+
+Avatar origin, creator intent
+
+Direct
+
+"What are you building this avatar for?"
+
+Noob
+
+Tone Description
+
+Core communication “voice”
+
+Direct, scenario, indirect
+
+“How would you describe your natural communication style?”
+
+Noob
+
+Style Tags
+
+Descriptive labels for style/personality
+
+Scenario, example-driven
+
+“What three words would a close friend use for your vibe?”
+
+Noob
+
+Big Five: Quick Pulse
+
+Indirect OCEAN sampling via relatable choices
+
+Scenario-based, indirect
+
+“You get a last-minute invite to a wild party. What do you do?”
+
+Pro
+
+Allowed Topics
+
+Safe/approved content areas
+
+Direct, preference, scenario
+
+“Are there any topics you’re always happy to discuss?”
+
+Pro
+
+Restricted Topics
+
+Off-limits/sensitive areas
+
+Direct, scenario, reflective
+
+“Are there any topics you prefer not to talk about?”
+
+Pro
+
+Fallback Reply
+
+Standard phrase for restricted topics
+
+Example-driven, scenario
+
+“If someone asks about a topic you avoid, how do you respond?”
+
+Pro
+
+Big Five: Confirmations
+
+Refine traits through focused feedback loops
+
+Forced-choice, reflective
+
+“Do you prefer planned routines or adapting on the fly?”
+
+Hero
+
+Audience Description
+
+Who the avatar is for
+
+Scenario, persona, niche
+
+“If you picture your ideal follower, who comes to mind?”
+
+Hero
+
+Signature Phrases
+
+Voice consistency through repeated phrasing
+
+Example-based, self-describe
+
+“What’s a phrase or line you often say?”
+
+Hero
+
+Trait Modulation
+
+Control how strongly traits are expressed
+
+Slider, contextual calibration
+
+“How energetic should this avatar feel when replying to fans?”
+
+Legend
+
+Edge Cases & Filters
+
+Handling trolling, sensitive escalation
+
+Scenario, behavioral boundary
+
+“How would you want this avatar to respond to harassment?”
+
+Legend
+
+Goals & Boundaries
+
+Long-term persona alignment/limits
+
+Reflective, goal-based
+
+“What should this persona never say or do?”
+
+Legend
+
+Dynamic Modes
+
+Persona mode switching (e.g., hype, empathy)
+
+Tag-based, profile selector
+
+“Switch to Hype Mode” or “Respond as Calm Mode”
