@@ -47,6 +47,11 @@ export interface PersonaChatState {
   stageJustAdvanced: boolean
   previousPersonaStage?: PersonaStage
 
+  // Session structure tracking
+  currentSessionQuestions: number
+  sessionLimit: number
+  stageQuestionCount: number
+
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>
 }
@@ -83,6 +88,9 @@ export class PersonaChatStateManager {
       personaStage: 'npc',
       stageJustAdvanced: false,
       previousPersonaStage: undefined,
+      currentSessionQuestions: 0,
+      sessionLimit: 2,
+      stageQuestionCount: 0,
       extractedConfig: {}
     }
   }

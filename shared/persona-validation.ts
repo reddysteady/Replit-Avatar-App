@@ -176,6 +176,16 @@ export function calculateCurrentStage(badgeCount: number): PersonaStage {
   return 'npc'
 }
 
+export function getStageConfig(stage: PersonaStage) {
+  const stageMap = {
+    'npc': { name: 'NPC', icon: '🤖', description: 'Blank Slate' },
+    'character': { name: 'Character', icon: '🎭', description: 'Voice Formation' },
+    'assistant': { name: 'Assistant', icon: '🎯', description: 'Boundary Setting' },
+    'persona': { name: 'Persona', icon: '✨', description: 'Voice Mastery' }
+  }
+  return stageMap[stage] || stageMap['npc']
+}
+
 export function calculateBadgeProgress(config: Partial<AvatarPersonaConfig>): BadgeSystemState {
   const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
     let earned = false

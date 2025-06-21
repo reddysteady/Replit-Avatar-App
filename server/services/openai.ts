@@ -862,81 +862,145 @@ export class AIService {
   }
 
   /**
-   * Builds a contextual system prompt for Phase 1 core parameter extraction
+   * Builds a contextual system prompt for stage-aware parameter extraction following the 5-stage framework
    */
   private buildPersonalityExtractionPrompt(state: any): string {
-    const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits } = state
+    const { stage, fieldsCollected, missingFields, userMessageCount, hasConfirmedTraits, personaStage } = state
 
-    // Create more engaging, varied question approaches
-    const questionStyles = [
-      "scenario-based", "direct-curious", "story-prompt", "comparison", "example-driven"
-    ]
-    const currentStyle = questionStyles[userMessageCount % questionStyles.length]
+    // Determine current persona stage based on badges/fields
+    const currentPersonaStage = this.determinePersonaStage(fieldsCollected)
+    const stageConfig = this.getStageQuestionStrategy(currentPersonaStage)
 
     let stageInstructions = ''
     let responseFormat = ''
+    let sessionLimit = stageConfig.sessionLimit || 3
 
-    switch (stage) {
-      case 'introduction':
-        stageInstructions =`Ask an engaging ${currentStyle} question that gets them talking naturally about their voice and style. Make it feel like a conversation, not an interview.`
+    // Stage-specific instructions based on 5-stage framework
+    switch (currentPersonaStage) {
+      case 'npc':
+        stageInstructions = `NPC STAGE (Blank Slate): Ask 1-2 direct questions to establish initial context and avatar purpose. Focus on: What are they building this avatar for? Keep it simple and foundational.`
+        sessionLimit = 2
         break
-      case 'core_collection':
-        const nextField = missingFields[0] || 'communication style'
-        stageInstructions = `Continue the natural conversation flow while learning about "${nextField}". Use ${currentStyle} approach. Build on what they've shared already. Make it conversational and engaging.`
+      case 'noob':
+        stageInstructions = `NOOB STAGE (Voice Formation): Ask 3-4 mixed questions focusing on tone and style. Use direct and example-based questions. Focus on: How they naturally communicate, their vibe, basic personality traits.`
+        sessionLimit = 4
         break
-      case 'reflection_checkpoint':
-        stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned in a personal way, then show chip selector for validation.'
-        responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
+      case 'pro':
+        stageInstructions = `PRO STAGE (Boundary Setting): Ask 4-5 scenario-based questions about boundaries and content safety. Focus on: Topics they avoid, how they handle disagreements, communication preferences.`
+        sessionLimit = 5
         break
-      case 'completion':
-        stageInstructions = 'Transition to their voice naturally. Show excitement about capturing their personality.'
-        responseFormat = '"isComplete": true, "isFinished": true,'
+      case 'hero':
+        stageInstructions = `HERO STAGE (Voice Mastery): Ask 3-4 reflective questions about audience and signature elements. Focus on: Who they're speaking to, their deeper goals, what makes their voice unique.`
+        sessionLimit = 4
         break
-      default:
-        stageInstructions = `Keep the conversation flowing naturally while learning about ${missingFields[0] || 'their style'}. Use ${currentStyle} approach.`
+      case 'legend':
+        stageInstructions = `LEGEND STAGE (Dynamic Control): Ask 3-5 advanced scenarios about edge cases and dynamic modes. Focus on: How they handle harassment, dynamic personality modes, advanced control.`
+        sessionLimit = 5
+        break
     }
 
-    return `You are learning someone's communication personality through natural, engaging conversation. This should feel like chatting with a friend who's genuinely curious about how they express themselves.
+    // Handle reflection checkpoints
+    if (stage === 'reflection_checkpoint') {
+      stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned, then show chip selector for validation.'
+      responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
+    }
 
-CONVERSATION APPROACH:
-- ${currentStyle} style for this interaction
-- Build on previous responses naturally
-- Ask follow-up questions that show you're listening
-- Use their own words and examples back to them
-- Make each question feel different and engaging
+    // Handle completion
+    if (stage === 'completion') {
+      stageInstructions = 'COMPLETION: All parameters collected. Transition to persona preview mode.'
+      responseFormat = '"isComplete": true, "isFinished": true,'
+    }
 
-CORE AREAS TO EXPLORE (organically):
-1. toneDescription - How they naturally sound when talking
-2. audienceDescription - Who they're speaking to
-3. avatarObjective - What they want to achieve
-4. boundaries - What they prefer not to discuss
-5. fallbackReply - How they handle sensitive topics
-6. communicationPrefs - Their natural style preferences
+    const targetParameters = this.getStageParameters(currentPersonaStage)
+    const questionTypes = stageConfig.questionTypes || ['direct']
 
-CURRENT STATE:
-- Conversation style: ${currentStyle}
-- Questions asked: ${userMessageCount}
-- Areas explored: ${fieldsCollected}/6
-- Still learning about: ${missingFields.slice(0, 2).join(', ')}
-- Ready for validation: ${hasConfirmedTraits ? 'Yes' : 'No'}
+    return `You are conducting stage-aware persona extraction following the 5-Stage Progression Framework.
 
+CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
 
-RESPONSE STYLE GUIDELINES:
-- Vary your question formats (scenarios, examples, comparisons, stories)
-- Reference what they've already shared to show you're listening
-- Keep it conversational and warm, not clinical
-- Ask follow-ups that dive deeper into interesting details
-- Use their energy level and match their communication style
+STAGE CONFIGURATION:
+- Session Limit: Max ${sessionLimit} questions for this stage
+- Question Types: ${questionTypes.join(', ')}
+- Target Parameters: ${targetParameters.join(', ')}
+- Questions Asked: ${userMessageCount}
+- Fields Collected: ${fieldsCollected}
+- Missing Fields: ${missingFields.slice(0, 3).join(', ')}
+
+STAGE-SPECIFIC QUESTION GUIDELINES:
+${this.getStageQuestionGuidelines(currentPersonaStage)}
+
+RESPONSE REQUIREMENTS:
+- Must align with current persona stage (${currentPersonaStage})
+- Respect session limits (${sessionLimit} max questions)
+- Use appropriate question types for this stage
+- Build naturally on previous responses
+- Extract stage-appropriate parameters
 
 REQUIRED JSON FORMAT:
 {
-  "response": "Your engaging, conversational question or reflection",
-  "extractedData": {fields you can infer from their latest response},
+  "response": "Your stage-appropriate question",
+  "extractedData": {stage-appropriate fields only},
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
-  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)}
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)},
+  "currentPersonaStage": "${currentPersonaStage}",
+  "questionCount": ${userMessageCount},
+  "sessionLimit": ${sessionLimit}
 }`
+  }
+
+  /**
+   * Determines persona stage based on field count following framework
+   */
+  private determinePersonaStage(fieldsCollected: number): string {
+    if (fieldsCollected === 0) return 'npc'
+    if (fieldsCollected <= 2) return 'noob'
+    if (fieldsCollected <= 4) return 'pro'
+    if (fieldsCollected <= 5) return 'hero'
+    return 'legend'
+  }
+
+  /**
+   * Gets stage-specific question strategy
+   */
+  private getStageQuestionStrategy(stage: string): any {
+    const strategies = {
+      'npc': { questionTypes: ['direct'], sessionLimit: 2 },
+      'noob': { questionTypes: ['direct', 'example'], sessionLimit: 4 },
+      'pro': { questionTypes: ['scenario', 'behavioral'], sessionLimit: 5 },
+      'hero': { questionTypes: ['reflective', 'audience-focused'], sessionLimit: 4 },
+      'legend': { questionTypes: ['advanced', 'scenario'], sessionLimit: 5 }
+    }
+    return strategies[stage] || strategies['npc']
+  }
+
+  /**
+   * Gets stage-appropriate parameters to focus on
+   */
+  private getStageParameters(stage: string): string[] {
+    const parameters = {
+      'npc': ['Initial Context'],
+      'noob': ['toneDescription', 'styleTags'],
+      'pro': ['boundaries', 'allowedTopics', 'restrictedTopics'],
+      'hero': ['audienceDescription', 'avatarObjective'],
+      'legend': ['edgeCases', 'dynamicModes', 'fallbackReply']
+    }
+    return parameters[stage] || parameters['npc']
+  }
+
+  /**
+   * Gets stage-specific question guidelines
+   */
+  private getStageQuestionGuidelines(stage: string): string {
+    const guidelines = {
+      'npc': 'Ask simple, direct questions about avatar purpose and basic intent. Foundation building.',
+      'noob': 'Mix direct questions with examples. Focus on voice formation and basic personality.',
+      'pro': 'Use scenarios to explore boundaries and content safety. How they handle difficult situations.',
+      'hero': 'Reflective questions about audience and goals. What makes their voice distinctive.',
+      'legend': 'Advanced scenarios about edge cases and dynamic control. Master-level personality aspects.'
+    }
+    return guidelines[stage] || guidelines['npc']
   }
 
   /**
@@ -971,17 +1035,28 @@ REQUIRED JSON FORMAT:
     const extractedData = this.cleanExtractedData(result.extractedData || {})
 
     // Generate traits based on conversation context - ensure they're meaningful
-    const contextualTraits = this.extractTraitsFromConversation(messages)
+    const contextualTraits = this.extractTraitsFromConversation(state.lastUserMessage ? [{ role: 'user', content: state.lastUserMessage }] : [])
     const suggestedTraits = result.suggestedTraits || contextualTraits
 
-    finalResult.suggestedTraits = suggestedTraits
-      .filter((trait: string) => trait && trait.length > 2) // Remove empty/short traits
-      .slice(0, 8) // Limit to 8 traits max
-      .map((trait: string, index: number) => ({
-        id: `trait-${Date.now()}-${index}`,
-        label: trait,
-        selected: false
-      }))
+    const finalResult = {
+      response: responseText,
+      extractedData,
+      personaMode: this.validatePersonaMode(result.personaMode),
+      isComplete: false, // Never complete until explicitly in completion stage
+      isFinished: false, // Never finished until explicitly in completion stage
+      confidenceScore: Math.min(0.95, totalFields / this.TARGET_FIELD_COUNT),
+      transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
+      showChipSelector: Boolean(result.showChipSelector),
+      suggestedTraits: suggestedTraits
+        .filter((trait: string) => trait && trait.length > 2) // Remove empty/short traits
+        .slice(0, 8) // Limit to 8 traits max
+        .map((trait: string, index: number) => ({
+          id: `trait-${Date.now()}-${index}`,
+          label: trait,
+          selected: false
+        })),
+      reflectionCheckpoint: Boolean(result.reflectionCheckpoint)
+    }
 
     // Calculate total fields after extraction
     const totalFields = state.fieldsCollected + Object.keys(extractedData).length
@@ -1062,10 +1137,14 @@ REQUIRED JSON FORMAT:
   /**
    * Extracts meaningful traits from conversation context
    */
-  private extractTraitsFromConversation(messages: ChatMessage[]): string[] {
+  private extractTraitsFromConversation(messages: any[]): string[] {
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return ['Engaging', 'Thoughtful', 'Authentic', 'Responsive']
+    }
+
     const userMessages = messages
       .filter(msg => msg.role === 'user')
-      .map(msg => msg.content.toLowerCase())
+      .map(msg => msg.content?.toLowerCase() || '')
       .join(' ')
 
     // Enhanced trait extraction with better context analysis
@@ -1098,7 +1177,7 @@ REQUIRED JSON FORMAT:
   /**
    * Generates traits from conversation context (legacy method)
    */
-  private generateTraitsFromContext(messages: ChatMessage[]): string[] {
+  private generateTraitsFromContext(messages: any[]): string[] {
     return this.extractTraitsFromConversation(messages)
   }
 
