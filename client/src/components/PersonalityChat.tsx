@@ -1,3 +1,7 @@
+The code is modified to remove the initial AI question generation and start directly with asking the avatar's purpose.
+```
+
+```replit_final_file
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -109,65 +113,36 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   // Generate dynamic initial message
   useEffect(() => {
-    const generateInitialMessage = async () => {
-      console.log('[PERSONALITY-STATE] Starting initial message generation')
+    if (messages.length === 0) {
+      console.log('[PERSONALITY-STATE] Starting with direct avatar purpose question')
 
-      try {
-        const requestBody = {
-          messages: [
-            {
-              role: 'system',
-              content: 'Generate an engaging opening question to start persona discovery. Make it warm, specific, and designed to capture the creator\'s communication style and goals.'
-            }
-          ],
-          currentConfig: {},
-          initialMessage: true
-        }
+      const initialMessage = "What are you building this avatar for? I'd love to understand your main goal or purpose for creating an AI version of yourself."
 
-        console.log('[PERSONALITY-STATE] Making request to /api/ai/personality-extract')
-
-        const response = await fetch('/api/ai/personality-extract', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        })
-
-        if (!response.ok) {
-          throw new Error(`Failed to generate initial message: ${response.status}`)
-        }
-
-        const aiResponse: PersonalityExtractionResponse = await response.json()
-
-        const initialMessage: ChatMessage = {
-          id: '1',
-          role: 'assistant',
-          content: aiResponse.response || "Hi! I'm here to help set up your AI avatar's personality. Let's start with something specific - imagine your favorite follower just asked you for advice. How do you typically respond to them?",
-          timestamp: new Date(),
-          personaMode: 'guidance'
-        }
-
-        setMessages([initialMessage])
-        console.log('[PERSONALITY-STATE] Initial message set successfully')
-      } catch (error) {
-        console.error('[PERSONALITY-STATE] Error generating initial message:', error)
-        // Fallback to improved static message
-        const fallbackMessage: ChatMessage = {
-          id: '1',
-          role: 'assistant',
-          content: "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
-          timestamp: new Date(),
-          personaMode: 'guidance'
-        }
-        setMessages([fallbackMessage])
-      } finally {
-        setIsInitializing(false)
+      const initialChatMessage: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: initialMessage,
+        timestamp: new Date()
       }
-    }
+      setMessages([initialChatMessage])
+      console.log('[PERSONALITY-STATE] Initial message set successfully')
 
-    generateInitialMessage()
-  }, [])
+      // Update state manager with initial state
+      const newState = stateManager.getState().updateFromExtraction(
+        { extractedData: {} },
+        0
+      )
+      setChatState(newState)
+      console.log('[PERSONALITY-STATE] State updated:', {
+        stage: newState.currentStage,
+        fieldsCollected: newState.fieldsCollected,
+        showChipSelector: newState.showChipSelector,
+        showCompleteButton: newState.showCompleteButton,
+        badgeCount: newState.badgeSystem.totalEarned
+      })
+      setIsInitializing(false)
+    }
+  }, [messages, stateManager])
 
   const handleChipConfirmation = async (selectedTraits: PersonalityTrait[]) => {
     console.log('[PERSONALITY-STATE] Chip validation completed')
