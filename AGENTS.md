@@ -35,18 +35,19 @@ integration), link out to a dedicated doc instead of bloating this file.
 
 ---
 
-## 3 · Pre‑Flight Checklist ✅
+## 3 · Pre‑Flight Checklist ✅
 
 Log each step with `[AGENT‑PRECHECK]`. Abort if any item fails.
 
 1. Working tree is clean **or** a feature/fix branch is checked out.
-2. Always check for all required environment variables (see `README.md → Environment Variables`) before running tests, builds, or the app.
+2. Always check for all required environment variables (see `README.md → Environment Variables`) before running tests, builds, or the app.
      - Reference `.env.example` for all keys.
      - If a variable is missing, **do not** create a dummy value in code—fail fast with a clear error.
      - If an agent or script detects missing env vars, prompt the human user to set them or update `.env.example`.
      - Only run the pre-flight checklist when actual secrets are present; never "fake pass" by inventing placeholders.
-4. .npm run type-check and npm run lint pass.
-5. .npm test passes (Vitest suite).
+3. **Run pre-commit hook validation**: Execute `npx husky run .husky/pre-commit` to ensure all code quality checks pass before proposing changes.
+4. npm run type-check and npm run lint pass.
+5. npm test passes (Vitest suite).
 6. If the task touches an **external service** (API, DB, queue, etc.) run its
    health‑check script under `scripts/health/` and ensure success.
 7. Run `npm outdated` and fail if critical packages are >1 major behind.
