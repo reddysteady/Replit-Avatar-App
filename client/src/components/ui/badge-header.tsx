@@ -10,11 +10,18 @@ import {
   Award 
 } from 'lucide-react'
 import { 
-  BadgeState, 
   BADGE_CONFIGS, 
-  calculateCurrentStage, 
   PERSONA_STAGES 
-} from '../../../../shared/persona-validation'
+} from '../../lib/constants'
+
+interface BadgeState {
+  id: string
+  earned: boolean
+  earnedAt?: Date
+  animationPlayed: boolean
+  category: string
+  threshold: number
+}
 
 interface BadgeHeaderProps {
   badges: BadgeState[]
@@ -44,7 +51,6 @@ export const BadgeHeader: React.FC<BadgeHeaderProps> = ({ badges }) => {
   })
 
   const earnedBadges = allBadges.filter(badge => badge.earned)
-  const currentStageType = calculateCurrentStage(earnedBadges.length)
   const stageConfig = PERSONA_STAGES.find(s => {
     if (earnedBadges.length >= 6) return s.id === 'mastered'
     if (earnedBadges.length >= 4) return s.id === 'adapting'

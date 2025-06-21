@@ -1038,6 +1038,9 @@ REQUIRED JSON FORMAT:
     const contextualTraits = this.extractTraitsFromConversation(state.lastUserMessage ? [{ role: 'user', content: state.lastUserMessage }] : [])
     const suggestedTraits = result.suggestedTraits || contextualTraits
 
+    // Calculate total fields after extraction
+    const totalFields = state.fieldsCollected + Object.keys(extractedData).length
+
     const finalResult = {
       response: responseText,
       extractedData,
@@ -1055,22 +1058,6 @@ REQUIRED JSON FORMAT:
           label: trait,
           selected: false
         })),
-      reflectionCheckpoint: Boolean(result.reflectionCheckpoint)
-    }
-
-    // Calculate total fields after extraction
-    const totalFields = state.fieldsCollected + Object.keys(extractedData).length
-
-    const finalResult = {
-      response: responseText,
-      extractedData,
-      personaMode: this.validatePersonaMode(result.personaMode),
-      isComplete: false, // Never complete until explicitly in completion stage
-      isFinished: false, // Never finished until explicitly in completion stage
-      confidenceScore: Math.min(0.95, totalFields / this.TARGET_FIELD_COUNT),
-      transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
-      showChipSelector: Boolean(result.showChipSelector),
-      suggestedTraits,
       reflectionCheckpoint: Boolean(result.reflectionCheckpoint)
     }
 
