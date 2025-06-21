@@ -186,39 +186,148 @@ export function getStageConfig(stage: PersonaStage) {
   return stageMap[stage] || stageMap['npc']
 }
 
-export function calculateBadgeProgress(config: Partial<AvatarPersonaConfig>): BadgeSystemState {
+// Enhanced badge validation interfaces
+export interface BadgeValidationResult {
+  hasData: boolean
+  hasContext: boolean
+  quality: boolean
+  confidence: number
+}
+
+export interface ConversationContext {
+  messages: string[]
+  messageCount: number
+  topics: string[]
+  extractionHistory: Partial<AvatarPersonaConfig>[]
+}
+
+// Enhanced validation functions
+export function validateExtractionForBadges(
+  extraction: Partial<AvatarPersonaConfig>,
+  conversationHistory: string[]
+): Record<string, BadgeValidationResult> {
+  const validations: Record<string, BadgeValidationResult> = {}
+
+  // Tone validation
+  validations.tone = {
+    hasData: !!(extraction.toneDescription && extraction.toneDescription.length > 20),
+    hasContext: conversationHistory.some(msg => 
+      /tone|style|voice|speak|sound|approach|manner|way/i.test(msg)
+    ),
+    quality: !!(extraction.toneDescription && extraction.toneDescription.length > 50 && 
+      /descriptive|adjective|specific/i.test(extraction.toneDescription.toLowerCase())),
+    confidence: 0
+  }
+
+  // Style validation
+  validations.style = {
+    hasData: !!(extraction.styleTags && extraction.styleTags.length >= 2),
+    hasContext: conversationHistory.some(msg =>
+      /style|tags|characteristics|personality|traits/i.test(msg)
+    ),
+    quality: !!(extraction.styleTags && extraction.styleTags.length >= 2 &&
+      extraction.styleTags.every(tag => tag.length > 2)),
+    confidence: 0
+  }
+
+  // Audience validation
+  validations.audience = {
+    hasData: !!(extraction.audienceDescription && extraction.audienceDescription.length > 20),
+    hasContext: conversationHistory.some(msg => 
+      /audience|followers|viewers|readers|customers|fans|people|users/i.test(msg)
+    ),
+    quality: !!(extraction.audienceDescription && extraction.audienceDescription.length > 30 &&
+      /(age|demographic|interest|who|what|type)/i.test(extraction.audienceDescription.toLowerCase())),
+    confidence: 0
+  }
+
+  // Objective validation
+  validations.objective = {
+    hasData: !!(extraction.avatarObjective && extraction.avatarObjective.length > 15),
+    hasContext: conversationHistory.some(msg =>
+      /goal|objective|purpose|want|help|do|achieve|accomplish/i.test(msg)
+    ),
+    quality: !!(extraction.avatarObjective && extraction.avatarObjective.length > 25 &&
+      /(help|support|provide|assist|enable|create)/i.test(extraction.avatarObjective.toLowerCase())),
+    confidence: 0
+  }
+
+  // Boundaries validation
+  validations.boundaries = {
+    hasData: !!(extraction.boundaries && extraction.boundaries.length > 15),
+    hasContext: conversationHistory.some(msg =>
+      /boundaries|limits|won't|shouldn't|avoid|not|restrict|don't/i.test(msg)
+    ),
+    quality: !!(extraction.boundaries && extraction.boundaries.length > 25 &&
+      /(not|avoid|won't|shouldn't|never|don't)/i.test(extraction.boundaries.toLowerCase())),
+    confidence: 0
+  }
+
+  // Communication preferences validation
+  validations.communication = {
+    hasData: !!(extraction.communicationPrefs && extraction.communicationPrefs.length > 15),
+    hasContext: conversationHistory.some(msg =>
+      /communicate|talk|respond|reply|format|length|detail|formal|casual/i.test(msg)
+    ),
+    quality: !!(extraction.communicationPrefs && extraction.communicationPrefs.length > 25 &&
+      /(formal|casual|detailed|brief|concise|verbose|structured)/i.test(extraction.communicationPrefs.toLowerCase())),
+    confidence: 0
+  }
+
+  // Calculate confidence scores
+  for (const [key, validation] of Object.entries(validations)) {
+    let confidence = 0
+    if (validation.hasData) confidence += 0.4
+    if (validation.hasContext) confidence += 0.3
+    if (validation.quality) confidence += 0.3
+    validation.confidence = confidence
+  }
+
+  return validations
+}
+
+export function calculateBadgeProgress(
+  config: Partial<AvatarPersonaConfig>, 
+  conversationHistory: string[] = []
+): BadgeSystemState {
+  const validations = validateExtractionForBadges(config, conversationHistory)
+  
   const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
     let earned = false
-    const value = config[badgeConfig.category]
+    const validation = validations[badgeConfig.id]
     
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[BADGE-CHECK] Category: ${badgeConfig.category}, Value:`, value, `Threshold: ${badgeConfig.threshold}`)
+      console.log(`[BADGE-CHECK] Enhanced validation for ${badgeConfig.id}:`, validation)
     }
     
-    switch (badgeConfig.category) {
-      case 'toneDescription':
-        earned = Boolean(config.toneDescription && typeof config.toneDescription === 'string' && config.toneDescription.trim().length > 0)
-        break
-      case 'styleTags':
-        earned = Boolean(config.styleTags && Array.isArray(config.styleTags) && config.styleTags.length >= badgeConfig.threshold)
-        break
-      case 'audienceDescription':
-        earned = Boolean(config.audienceDescription && typeof config.audienceDescription === 'string' && config.audienceDescription.trim().length > 0)
-        break
-      case 'avatarObjective':
-        earned = Boolean(config.avatarObjective && typeof config.avatarObjective === 'string' && config.avatarObjective.trim().length > 0)
-        break
-      case 'boundaries':
-        earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 0)
-        break
-      case 'communicationPrefs':
-        earned = Boolean(config.communicationPrefs && typeof config.communicationPrefs === 'string' && config.communicationPrefs.trim().length > 0)
-        break
-      default:
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[BADGE-CHECK] Default false for:`, value)
-        }
-        earned = false
+    // Enhanced earning criteria: requires data + context + minimum quality
+    if (validation) {
+      earned = validation.hasData && validation.hasContext && validation.confidence >= 0.7
+    } else {
+      // Fallback to original logic for unhandled categories
+      const value = config[badgeConfig.category]
+      switch (badgeConfig.category) {
+        case 'toneDescription':
+          earned = Boolean(config.toneDescription && typeof config.toneDescription === 'string' && config.toneDescription.trim().length > 0)
+          break
+        case 'styleTags':
+          earned = Boolean(config.styleTags && Array.isArray(config.styleTags) && config.styleTags.length >= badgeConfig.threshold)
+          break
+        case 'audienceDescription':
+          earned = Boolean(config.audienceDescription && typeof config.audienceDescription === 'string' && config.audienceDescription.trim().length > 0)
+          break
+        case 'avatarObjective':
+          earned = Boolean(config.avatarObjective && typeof config.avatarObjective === 'string' && config.avatarObjective.trim().length > 0)
+          break
+        case 'boundaries':
+          earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 0)
+          break
+        case 'communicationPrefs':
+          earned = Boolean(config.communicationPrefs && typeof config.communicationPrefs === 'string' && config.communicationPrefs.trim().length > 0)
+          break
+        default:
+          earned = false
+      }
     }
     
     return {

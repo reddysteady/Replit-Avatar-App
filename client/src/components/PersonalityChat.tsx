@@ -322,7 +322,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       // Update state manager with extraction result  
       const updatedState = stateManager.updateFromExtraction(
         aiResponse as ExtractionResult,
-        newMessages.length + 1
+        newMessages.length + 1,
+        userMessage
       )
       setChatState(updatedState)
 

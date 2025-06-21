@@ -52,6 +52,11 @@ export interface PersonaChatState {
   sessionLimit: number
   stageQuestionCount: number
 
+  // Enhanced conversation tracking
+  conversationHistory: string[]
+  extractionHistory: Partial<AvatarPersonaConfig>[]
+  qualityMetrics: Record<string, number>
+
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>
 }
@@ -91,14 +96,32 @@ export class PersonaChatStateManager {
       currentSessionQuestions: 0,
       sessionLimit: 2,
       stageQuestionCount: 0,
+      conversationHistory: [],
+      extractionHistory: [],
+      qualityMetrics: {},
       extractedConfig: {}
     }
   }
 
-  updateFromExtraction(result: ExtractionResult, newMessageCount: number): PersonaChatState {
+  updateFromExtraction(result: ExtractionResult, newMessageCount: number, userMessage?: string): PersonaChatState {
     const previousFieldCount = this.state.fieldsCollected
     const mergedConfig = { ...this.state.extractedConfig, ...result.extractedData }
     const newFieldCount = countValidFields(mergedConfig)
+
+    // Update conversation tracking
+    if (userMessage) {
+      this.state.conversationHistory.push(userMessage)
+      // Keep last 20 messages for context analysis
+      if (this.state.conversationHistory.length > 20) {
+        this.state.conversationHistory = this.state.conversationHistory.slice(-20)
+      }
+    }
+
+    // Track extraction history for quality analysis
+    this.state.extractionHistory.push(mergedConfig)
+    if (this.state.extractionHistory.length > 10) {
+      this.state.extractionHistory = this.state.extractionHistory.slice(-10)
+    }
 
     // Persist state to prevent accidental resets
     const persistedState = { ...this.state }
@@ -116,9 +139,9 @@ export class PersonaChatStateManager {
     this.state.extractedConfig = mergedConfig
     this.state.progressPercentage = calculateProgress(mergedConfig)
 
-    // Update badge system
+    // Update badge system with conversation context
     const previousBadgeState = this.state.badgeSystem
-    this.state.badgeSystem = calculateBadgeProgress(mergedConfig)
+    this.state.badgeSystem = calculateBadgeProgress(mergedConfig, this.state.conversationHistory)
 
     // Check for newly earned badges (prevent duplicates)
     const newlyEarnedBadges = this.state.badgeSystem.badges.filter(badge => 
@@ -172,6 +195,93 @@ export class PersonaChatStateManager {
     this.state.readyForCompletion = uiState.showCompleteButton
 
     return { ...this.state }
+  }
+
+
+
+  // Enhanced quality analysis methods
+  analyzeConversationQuality(): Record<string, number> {
+    const metrics: Record<string, number> = {}
+    
+    // Conversation depth analysis
+    metrics.averageMessageLength = this.state.conversationHistory.reduce((sum, msg) => sum + msg.length, 0) / 
+      Math.max(this.state.conversationHistory.length, 1)
+    
+    // Topic coverage analysis
+    const topicKeywords = {
+      tone: /tone|style|voice|speak|sound|approach|manner/i,
+      audience: /audience|followers|viewers|readers|customers|fans|people/i,
+      goals: /goal|objective|purpose|want|help|achieve|accomplish/i,
+      boundaries: /boundaries|limits|won't|shouldn't|avoid|not|restrict/i,
+      communication: /communicate|talk|respond|reply|format|length|detail/i
+    }
+    
+    for (const [topic, regex] of Object.entries(topicKeywords)) {
+      const coverage = this.state.conversationHistory.filter(msg => regex.test(msg)).length / 
+        Math.max(this.state.conversationHistory.length, 1)
+      metrics[`${topic}Coverage`] = coverage
+    }
+    
+    // Parameter evolution tracking
+    if (this.state.extractionHistory.length > 1) {
+      const recent = this.state.extractionHistory[this.state.extractionHistory.length - 1]
+      const previous = this.state.extractionHistory[this.state.extractionHistory.length - 2]
+      
+      let improvements = 0
+      let totalFields = 0
+      
+      for (const field of ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'communicationPrefs']) {
+        totalFields++
+        const recentValue = recent[field] || ''
+        const previousValue = previous[field] || ''
+        
+        if (typeof recentValue === 'string' && typeof previousValue === 'string') {
+          if (recentValue.length > previousValue.length) {
+            improvements++
+          }
+        }
+      }
+      
+      metrics.parameterImprovement = improvements / totalFields
+    }
+    
+    this.state.qualityMetrics = metrics
+    return metrics
+  }
+
+  getConversationInsights(): {
+    needsMoreContext: string[]
+    strongAreas: string[]
+    suggestedQuestions: string[]
+  } {
+    const metrics = this.analyzeConversationQuality()
+    const needsMoreContext: string[] = []
+    const strongAreas: string[] = []
+    const suggestedQuestions: string[] = []
+    
+    // Analyze coverage gaps
+    if (metrics.toneCoverage < 0.3) {
+      needsMoreContext.push('tone')
+      suggestedQuestions.push("How would you describe your communication style?")
+    } else {
+      strongAreas.push('tone')
+    }
+    
+    if (metrics.audienceCoverage < 0.3) {
+      needsMoreContext.push('audience')
+      suggestedQuestions.push("Who are you primarily trying to reach with your content?")
+    } else {
+      strongAreas.push('audience')
+    }
+    
+    if (metrics.goalsCoverage < 0.3) {
+      needsMoreContext.push('goals')
+      suggestedQuestions.push("What's the main goal you want to achieve with your avatar?")
+    } else {
+      strongAreas.push('goals')
+    }
+    
+    return { needsMoreContext, strongAreas, suggestedQuestions }
   }
 
   completeChipValidation(): PersonaChatState {
@@ -235,6 +345,12 @@ export class PersonaChatStateManager {
       personaStage: 'npc',
       stageJustAdvanced: false,
       previousPersonaStage: undefined,
+      currentSessionQuestions: 0,
+      sessionLimit: 2,
+      stageQuestionCount: 0,
+      conversationHistory: [],
+      extractionHistory: [],
+      qualityMetrics: {},
       extractedConfig: {}
     }
   }
