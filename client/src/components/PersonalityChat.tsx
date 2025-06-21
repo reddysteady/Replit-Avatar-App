@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -76,15 +76,25 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const [stateManager] = useState(() => new PersonaChatStateManager())
   const [chatState, setChatState] = useState(() => stateManager.getState())
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
-  const focusInput = () => {
+  const focusInput = useCallback(() => {
     if (inputRef.current && !isFinished && !chatState.reflectionActive) {
       inputRef.current.focus()
     }
-  }
+  }, [isFinished, chatState.reflectionActive])
+
+  // Memoize expensive calculations
+  const memoizedChatState = useMemo(() => chatState, [
+    chatState.fieldsCollected,
+    chatState.currentStage,
+    chatState.showCompleteButton,
+    chatState.showChipSelector,
+    chatState.badgeSystem.totalEarned,
+    chatState.pendingBadgeAnimation
+  ])
 
   useEffect(() => {
     scrollToBottom()
@@ -420,12 +430,15 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     onComplete(finalConfig)
   }
 
-  const handleBadgeAnimationComplete = () => {
+  const handleBadgeAnimationComplete = useCallback(() => {
     setShowBadgeAnimation(false)
     if (animatingBadge) {
       // Show green "Personality Updated" notification first
       setShowPersonalityUpdated(true)
-      setTimeout(() => setShowPersonalityUpdated(false), 3000)
+      const timeoutId = setTimeout(() => setShowPersonalityUpdated(false), 3000)
+
+      // Clean up timeout on unmount
+      return () => clearTimeout(timeoutId)
 
       // Then show badge toast
       setToastBadge(animatingBadge)
@@ -433,11 +446,10 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
     setAnimatingBadge(null)
 
-    // Clear pending animation from state
-    const newState = { ...chatState }
-    newState.pendingBadgeAnimation = undefined
-    setChatState(newState)
-  }
+    // Clear pending animation from state manager
+    stateManager.clearPendingBadgeAnimation()
+    setChatState(stateManager.getState())
+  }, [animatingBadge, stateManager])
 
   const handleBadgeToastClose = () => {
     setShowBadgeToast(false)

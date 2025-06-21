@@ -58,7 +58,7 @@ export const BADGE_CONFIGS: BadgeConfig[] = [
   },
   {
     id: 'communication',
-    category: 'communicationPrefs',
+    category: 'fallbackReply',
     threshold: 1,
     name: 'Communication Pro',
     description: 'Communication preferences set'
@@ -141,7 +141,7 @@ export function countValidFields(config: Partial<AvatarPersonaConfig>): number {
   if (config.audienceDescription && config.audienceDescription.length > 0) count++
   if (config.avatarObjective && config.avatarObjective.length > 0) count++
   if (config.boundaries && config.boundaries.length > 0) count++
-  if (config.communicationPrefs && config.communicationPrefs.length > 0) count++
+  if (config.fallbackReply && config.fallbackReply.length > 0) count++
   return count
 }
 

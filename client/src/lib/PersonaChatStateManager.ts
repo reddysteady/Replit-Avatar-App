@@ -108,7 +108,7 @@ export class PersonaChatStateManager {
     const mergedConfig = { ...this.state.extractedConfig, ...result.extractedData }
     const newFieldCount = countValidFields(mergedConfig)
 
-    // Update conversation tracking
+    // Update conversation tracking with bounds checking
     if (userMessage) {
       this.state.conversationHistory.push(userMessage)
       // Keep last 20 messages for context analysis
@@ -117,7 +117,7 @@ export class PersonaChatStateManager {
       }
     }
 
-    // Track extraction history for quality analysis
+    // Track extraction history for quality analysis with bounds checking
     this.state.extractionHistory.push(mergedConfig)
     if (this.state.extractionHistory.length > 10) {
       this.state.extractionHistory = this.state.extractionHistory.slice(-10)
@@ -148,16 +148,19 @@ export class PersonaChatStateManager {
       badge.earned && !previousBadgeState.badges.find(prev => prev.id === badge.id && prev.earned)
     )
 
-    // Only set pending animation if there's a genuinely new badge and no animation is already pending
+    // Improved badge animation management
     if (newlyEarnedBadges.length > 0 && !this.state.pendingBadgeAnimation) {
       // Find the first badge that hasn't had its animation played yet
       const unanimatedBadge = newlyEarnedBadges.find(badge => !badge.animationPlayed)
       if (unanimatedBadge) {
+        // Set pending animation and mark as animation played atomically
         this.state.pendingBadgeAnimation = unanimatedBadge.id
-        // Mark as animation played to prevent future duplicates
+        unanimatedBadge.animationPlayed = true
+        
+        // Update the badge state in the system
         const badgeIndex = this.state.badgeSystem.badges.findIndex(b => b.id === unanimatedBadge.id)
         if (badgeIndex >= 0) {
-          this.state.badgeSystem.badges[badgeIndex].animationPlayed = true
+          this.state.badgeSystem.badges[badgeIndex] = { ...unanimatedBadge }
         }
       }
     }
@@ -230,7 +233,7 @@ export class PersonaChatStateManager {
       let improvements = 0
       let totalFields = 0
       
-      for (const field of ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'communicationPrefs']) {
+      for (const field of ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply']) {
         totalFields++
         const recentValue = recent[field] || ''
         const previousValue = previous[field] || ''
