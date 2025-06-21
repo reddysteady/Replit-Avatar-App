@@ -570,6 +570,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                       initialTraits={suggestedTraits}
                       onConfirm={handleChipConfirmation}
                       className="max-w-full"
+                      includeAdjacent={true}
+                      includeAntonyms={chatState.personaStage === 'refinement'}
                     />
                   </div>
                 )}
