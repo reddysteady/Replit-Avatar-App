@@ -125,8 +125,18 @@ export class PersonaChatStateManager {
       badge.earned && !previousBadgeState.badges.find(prev => prev.id === badge.id && prev.earned)
     )
 
+    // Only set pending animation if there's a genuinely new badge and no animation is already pending
     if (newlyEarnedBadges.length > 0 && !this.state.pendingBadgeAnimation) {
-      this.state.pendingBadgeAnimation = newlyEarnedBadges[0].id
+      // Find the first badge that hasn't had its animation played yet
+      const unanimatedBadge = newlyEarnedBadges.find(badge => !badge.animationPlayed)
+      if (unanimatedBadge) {
+        this.state.pendingBadgeAnimation = unanimatedBadge.id
+        // Mark as animation played to prevent future duplicates
+        const badgeIndex = this.state.badgeSystem.badges.findIndex(b => b.id === unanimatedBadge.id)
+        if (badgeIndex >= 0) {
+          this.state.badgeSystem.badges[badgeIndex].animationPlayed = true
+        }
+      }
     }
 
     // Update persona stage progression
@@ -200,6 +210,10 @@ export class PersonaChatStateManager {
 
   getState(): PersonaChatState {
     return { ...this.state }
+  }
+
+  clearPendingBadgeAnimation(): void {
+    this.state.pendingBadgeAnimation = undefined
   }
 
   reset(): void {
