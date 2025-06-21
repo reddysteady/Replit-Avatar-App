@@ -1,4 +1,3 @@
-
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { 
   countValidFields, 
@@ -77,7 +76,7 @@ export class PersonaChatStateManager {
   constructor() {
     // Initialize with proper badge system
     const initialBadgeSystem = calculateBadgeProgress({})
-    
+
     this.state = {
       fieldsCollected: 0,
       messageCount: 0,
@@ -158,10 +157,10 @@ export class PersonaChatStateManager {
       if (unanimatedBadge) {
         // Create a new badge object to avoid mutation
         const updatedBadge = { ...unanimatedBadge, animationPlayed: true }
-        
+
         // Set pending animation
         this.state.pendingBadgeAnimation = updatedBadge.id
-        
+
         // Update the badge state in the system immutably
         const badgeIndex = this.state.badgeSystem.badges.findIndex(b => b.id === updatedBadge.id)
         if (badgeIndex >= 0) {
@@ -214,11 +213,11 @@ export class PersonaChatStateManager {
   // Enhanced quality analysis methods
   analyzeConversationQuality(): Record<string, number> {
     const metrics: Record<string, number> = {}
-    
+
     // Conversation depth analysis
     metrics.averageMessageLength = this.state.conversationHistory.reduce((sum, msg) => sum + msg.length, 0) / 
       Math.max(this.state.conversationHistory.length, 1)
-    
+
     // Topic coverage analysis
     const topicKeywords = {
       tone: /tone|style|voice|speak|sound|approach|manner/i,
@@ -227,36 +226,36 @@ export class PersonaChatStateManager {
       boundaries: /boundaries|limits|won't|shouldn't|avoid|not|restrict/i,
       communication: /communicate|talk|respond|reply|format|length|detail/i
     }
-    
+
     for (const [topic, regex] of Object.entries(topicKeywords)) {
       const coverage = this.state.conversationHistory.filter(msg => regex.test(msg)).length / 
         Math.max(this.state.conversationHistory.length, 1)
       metrics[`${topic}Coverage`] = coverage
     }
-    
+
     // Parameter evolution tracking
     if (this.state.extractionHistory.length > 1) {
       const recent = this.state.extractionHistory[this.state.extractionHistory.length - 1]
       const previous = this.state.extractionHistory[this.state.extractionHistory.length - 2]
-      
+
       let improvements = 0
       let totalFields = 0
-      
+
       for (const field of ['toneDescription', 'audienceDescription', 'avatarObjective', 'boundaries', 'fallbackReply']) {
         totalFields++
         const recentValue = recent[field] || ''
         const previousValue = previous[field] || ''
-        
+
         if (typeof recentValue === 'string' && typeof previousValue === 'string') {
           if (recentValue.length > previousValue.length) {
             improvements++
           }
         }
       }
-      
+
       metrics.parameterImprovement = improvements / totalFields
     }
-    
+
     this.state.qualityMetrics = metrics
     return metrics
   }
@@ -270,7 +269,7 @@ export class PersonaChatStateManager {
     const needsMoreContext: string[] = []
     const strongAreas: string[] = []
     const suggestedQuestions: string[] = []
-    
+
     // Analyze coverage gaps
     if (metrics.toneCoverage < 0.3) {
       needsMoreContext.push('tone')
@@ -278,21 +277,21 @@ export class PersonaChatStateManager {
     } else {
       strongAreas.push('tone')
     }
-    
+
     if (metrics.audienceCoverage < 0.3) {
       needsMoreContext.push('audience')
       suggestedQuestions.push("Who are you primarily trying to reach with your content?")
     } else {
       strongAreas.push('audience')
     }
-    
+
     if (metrics.goalsCoverage < 0.3) {
       needsMoreContext.push('goals')
       suggestedQuestions.push("What's the main goal you want to achieve with your avatar?")
     } else {
       strongAreas.push('goals')
     }
-    
+
     return { needsMoreContext, strongAreas, suggestedQuestions }
   }
 
@@ -322,7 +321,7 @@ export class PersonaChatStateManager {
 
   validateProgression(): boolean {
     const requirements = STAGE_REQUIREMENTS[this.state.currentStage]
-    
+
     return (
       this.state.fieldsCollected >= requirements.minFields &&
       this.state.messageCount >= requirements.minMessages &&
@@ -365,5 +364,22 @@ export class PersonaChatStateManager {
       qualityMetrics: {},
       extractedConfig: {}
     }
+  }
+
+  shouldShowChipSelector(): boolean {
+    // Show chip selector when we have collected enough fields and haven't validated recently
+    const hasEnoughFields = this.state.fieldsCollected >= 2;
+    const shouldTrigger = this.state.fieldsCollected % 2 === 0; // Every 2 fields
+    const notRecentlyValidated = !this.state.chipValidationComplete;
+
+    console.log('[CHIP-SELECTOR-CHECK]', {
+      fieldsCollected: this.state.fieldsCollected,
+      hasEnoughFields,
+      shouldTrigger,
+      notRecentlyValidated,
+      result: hasEnoughFields && shouldTrigger && notRecentlyValidated
+    });
+
+    return hasEnoughFields && shouldTrigger && notRecentlyValidated;
   }
 }

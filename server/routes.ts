@@ -708,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/threads/:id/status', async (req, res) => {
     try {
       const threadId = parseInt(req.params.id)
-      const { status } = req.body
+      const { status } } = req.body
 
       if (!status || !['active', 'archived', 'snoozed'].includes(status)) {
         return res.status(400).json({ message: 'Invalid status' })
@@ -787,8 +787,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/messages/:id', async (req, res) => {
     try {
       const messageId = parseInt(req.params.id)
-      const success =```python
- await storage.deleteMessage(messageId)
+      const success```python
+= await storage.deleteMessage(messageId)
       if (!success) {
         return res.status(404).json({ message: 'Message not found' })
       }
@@ -1698,7 +1698,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updates.aiSettings = {
             ...existingSettings.aiSettings,
             autoReplyInstagram: Boolean(enabled),
-          ```python
           }
         } else {          // Create aiSettings if it doesn't exist
           updates.aiSettings = {
@@ -2100,7 +2099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
       ]
 
-      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)])
 
       const fallbackResult = {
         response: randomFallback,
