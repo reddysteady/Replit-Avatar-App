@@ -831,20 +831,29 @@ export class AIService {
    * Determines the current conversation stage for Phase 1 simplified flow
    */
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
+    // Ensure we ask at least 4-6 questions before considering completion
+    const MIN_QUESTIONS_REQUIRED = 5
+    
     // Simple linear progression - never jump stages prematurely
     if (userMessages <= 1) return 'introduction'
 
-    // Show chip validation after every 2 parameters collected
-    if (fieldsCollected >= 2 && fieldsCollected % 2 === 0 && !confirmedTraits) {
+    // Don't show reflection checkpoints too early - need meaningful conversation first
+    if (userMessages >= 3 && fieldsCollected >= 3 && fieldsCollected % 3 === 0 && !confirmedTraits) {
       return 'reflection_checkpoint'
     }
 
-    // Only move to completion after ALL core parameters + chip validation
-    if (fieldsCollected >= this.TARGET_FIELD_COUNT && confirmedTraits) {
+    // Only move to completion after ALL requirements are met:
+    // 1. Minimum number of questions asked
+    // 2. All core parameters collected
+    // 3. User has confirmed traits through chip validation
+    if (userMessages >= MIN_QUESTIONS_REQUIRED && 
+        fieldsCollected >= this.TARGET_FIELD_COUNT && 
+        confirmedTraits && 
+        confirmedTraits.length > 0) {
       return 'completion'
     }
 
-    // Stay in core collection until requirements are met
+    // Stay in core collection until all requirements are met
     return 'core_collection'
   }
 
@@ -905,48 +914,50 @@ export class AIService {
       responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
     }
 
-    // Handle completion
+    // Handle completion - only when truly ready
     if (stage === 'completion') {
-      stageInstructions = 'COMPLETION: All parameters collected. Transition to persona preview mode.'
+      stageInstructions = 'COMPLETION: All parameters collected and validated. Provide a final summary and transition to persona preview mode.'
       responseFormat = '"isComplete": true, "isFinished": true,'
     }
 
     const targetParameters = this.getStageParameters(currentPersonaStage)
     const questionTypes = stageConfig.questionTypes || ['direct']
 
-    return `You are conducting stage-aware persona extraction following the 5-Stage Progression Framework.
+    return `You are conducting persona discovery through natural conversation. Your goal is to understand the user's communication style, audience, and goals through engaging dialogue.
+
+CONVERSATION FLOW RULES:
+- NEVER end conversations with generic statements like "Thank you for sharing that information!"
+- ALWAYS ask meaningful follow-up questions based on what the user shares
+- Build naturally on their responses to create a flowing conversation
+- Keep the conversation engaging and focused on learning about their personality
 
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
 
-STAGE CONFIGURATION:
-- Session Limit: Max ${sessionLimit} questions for this stage
-- Question Types: ${questionTypes.join(', ')}
-- Target Parameters: ${targetParameters.join(', ')}
-- Questions Asked: ${userMessageCount}
-- Fields Collected: ${fieldsCollected}
-- Missing Fields: ${missingFields.slice(0, 3).join(', ')}
+CONVERSATION STATE:
+- Questions Asked: ${userMessageCount} (minimum 5 required)
+- Information Gathered: ${fieldsCollected}/${this.TARGET_FIELD_COUNT} core areas
+- Missing Areas: ${missingFields.slice(0, 3).join(', ')}
 
-STAGE-SPECIFIC QUESTION GUIDELINES:
+CONVERSATION GUIDELINES:
 ${this.getStageQuestionGuidelines(currentPersonaStage)}
 
-RESPONSE REQUIREMENTS:
-- Must align with current persona stage (${currentPersonaStage})
-- Respect session limits (${sessionLimit} max questions)
-- Use appropriate question types for this stage
-- Build naturally on previous responses
-- Extract stage-appropriate parameters
+YOUR RESPONSE MUST:
+1. Acknowledge what they shared specifically
+2. Ask a meaningful follow-up question that builds on their response
+3. Focus on understanding their personality, communication style, or audience
+4. Keep the conversation natural and engaging
+5. NEVER use generic closing statements unless truly completing the conversation
 
 REQUIRED JSON FORMAT:
 {
-  "response": "Your stage-appropriate question",
-  "extractedData": {stage-appropriate fields only},
+  "response": "Your engaging follow-up question that builds on their response",
+  "extractedData": {relevant personality insights from their response},
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
-  "confidenceScore": ${Math.min(0.95, fieldsCollected / 6)},
+  "confidenceScore": ${Math.min(0.95, fieldsCollected / this.TARGET_FIELD_COUNT)},
   "currentPersonaStage": "${currentPersonaStage}",
-  "questionCount": ${userMessageCount},
-  "sessionLimit": ${sessionLimit}
+  "questionCount": ${userMessageCount}
 }`
   }
 
@@ -994,11 +1005,11 @@ REQUIRED JSON FORMAT:
    */
   private getStageQuestionGuidelines(stage: string): string {
     const guidelines = {
-      'npc': 'Ask simple, direct questions about avatar purpose and basic intent. Foundation building.',
-      'noob': 'Mix direct questions with examples. Focus on voice formation and basic personality.',
-      'pro': 'Use scenarios to explore boundaries and content safety. How they handle difficult situations.',
-      'hero': 'Reflective questions about audience and goals. What makes their voice distinctive.',
-      'legend': 'Advanced scenarios about edge cases and dynamic control. Master-level personality aspects.'
+      'npc': 'Ask about their main goals and what they want their AI to help with. Examples: "What are you building this avatar for?" "What kind of interactions do you want it to handle?"',
+      'noob': 'Explore their natural communication style and personality. Examples: "How do you usually respond to fans?" "What makes your communication unique?" "Give me an example of how you typically reply to questions."',
+      'pro': 'Understand their boundaries and content preferences. Examples: "What topics do you avoid discussing?" "How do you handle disagreements?" "What subjects are you most passionate about?"',
+      'hero': 'Discover their audience and deeper goals. Examples: "Who is your target audience?" "What impact do you want to have?" "What makes your perspective valuable?"',
+      'legend': 'Advanced personality nuances and edge cases. Examples: "How do you handle criticism?" "What are your non-negotiable values?" "How do you want to be remembered?"'
     }
     return guidelines[stage] || guidelines['npc']
   }
@@ -1045,8 +1056,8 @@ REQUIRED JSON FORMAT:
       response: responseText,
       extractedData,
       personaMode: this.validatePersonaMode(result.personaMode),
-      isComplete: false, // Never complete until explicitly in completion stage
-      isFinished: false, // Never finished until explicitly in completion stage
+      isComplete: false, // Never complete until all requirements met
+      isFinished: false, // Never finished until conversation is truly complete
       confidenceScore: Math.min(0.95, totalFields / this.TARGET_FIELD_COUNT),
       transitionMessage: this.generateTransitionMessage(result.personaMode, state.stage),
       showChipSelector: Boolean(result.showChipSelector),
