@@ -18,6 +18,14 @@ export interface CorePersonaContext {
   fallbackReply: string;
 }
 
+export interface BigFiveTraits {
+  openness: { score: number; confidence: number };
+  conscientiousness: { score: number; confidence: number };
+  extraversion: { score: number; confidence: number };
+  agreeableness: { score: number; confidence: number };
+  neuroticism: { score: number; confidence: number };
+}
+
 /**
  * Configuration describing an avatar's persona.
  * Updated for Phase 1 core implementation
@@ -66,6 +74,11 @@ export interface AvatarPersonaConfig {
    * Core persona context with structured tone profiles
    */
   corePersona?: CorePersonaContext
+  
+  /**
+   * Big Five personality assessment
+   */
+  bigFiveProfile?: BigFiveTraits
 }
 
 /**

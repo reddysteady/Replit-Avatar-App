@@ -367,19 +367,17 @@ export class PersonaChatStateManager {
   }
 
   shouldShowChipSelector(): boolean {
-    // Show chip selector when we have collected enough fields and haven't validated recently
-    const hasEnoughFields = this.state.fieldsCollected >= 2;
-    const shouldTrigger = this.state.fieldsCollected % 2 === 0; // Every 2 fields
-    const notRecentlyValidated = !this.state.chipValidationComplete;
+    const shouldShow = this.state.fieldsCollected >= 2 && 
+           !this.state.chipValidationComplete &&
+           this.state.fieldsCollected % 2 === 0; // Every 2 fields
 
-    console.log('[CHIP-SELECTOR-CHECK]', {
+    console.log('[CHIP-TRIGGER]', {
       fieldsCollected: this.state.fieldsCollected,
-      hasEnoughFields,
-      shouldTrigger,
-      notRecentlyValidated,
-      result: hasEnoughFields && shouldTrigger && notRecentlyValidated
+      chipValidationComplete: this.state.chipValidationComplete,
+      modCheck: this.state.fieldsCollected % 2 === 0,
+      shouldShow
     });
 
-    return hasEnoughFields && shouldTrigger && notRecentlyValidated;
+    return shouldShow;
   }
 }

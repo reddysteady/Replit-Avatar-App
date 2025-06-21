@@ -786,7 +786,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/messages/:id', async (req, res) => {
     try {
-      const messageId = parseInt(req.params.id)
+      const messageId = parseInt(req.params// The following code adds confidence scoring to the personality extraction process.
+      id)
       const success = await storage.deleteMessage(messageId)
       if (!success) {
         return res.status(404).json({ message: 'Message not found' })
