@@ -189,26 +189,36 @@ export function getStageConfig(stage: PersonaStage) {
 export function calculateBadgeProgress(config: Partial<AvatarPersonaConfig>): BadgeSystemState {
   const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
     let earned = false
+    const value = config[badgeConfig.category]
+    
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[BADGE-CHECK] Category: ${badgeConfig.category}, Value:`, value, `Threshold: ${badgeConfig.threshold}`)
+    }
     
     switch (badgeConfig.category) {
       case 'toneDescription':
-        earned = Boolean(config.toneDescription && config.toneDescription.length > 0)
+        earned = Boolean(config.toneDescription && typeof config.toneDescription === 'string' && config.toneDescription.trim().length > 0)
         break
       case 'styleTags':
-        earned = Boolean(config.styleTags && config.styleTags.length >= badgeConfig.threshold)
+        earned = Boolean(config.styleTags && Array.isArray(config.styleTags) && config.styleTags.length >= badgeConfig.threshold)
         break
       case 'audienceDescription':
-        earned = Boolean(config.audienceDescription && config.audienceDescription.length > 0)
+        earned = Boolean(config.audienceDescription && typeof config.audienceDescription === 'string' && config.audienceDescription.trim().length > 0)
         break
       case 'avatarObjective':
-        earned = Boolean(config.avatarObjective && config.avatarObjective.length > 0)
+        earned = Boolean(config.avatarObjective && typeof config.avatarObjective === 'string' && config.avatarObjective.trim().length > 0)
         break
       case 'boundaries':
-        earned = Boolean(config.boundaries && config.boundaries.length > 0)
+        earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 0)
         break
       case 'communicationPrefs':
-        earned = Boolean(config.communicationPrefs && config.communicationPrefs.length > 0)
+        earned = Boolean(config.communicationPrefs && typeof config.communicationPrefs === 'string' && config.communicationPrefs.trim().length > 0)
         break
+      default:
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[BADGE-CHECK] Default false for:`, value)
+        }
+        earned = false
     }
     
     return {
