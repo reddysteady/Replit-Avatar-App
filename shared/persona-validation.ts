@@ -291,15 +291,15 @@ export function calculateBadgeProgress(
   conversationHistory: string[] = []
 ): BadgeSystemState {
   const validations = validateExtractionForBadges(config, conversationHistory)
-  
+
   const badges: BadgeState[] = BADGE_CONFIGS.map(badgeConfig => {
     let earned = false
     const validation = validations[badgeConfig.id]
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log(`[BADGE-CHECK] Enhanced validation for ${badgeConfig.id}:`, validation)
     }
-    
+
     // Enhanced earning criteria: requires data + context + minimum quality
     if (validation) {
       earned = validation.hasData && validation.hasContext && validation.confidence >= 0.7
@@ -322,14 +322,14 @@ export function calculateBadgeProgress(
         case 'boundaries':
           earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 0)
           break
-        case 'communicationPrefs':
-          earned = Boolean(config.communicationPrefs && typeof config.communicationPrefs === 'string' && config.communicationPrefs.trim().length > 0)
+        case 'fallbackReply':
+          earned = Boolean(config.fallbackReply && typeof config.fallbackReply === 'string' && config.fallbackReply.trim().length > 0)
           break
         default:
           earned = false
       }
     }
-    
+
     return {
       id: badgeConfig.id,
       earned,
@@ -339,9 +339,9 @@ export function calculateBadgeProgress(
       threshold: badgeConfig.threshold
     }
   })
-  
+
   const totalEarned = badges.filter(b => b.earned).length
-  
+
   return {
     badges,
     totalEarned,

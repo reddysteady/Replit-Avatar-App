@@ -153,14 +153,20 @@ export class PersonaChatStateManager {
       // Find the first badge that hasn't had its animation played yet
       const unanimatedBadge = newlyEarnedBadges.find(badge => !badge.animationPlayed)
       if (unanimatedBadge) {
-        // Set pending animation and mark as animation played atomically
-        this.state.pendingBadgeAnimation = unanimatedBadge.id
-        unanimatedBadge.animationPlayed = true
+        // Create a new badge object to avoid mutation
+        const updatedBadge = { ...unanimatedBadge, animationPlayed: true }
         
-        // Update the badge state in the system
-        const badgeIndex = this.state.badgeSystem.badges.findIndex(b => b.id === unanimatedBadge.id)
+        // Set pending animation
+        this.state.pendingBadgeAnimation = updatedBadge.id
+        
+        // Update the badge state in the system immutably
+        const badgeIndex = this.state.badgeSystem.badges.findIndex(b => b.id === updatedBadge.id)
         if (badgeIndex >= 0) {
-          this.state.badgeSystem.badges[badgeIndex] = { ...unanimatedBadge }
+          this.state.badgeSystem.badges = [
+            ...this.state.badgeSystem.badges.slice(0, badgeIndex),
+            updatedBadge,
+            ...this.state.badgeSystem.badges.slice(badgeIndex + 1)
+          ]
         }
       }
     }
