@@ -787,7 +787,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/messages/:id', async (req, res) => {
     try {
       const messageId = parseInt(req.params.id)
-      const success = await storage.deleteMessage(messageId)
+      const success =```python
+ await storage.deleteMessage(messageId)
       if (!success) {
         return res.status(404).json({ message: 'Message not found' })
       }
@@ -1697,6 +1698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           updates.aiSettings = {
             ...existingSettings.aiSettings,
             autoReplyInstagram: Boolean(enabled),
+          ```python
           }
         } else {          // Create aiSettings if it doesn't exist
           updates.aiSettings = {

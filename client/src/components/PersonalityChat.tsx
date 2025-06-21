@@ -345,8 +345,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       // Handle UI updates based on new state
       if (updatedState.showChipSelector && aiResponse.suggestedTraits) {
-        // Only use AI-generated traits, not defaults
-        setSuggestedTraits(aiResponse.suggestedTraits)
+        // Use AI-generated traits with enhanced categorization
+        setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
+          ...trait,
+          type: trait.type || 'extracted' // Default to extracted if not specified
+        })))
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
