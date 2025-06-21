@@ -60,3 +60,4 @@ This command starts the Express server which:
 ## User Preferences
 - Non-technical user requiring simple explanations
 - Prefers working application over technical details
+- Agent should do a thorough code review prior to submitting code for review by the user
