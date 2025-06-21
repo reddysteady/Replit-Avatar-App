@@ -252,8 +252,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
 
           {/* Add Custom Trait Button */}
           <div className="flex flex-wrap gap-2">
-
-          {showAddInput ? (
+            {showAddInput ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -293,6 +292,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
               Add trait
             </motion.button>
           )}
+          </div>
         </div>
 
         <div className="flex justify-end pt-2">
