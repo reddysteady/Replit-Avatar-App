@@ -40,6 +40,9 @@ This command starts the Express server which:
 3. Handles both backend and frontend in a single process
 
 ## Recent Changes
+- 2025-06-21: Fixed duplicate AI message issue by implementing proper message deduplication and unique ID generation
+- 2025-06-21: Resolved badge notification timing problems - badges now only animate when genuinely earned
+- 2025-06-21: Enhanced badge animation tracking with animationPlayed flag to prevent duplicate notifications
 - 2025-06-19: Fixed critical syntax errors preventing application startup - app now running successfully on port 5000
 - 2025-06-19: Created missing persona-state-manager module with proper TypeScript interfaces
 - 2025-06-19: Fixed badge component export/import issues and corrected function signatures

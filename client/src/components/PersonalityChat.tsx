@@ -216,12 +216,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       )
       setChatState(updatedState)
 
-      // Handle badge animations
-      if (updatedState.pendingBadgeAnimation) {
+      // Handle badge animations - only for genuinely new badges
+      if (updatedState.pendingBadgeAnimation && 
+          updatedState.pendingBadgeAnimation !== chatState.pendingBadgeAnimation) {
         const badgeConfig = updatedState.badgeSystem.badges.find(b => b.id === updatedState.pendingBadgeAnimation)
-        if (badgeConfig) {
+        if (badgeConfig && !badgeConfig.animationPlayed) {
           setAnimatingBadge(badgeConfig)
           setShowBadgeAnimation(true)
+          setTimeout(() => stateManager.clearPendingBadgeAnimation(), 100)
         }
       }
 
@@ -297,7 +299,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       const aiResponse: PersonalityExtractionResponse = await response.json()
 
       const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         role: 'assistant',
         content: aiResponse.response,
         timestamp: new Date(),
@@ -305,10 +307,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         isSpecial: aiResponse.personaMode === 'persona_preview'
       }
 
-      const finalMessages = [...newMessages, aiMessage]
-      setMessages(finalMessages)
+      // Use functional update to prevent race conditions
+      setMessages(prev => {
+        // Prevent duplicate messages
+        const hasRecentDuplicate = prev.some(msg => 
+          msg.role === 'assistant' && 
+          msg.content === aiMessage.content &&
+          Math.abs(new Date(msg.timestamp).getTime() - aiMessage.timestamp.getTime()) < 2000
+        )
+        if (hasRecentDuplicate) return prev
+        return [...prev, aiMessage]
+      })
 
-      // Update state manager with extraction result
+      // Update state manager with extraction result  
       const updatedState = stateManager.updateFromExtraction(
         aiResponse as ExtractionResult,
         newMessages.length + 1
@@ -323,12 +334,15 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         badgeCount: updatedState.badgeSystem.totalEarned
       })
 
-      // Handle badge animations
-      if (updatedState.pendingBadgeAnimation) {
+      // Handle badge animations - only for genuinely new badges
+      if (updatedState.pendingBadgeAnimation && 
+          updatedState.pendingBadgeAnimation !== chatState.pendingBadgeAnimation) {
         const badgeConfig = updatedState.badgeSystem.badges.find(b => b.id === updatedState.pendingBadgeAnimation)
-        if (badgeConfig) {
+        if (badgeConfig && !badgeConfig.animationPlayed) {
           setAnimatingBadge(badgeConfig)
           setShowBadgeAnimation(true)
+          // Clear pending animation to prevent duplicates
+          setTimeout(() => stateManager.clearPendingBadgeAnimation(), 100)
         }
       }
 
