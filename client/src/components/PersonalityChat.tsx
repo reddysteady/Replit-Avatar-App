@@ -123,22 +123,19 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       setMessages([initialChatMessage])
       console.log('[PERSONALITY-STATE] Initial message set successfully')
 
-      // Update state manager with initial state
-      const newState = stateManager.getState().updateFromExtraction(
-        { extractedData: {} },
-        0
-      )
-      setChatState(newState)
+      // Update state manager with initial state - use proper initial state
+      const initialState = stateManager.getState()
+      setChatState(initialState)
       console.log('[PERSONALITY-STATE] State updated:', {
-        stage: newState.currentStage,
-        fieldsCollected: newState.fieldsCollected,
-        showChipSelector: newState.showChipSelector,
-        showCompleteButton: newState.showCompleteButton,
-        badgeCount: newState.badgeSystem.totalEarned
+        stage: initialState.currentStage,
+        fieldsCollected: initialState.fieldsCollected,
+        showChipSelector: initialState.showChipSelector,
+        showCompleteButton: initialState.showCompleteButton,
+        badgeCount: initialState.badgeSystem.totalEarned
       })
       setIsInitializing(false)
     }
-  }, [messages, stateManager])
+  }, [])
 
   const handleChipConfirmation = async (selectedTraits: PersonalityTrait[]) => {
     console.log('[PERSONALITY-STATE] Chip validation completed')

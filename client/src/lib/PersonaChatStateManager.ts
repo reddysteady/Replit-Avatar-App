@@ -75,6 +75,9 @@ export class PersonaChatStateManager {
   private state: PersonaChatState
 
   constructor() {
+    // Initialize with proper badge system
+    const initialBadgeSystem = calculateBadgeProgress({})
+    
     this.state = {
       fieldsCollected: 0,
       messageCount: 0,
@@ -88,7 +91,7 @@ export class PersonaChatStateManager {
       readyForCompletion: false,
       progressPercentage: 0,
       confidenceScore: 0,
-      badgeSystem: calculateBadgeProgress({}),
+      badgeSystem: initialBadgeSystem,
       pendingBadgeAnimation: undefined,
       personaStage: 'npc',
       stageJustAdvanced: false,
