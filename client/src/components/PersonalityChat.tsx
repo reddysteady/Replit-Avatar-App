@@ -1,7 +1,3 @@
-The code is modified to remove the initial AI question generation and start directly with asking the avatar's purpose.
-```
-
-```replit_final_file
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
