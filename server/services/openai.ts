@@ -554,6 +554,21 @@ export class AIService {
       // Generate contextual system prompt
       const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
 
+      // CRITICAL DEBUG: Log conversation content for trait extraction analysis
+      const userMessages = messages?.filter(m => m.role === 'user') || []
+      console.log('[TRAIT-EXTRACTION-DEBUG] Conversation analysis:', {
+        totalUserMessages: userMessages.length,
+        conversationKeywords: userMessages.join(' ').toLowerCase().split(' ').filter(w => 
+          ['humor', 'humorous', 'joke', 'funny', 'help', 'helpful', 'casual', 'formal', 'creative', 'analytical', 'style', 'communication'].includes(w)
+        ),
+        conversationSample: userMessages.slice(-3).map(msg => ({
+          content: msg.content,
+          length: msg.content.length,
+          hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional|style|communication/i.test(msg.content),
+          hasStyleWords: /style|approach|way|manner|method|communicate|talk|speak/i.test(msg.content)
+        }))
+      })
+
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-EXTRACT] Making OpenAI API call with prompt length:', systemPrompt.length)
       }
