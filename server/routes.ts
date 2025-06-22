@@ -1564,7 +1564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = 1
 
       // Use the OAuth service to exchange code for token
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/instagram/callback`
+      const redirectUri = req.protocol + '://' + req.get('host') + '/api/instagram/callback'
       const instagramAppId = process.env.INSTAGRAM_APP_ID || ''
       const instagramAppSecret = process.env.INSTAGRAM_APP_SECRET || ''
 
