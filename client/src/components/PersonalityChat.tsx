@@ -369,12 +369,25 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       }
 
       // Handle UI updates based on new state
-      if (updatedState.showChipSelector && aiResponse.suggestedTraits) {
-        // Use AI-generated traits with enhanced categorization
-        setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
-          ...trait,
-          type: trait.type || 'extracted' // Default to extracted if not specified
-        })))
+      if (updatedState.showChipSelector) {
+        console.log('[TRAIT-CLOUD] Should show trait cloud:', {
+          showChipSelector: updatedState.showChipSelector,
+          aiSuggestedTraits: aiResponse.suggestedTraits?.length || 0,
+          extractedConfig: updatedState.extractedConfig
+        })
+        
+        if (aiResponse.suggestedTraits) {
+          // Use AI-generated traits with enhanced categorization
+          setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
+            ...trait,
+            type: trait.type || 'extracted' // Default to extracted if not specified
+          })))
+        } else {
+          // Generate traits from extracted config if AI didn't provide any
+          const generatedTraits = generateTraitsFromExtractedConfig(updatedState.extractedConfig)
+          setSuggestedTraits(generatedTraits)
+          console.log('[TRAIT-CLOUD] Generated fallback traits:', generatedTraits)
+        }
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
@@ -774,6 +787,28 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+
+              {/* Debug: Manual trait cloud trigger for testing */}
+              {!chatState.showChipSelector && !isFinished && messages.length >= 4 && (
+                <Button 
+                  onClick={() => {
+                    console.log('[DEBUG] Manually triggering trait cloud')
+                    const newState = stateManager.getState()
+                    newState.showChipSelector = true
+                    newState.reflectionActive = true
+                    setChatState({...newState})
+                    
+                    // Generate traits from current state
+                    const generatedTraits = generateTraitsFromExtractedConfig(newState.extractedConfig)
+                    setSuggestedTraits(generatedTraits)
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  Debug: Test Trait Cloud
+                </Button>
+              )}
 
               {/* Complete Setup Button - controlled by state manager */}
               {chatState.showCompleteButton && (

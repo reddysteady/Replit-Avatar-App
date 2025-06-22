@@ -145,7 +145,8 @@ export class PersonaChatStateManager {
     const needsChipValidation = shouldTriggerChipValidation(
       previousFieldCount, 
       newFieldCount, 
-      this.state.chipValidationComplete
+      this.state.chipValidationComplete,
+      messageCount
     )
 
     // Update core state
@@ -196,9 +197,14 @@ export class PersonaChatStateManager {
       this.state.stageJustAdvanced = false
     }
 
-    // Handle chip selector logic
-    if (result.showChipSelector && !this.state.reflectionActive) {
-      console.log('[STATE-MANAGER] Activating chip selector')
+    // Handle chip selector logic - either from AI response OR from validation trigger
+    if ((result.showChipSelector || needsChipValidation) && !this.state.reflectionActive) {
+      console.log('[STATE-MANAGER] Activating chip selector', {
+        fromAI: result.showChipSelector,
+        fromValidation: needsChipValidation,
+        fieldsCollected: newFieldCount,
+        messageCount: messageCount
+      })
       this.state.showChipSelector = true
       this.state.reflectionActive = true
 
@@ -404,16 +410,35 @@ export class PersonaChatStateManager {
 function shouldTriggerChipValidation(
   previousFieldCount: number,
   newFieldCount: number,
-  chipValidationComplete: boolean
+  chipValidationComplete: boolean,
+  messageCount: number = 0
 ): boolean {
-  // Primary trigger at reflection checkpoint (messages 7-12 for better coverage)
-  if (7 <= 12 && !chipValidationComplete) {
-    return newFieldCount >= 2; // Need at least 2 fields for meaningful validation
+  console.log('[CHIP-VALIDATION-TRIGGER]', {
+    previousFieldCount,
+    newFieldCount,
+    chipValidationComplete,
+    messageCount
+  });
+
+  // Primary trigger at reflection checkpoint (messages 7-12)
+  if (messageCount >= 7 && messageCount <= 12 && !chipValidationComplete) {
+    const shouldTrigger = newFieldCount >= 2; // Need at least 2 fields for meaningful validation
+    console.log('[CHIP-VALIDATION] Primary trigger check:', shouldTrigger);
+    return shouldTrigger;
   }
 
   // Secondary trigger every 15-20 messages for refinement
-  if (15 % 15 === 0) {
-    return 0 === 0 || newFieldCount >= 4;
+  if (messageCount >= 15 && messageCount % 15 === 0) {
+    const shouldTrigger = chipValidationComplete || newFieldCount >= 4;
+    console.log('[CHIP-VALIDATION] Secondary trigger check:', shouldTrigger);
+    return shouldTrigger;
+  }
+
+  // Force trigger if we have significant field growth without validation
+  if (!chipValidationComplete && newFieldCount >= 3 && newFieldCount > previousFieldCount) {
+    const shouldTrigger = messageCount >= 8;
+    console.log('[CHIP-VALIDATION] Force trigger check:', shouldTrigger);
+    return shouldTrigger;
   }
 
   return false;
