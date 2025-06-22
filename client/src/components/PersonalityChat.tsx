@@ -393,26 +393,60 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           conversationHistory: messages.filter(m => m.role === 'user').map(m => m.content.substring(0, 50))
         })
 
+        // CRITICAL: Enhanced trait processing with comprehensive logging
+        console.log('[TRAIT-EXTRACTION-DEBUG] Processing AI response:', {
+          hasAITraits: !!(aiResponse.suggestedTraits?.length),
+          aiTraitsCount: aiResponse.suggestedTraits?.length || 0,
+          aiTraits: aiResponse.suggestedTraits,
+          showChipSelector: aiResponse.showChipSelector,
+          extractedData: aiResponse.extractedData,
+          conversationStage: updatedState.stage
+        })
+        
         if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
           // Use AI-generated traits with enhanced categorization
-          console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', aiResponse.suggestedTraits)
-          setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
+          console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', {
+            total: aiResponse.suggestedTraits.length,
+            extracted: aiResponse.suggestedTraits.filter(t => t.type === 'extracted').length,
+            adjacent: aiResponse.suggestedTraits.filter(t => t.type === 'adjacent').length,
+            antonym: aiResponse.suggestedTraits.filter(t => t.type === 'antonym').length,
+            traits: aiResponse.suggestedTraits.map(t => ({ label: t.label, type: t.type }))
+          })
+          
+          const processedTraits = aiResponse.suggestedTraits.map(trait => ({
             ...trait,
+            id: trait.id || `ai-${Date.now()}-${Math.random()}`,
             type: trait.type || 'extracted' // Default to extracted if not specified
-          })))
+          }))
+          
+          setSuggestedTraits(processedTraits)
+          console.log('[TRAIT-EXTRACTION-DEBUG] AI traits successfully processed and set')
+          
         } else {
-          // Generate traits from extracted config if AI didn't provide any
-          console.log('[TRAIT-EXTRACTION-DEBUG] AI provided no traits, generating from config:', updatedState.extractedConfig)
-          console.log('[TRAIT-EXTRACTION-DEBUG] About to call generateTraitsFromExtractedConfig with conversation context')
+          // Generate traits from conversation analysis if AI didn't provide any
+          console.log('[TRAIT-EXTRACTION-DEBUG] AI provided no traits, falling back to conversation analysis')
+          console.log('[TRAIT-EXTRACTION-DEBUG] Conversation context for analysis:', {
+            messageCount: messages.length,
+            userMessages: messages.filter(m => m.role === 'user').length,
+            extractedConfig: updatedState.extractedConfig,
+            lastUserMessage: messages.filter(m => m.role === 'user').slice(-1)[0]?.content?.substring(0, 100)
+          })
+          
           const generatedTraits = generateTraitsFromExtractedConfig(updatedState.extractedConfig)
-          setSuggestedTraits(generatedTraits)
-          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits count:', generatedTraits.length)
-          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits breakdown:', {
+          
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits:', {
+            total: generatedTraits.length,
             extracted: generatedTraits.filter(t => t.type === 'extracted').length,
             adjacent: generatedTraits.filter(t => t.type === 'adjacent').length,
             antonym: generatedTraits.filter(t => t.type === 'antonym').length,
-            total: generatedTraits.length
+            traits: generatedTraits.map(t => ({ label: t.label, type: t.type }))
           })
+          
+          if (generatedTraits.length === 0) {
+            console.error('[TRAIT-EXTRACTION-DEBUG] CRITICAL: No traits generated from any method!')
+          }
+          
+          setSuggestedTraits(generatedTraits)
         }
       } else {
         console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud NOT triggered:', {

@@ -847,7 +847,7 @@ export class AIService {
   private extractMentionedTopics(messages: any[]): string[] {
     const topics: string[] = []
     const text = messages.map(m => m.content).join(' ').toLowerCase()
-    
+
     // Simple keyword extraction - could be enhanced with NLP
     const keywords = text.match(/\b\w{4,}\b/g) || []
     return [...new Set(keywords)].slice(0, 5)
@@ -869,9 +869,9 @@ export class AIService {
   private detectUserTone(messages: any[]): string {
     const userMessages = messages.filter(m => m.role === 'user')
     if (userMessages.length === 0) return 'neutral'
-    
+
     const text = userMessages.map(m => m.content).join(' ').toLowerCase()
-    
+
     if (text.includes('!') || text.includes('awesome') || text.includes('great')) {
       return 'enthusiastic'
     } else if (text.includes('help') || text.includes('please') || text.includes('thanks')) {
@@ -879,8 +879,79 @@ export class AIService {
     } else if (text.length > 200) {
       return 'detailed'
     }
-    
+
     return 'casual'
+  }
+
+  /**
+   * Build personality extraction prompt
+   */
+  private buildPersonalityExtractionPrompt(conversationState: any): string {
+    const { stage, userMessageCount, missingFields, conversationTone, conversationContext } = conversationState
+
+    let basePrompt = `You are a personality extraction specialist helping someone set up their AI avatar. `
+
+    if (stage === 'reflection_checkpoint') {
+      basePrompt += `
+CRITICAL: This is a reflection checkpoint at ${userMessageCount} messages. You MUST:
+1. Analyze the conversation for specific personality traits
+2. Extract 3-5 conversation-specific traits based on user's communication style
+3. Set "showChipSelector": true
+4. Generate "suggestedTraits" array with proper categorization
+5. Include adjacent traits (related) and antonym traits (opposite)
+
+CONVERSATION ANALYSIS INSTRUCTIONS:
+- Look for communication style indicators (humor, helpfulness, formality, creativity)
+- Identify tone patterns (enthusiastic, detailed, concise, friendly)
+- Extract specific traits mentioned or demonstrated by the user
+- Generate related traits that complement the extracted ones
+- Include opposite traits for personality boundaries
+
+TRAIT CATEGORIES:
+- "extracted": Traits directly observed from conversation (2-3 traits)
+- "adjacent": Related/similar traits user might like (2-3 traits)  
+- "antonym": Opposite traits for contrast (2-3 traits)
+
+Extract personality traits from the conversation and respond with:
+{
+  "response": "I've learned quite a bit about your communication style! Let me show you what I've picked up from our conversation...",
+  "extractedData": {
+    "toneDescription": "specific tone extracted from user messages",
+    "styleTags": ["extracted_trait1", "extracted_trait2", "extracted_trait3"],
+    "communicationStyle": "specific communication style observed"
+  },
+  "showChipSelector": true,
+  "suggestedTraits": [
+    {"id": "ext1", "label": "ExtractedTrait1", "selected": true, "type": "extracted"},
+    {"id": "ext2", "label": "ExtractedTrait2", "selected": true, "type": "extracted"}, 
+    {"id": "ext3", "label": "ExtractedTrait3", "selected": true, "type": "extracted"},
+    {"id": "adj1", "label": "RelatedTrait1", "selected": false, "type": "adjacent"},
+    {"id": "adj2", "label": "RelatedTrait2", "selected": false, "type": "adjacent"},
+    {"id": "ant1", "label": "OppositeTrait1", "selected": false, "type": "antonym"},
+    {"id": "ant2", "label": "OppositeTrait2", "selected": false, "type": "antonym"}
+  ],
+  "personaMode": "blended",
+  "isComplete": false,
+  "confidenceScore": 0.8,
+  "reflectionCheckpoint": true
+}`
+    } else {
+      basePrompt += `Continue the natural conversation to extract: ${missingFields.join(', ')}.
+
+Match their ${conversationTone} tone and ask follow-up questions naturally.
+
+Respond with JSON:
+{
+  "response": "natural conversational response",
+  "extractedData": {},
+  "showChipSelector": false,
+  "personaMode": "guidance",
+  "isComplete": false,
+  "confidenceScore": 0.5
+}`
+    }
+
+    return basePrompt
   }
 }
 
