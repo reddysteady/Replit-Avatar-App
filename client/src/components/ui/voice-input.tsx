@@ -46,6 +46,7 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const finalTranscriptRef = useRef('')
+  const isFirstTranscriptRef = useRef(true)
 
   useEffect(() => {
     // Check if speech recognition is supported
@@ -62,12 +63,14 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
       recognition.onstart = () => {
         setIsRecording(true)
         setError(null)
-        finalTranscriptRef.current = ''
+        // Don't reset finalTranscriptRef - keep accumulating
+        isFirstTranscriptRef.current = true
       }
 
       recognition.onend = () => {
         setIsRecording(false)
         setError(null)
+        isFirstTranscriptRef.current = false
       }
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -83,9 +86,40 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
           }
         }
 
-        // Update final transcript accumulator
+        // Helper function to replace spoken punctuation with actual punctuation
+        const replacePunctuation = (text: string): string => {
+          return text
+            .replace(/\bcomma\b/gi, ',')
+            .replace(/\bperiod\b/gi, '.')
+            .replace(/\bdot\b/gi, '.')
+            .replace(/\bquestion mark\b/gi, '?')
+            .replace(/\bexclamation mark\b/gi, '!')
+            .replace(/\bexclamation point\b/gi, '!')
+            .replace(/\bsemicolon\b/gi, ';')
+            .replace(/\bcolon\b/gi, ':')
+            .replace(/\bdash\b/gi, '-')
+            .replace(/\bhyphen\b/gi, '-')
+            .replace(/\bapostrophe\b/gi, "'")
+            .replace(/\bquote\b/gi, '"')
+            .replace(/\bquotation mark\b/gi, '"')
+            .replace(/\bopen parenthesis\b/gi, '(')
+            .replace(/\bclose parenthesis\b/gi, ')')
+            .replace(/\bopen bracket\b/gi, '[')
+            .replace(/\bclose bracket\b/gi, ']')
+        }
+
+        // Update final transcript accumulator with proper spacing and punctuation
         if (finalTranscript) {
-          finalTranscriptRef.current += finalTranscript
+          const processedTranscript = replacePunctuation(finalTranscript)
+          
+          // Add space before new content if this isn't the first transcript and we have existing content
+          if (!isFirstTranscriptRef.current && finalTranscriptRef.current.length > 0) {
+            finalTranscriptRef.current += ' ' + processedTranscript
+          } else {
+            finalTranscriptRef.current += processedTranscript
+          }
+          
+          isFirstTranscriptRef.current = false
           onTranscript(finalTranscriptRef.current.trim())
         }
       }
@@ -140,6 +174,12 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
     } else {
       startRecording()
     }
+  }
+
+  // Method to reset transcript (useful for external callers)
+  const resetTranscript = () => {
+    finalTranscriptRef.current = ''
+    isFirstTranscriptRef.current = true
   }
 
   // Effect to handle external stop requests

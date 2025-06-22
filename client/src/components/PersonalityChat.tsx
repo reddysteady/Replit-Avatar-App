@@ -313,8 +313,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       console.log('[PERSONALITY-STATE] State updated:', {
         stage: updatedState.currentStage,
         fieldsCollected: updatedState.fieldsCollected,
-        showChipSelector: updatedState.showChipSelector,
-        showCompleteButton: updatedState.showCompleteButton,
+        showChipSelector: updatedState.showCompleteButton,
         badgeCount: updatedState.badgeSystem.totalEarned
       })
 
@@ -611,14 +610,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 )}
 
                 {chatState.showChipSelector && (
-                  
+
                   <PersonalityTraitCloud
                     initialTraits={generateTraitsFromExtractedConfig(chatState.extractedConfig)}
                     onConfirm={handleChipConfirmation}
                     showAntonyms={true}
                     className="max-w-full"
                   />
-                
+
                 )}
               </div>
               <div ref={messagesEndRef} />
@@ -645,7 +644,10 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 />
                 <div className="relative">
                   <VoiceInput
-                    onTranscript={handleVoiceTranscript}
+                    onTranscript={(text) => {
+                      // Always use the accumulated text from voice input
+                      setInputValue(text)
+                    }}
                     disabled={isLoading || isFinished || chatState.reflectionActive}
                   />
                 </div>
