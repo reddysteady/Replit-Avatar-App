@@ -859,6 +859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
     }
   })
+
   // Instagram webhook endpoint
   app.get('/webhook/instagram', async (req, res) => {
     // Webhook verification (required by Facebook)
@@ -886,7 +887,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Instagram webhook POST endpoint to receive DM notifications
   app.post('/webhook/instagram', async (req, res) => {
     try {
-      log(`Received Instagram webhook: ${JSON.stringify(req.body, null, 2)}`)
+      log('Received Instagram webhook: ' + JSON.stringify(req.body, null, 2))
 
       // Respond to Facebook/Instagram immediately (required)
       res.status(200).send('EVENT_RECEIVED')
