@@ -566,8 +566,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isReply: !!m.parentMessageId,
             hasReplies: childrenMap.has(m.id),
             timestamp: m.timestamp,
-          })),
-        ),
+          }))
+        )
       )
 
       // Make sure all messages have parentMessageId explicitly set as a number or null
@@ -786,8 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
-  app.delete('/api/messages/:id', async (req, res) =>```tool_code
-{
+  app.delete('/api/messages/:id', async (req, res) => {
     try {
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
@@ -2228,7 +2227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message, messageCount = 1 } = req.body
       const userId = 1 // Default user for now
-      const sessionId = req.headers['x-session-id'] as string || ('session-' + Date.now())
+      const sessionId = req.headers['x-session-id'] as string || 'session-' + Date.now()
 
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'Message is required' })
