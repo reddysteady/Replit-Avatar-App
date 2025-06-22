@@ -117,10 +117,11 @@ export function createExpandedTraits(
 
   console.log('[TRAIT-EXPANSION] createExpandedTraits called with:', {
     initialTraitsCount: initialTraits.length,
-    initialTraits: initialTraits.map(t => ({ label: t.label, type: t.type })),
+    initialTraits: initialTraits.map(t => ({ label: t.label, type: t.type, selected: t.selected })),
     includeAdjacent,
     includeAntonyms,
-    conversationHistoryLength: conversationHistory.length
+    conversationHistoryLength: conversationHistory.length,
+    conversationSample: conversationHistory.slice(0, 2).map(msg => msg.substring(0, 50))
   })
 
   // Ensure initial traits have proper type

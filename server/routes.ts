@@ -785,8 +785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
-  app<replit_final_file>
-.delete('/api/messages/:id', async (req, res) => {
+  app.delete('/api/messages/:id', async (req, res) => {
     try {
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
@@ -1319,7 +1318,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const startTime = Date.now()
 
     try {
-      const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
+    const { messages, currentConfig, confirmedTraits, sessionId } = req.body
+    console.log('[PERSONALITY-EXTRACT] Received request:', {
+      messageCount: messages?.length,
+      hasCurrentConfig: !!currentConfig,
+      currentConfigKeys: currentConfig ? Object.keys(currentConfig) : [],
+      currentConfig: currentConfig,
+      confirmedTraits: confirmedTraits?.length || 0,
+      lastUserMessage: messages?.filter(m => m.role === 'user')?.slice(-1)?.[0]?.content?.substring(0, 100)
+    })
+
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array is required' })
+    }
 
       // Handle session state for Phase 1
       let session = null
@@ -1676,7 +1687,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         aiSettings: z
           .object({
             temperature: z.number().min(0).max(1).optional(),
-            maxResponseLength: z.number().min(50).max(2000).optional(),
+            maxResponseLength: z.number().min(50).max(200).optional(),
             model: z.string().optional(),
             autoReplyInstagram: z.boolean().optional(),
             autoReplyYoutube: z.boolean().optional(),

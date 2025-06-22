@@ -281,6 +281,17 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       const aiResponse: PersonalityExtractionResponse = await response.json()
 
+      // CRITICAL DEBUG: Log AI response trait extraction
+      console.log('[TRAIT-EXTRACTION-DEBUG] AI Response received:', {
+        hasExtractedData: !!aiResponse.extractedData,
+        extractedDataKeys: aiResponse.extractedData ? Object.keys(aiResponse.extractedData) : [],
+        hasSuggestedTraits: !!aiResponse.suggestedTraits,
+        suggestedTraitsCount: aiResponse.suggestedTraits?.length || 0,
+        suggestedTraits: aiResponse.suggestedTraits,
+        showChipSelector: aiResponse.showChipSelector,
+        responseLength: aiResponse.response.length
+      })
+
       const aiMessage: ChatMessage = {
         id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         role: 'assistant',
@@ -370,23 +381,28 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       // Handle UI updates based on new state
       if (updatedState.showChipSelector) {
-        console.log('[TRAIT-CLOUD] Should show trait cloud:', {
+        console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud triggered:', {
           showChipSelector: updatedState.showChipSelector,
           aiSuggestedTraits: aiResponse.suggestedTraits?.length || 0,
-          extractedConfig: updatedState.extractedConfig
+          aiSuggestedTraitsDetail: aiResponse.suggestedTraits,
+          extractedConfigKeys: Object.keys(updatedState.extractedConfig),
+          extractedConfig: updatedState.extractedConfig,
+          messageCount: newMessages.length + 1
         })
         
-        if (aiResponse.suggestedTraits) {
+        if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
           // Use AI-generated traits with enhanced categorization
+          console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', aiResponse.suggestedTraits)
           setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
             ...trait,
             type: trait.type || 'extracted' // Default to extracted if not specified
           })))
         } else {
           // Generate traits from extracted config if AI didn't provide any
+          console.log('[TRAIT-EXTRACTION-DEBUG] AI provided no traits, generating from config:', updatedState.extractedConfig)
           const generatedTraits = generateTraitsFromExtractedConfig(updatedState.extractedConfig)
           setSuggestedTraits(generatedTraits)
-          console.log('[TRAIT-CLOUD] Generated fallback traits:', generatedTraits)
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits:', generatedTraits)
         }
       }
 
