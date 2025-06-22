@@ -62,7 +62,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   // Badge animation states
   const [showBadgeAnimation, setShowBadgeAnimation] = useState(false)
-  const [animatingBadge, setAnimatingBadge = useState<any>(null)
+  const [animatingBadge, setAnimatingBadge] = useState<any>(null)
   const [showBadgeToast, setShowBadgeToast] = useState(false)
   const [toastBadge, setToastBadge] = useState<any>(null)
   const [showSpecialAnimation, setShowSpecialAnimation] = useState(false)
