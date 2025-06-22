@@ -29,6 +29,7 @@ import AISettingsPage from '@/pages/settings/AISettingsPage'
 import AutomationPage from '@/pages/settings/AutomationPage'
 import NotificationSettings from '@/pages/settings/NotificationSettings'
 import APIKeysPage from '@/pages/settings/APIKeysPage'
+import ChatLogsPage from '@/pages/settings/ChatLogsPage'
 
 import DesktopHeader from '@/components/layout/DesktopHeader'
 
@@ -116,6 +117,7 @@ function AppLayout() {
           <Route path="/testing" element={<Testing />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/settings/chat-logs" element={<ChatLogsPage />} />
         </Routes>
       </div>
     </div>

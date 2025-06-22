@@ -36,6 +36,7 @@ import type { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { oauthService } from './services/oauth'
 import { log } from './logger'
 import { personaStateManager } from './persona-state-manager'
+import { chatLogger } from './services/chatLogger'
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Threaded messages API endpoint with recursive SQL
@@ -1197,6 +1198,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'My content creation philosophy centers on providing value first, monetization second',
         ]
 
+  // Chat logging endpoints for review and enhancement
+  app.get('/api/chat-logs', async (req, res) => {
+    try {
+      const userId = parseInt(req.query.userId as string) || 1
+      const limit = parseInt(req.query.limit as string) || 100
+      const sessionId = req.query.sessionId as string
+
+      let logs
+      if (sessionId) {
+        logs = await chatLogger.getSessionHistory(sessionId)
+      } else {
+        logs = await chatLogger.getChatHistory(userId, limit)
+      }
+
+      res.json({ logs, total: logs.length })
+    } catch (error: any) {
+      console.error('Error retrieving chat logs:', error)
+      res.status(500).json({ error: 'Failed to retrieve chat logs' })
+    }
+  })
+
+  // Export chat logs as JSON for analysis
+  app.get('/api/chat-logs/export', async (req, res) => {
+    try {
+      const userId = parseInt(req.query.userId as string) || 1
+      const logs = await chatLogger.getChatHistory(userId, 1000)
+      
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        userId,
+        totalLogs: logs.length,
+        logs: logs.map(log => ({
+          timestamp: log.timestamp,
+          type: log.messageType,
+          content: log.content,
+          metadata: log.metadata
+        }))
+      }
+
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Disposition', `attachment; filename="chat-logs-${userId}-${Date.now()}.json"`)
+      res.json(exportData)
+    } catch (error: any) {
+      console.error('Error exporting chat logs:', error)
+      res.status(500).json({ error: 'Failed to export chat logs' })
+    }
+  })
+
+
         // For real implementation:
         // try {
         //   contextSnippets = await contentService.retrieveRelevantContent(
@@ -2032,6 +2082,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sessionId: req.body.sessionId
     })
 
+    const startTime = Date.now()
+    
     try {
       const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
 
@@ -2080,6 +2132,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           showChipSelector: result.showChipSelector,
           fallbackUsed: result.fallbackUsed
         })
+      }
+
+      // Log the conversation for review and enhancement
+      const responseTime = Date.now() - startTime
+      const lastUserMessage = messages?.filter(m => m.role === 'user')?.pop()?.content || ''
+      
+      if (lastUserMessage) {
+        await chatLogger.logPersonalityExtraction(
+          1, // MVP: assume user ID 1
+          lastUserMessage,
+          result,
+          sessionId,
+          responseTime
+        )
       }
 
       res.json(result)
