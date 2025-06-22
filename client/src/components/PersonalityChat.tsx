@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { AvatarPersonaConfig } from '@/types/AvatarPersonaConfig'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog'
 import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
+import VoiceInput from './ui/voice-input'
 import { motion } from 'framer-motion'
 import { PersonaChatStateManager, ExtractionResult } from '../lib/PersonaChatStateManager'
 import BadgeHeader from './ui/badge-header'
@@ -386,6 +387,16 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
   }
 
+  const handleVoiceTranscript = (transcript: string) => {
+    if (transcript.trim()) {
+      setInputValue(transcript)
+      // Auto-focus input after transcript is received
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
+    }
+  }
+
   const handleComplete = () => {
     // Ensure we have a complete config before completing
     const finalConfig: AvatarPersonaConfig = {
@@ -601,6 +612,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   disabled={isLoading || isFinished || chatState.reflectionActive}
                   className={`flex-1 ${isFinished || chatState.reflectionActive ? 'bg-gray-100 text-gray-500' : ''}`}
                 />
+                <div className="relative">
+                  <VoiceInput
+                    onTranscript={handleVoiceTranscript}
+                    disabled={isLoading || isFinished || chatState.reflectionActive}
+                  />
+                </div>
                 <Button 
                   onClick={handleSendMessage} 
                   disabled={!inputValue.trim() || isLoading || isFinished || chatState.reflectionActive}
