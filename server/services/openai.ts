@@ -53,12 +53,12 @@ interface DetectSensitiveResult {
 
 // Shared validation logic
 const CORE_PERSONA_FIELDS = [
-  'toneDescription',
-  'audienceDescription',
   'avatarObjective',
+  'audienceDescription', 
+  'toneDescription',
+  'styleTags',
   'boundaries',
   'communicationPrefs',
-  'fallbackReply',
 ] as const;
 
 function countValidFields(config: Partial<AvatarPersonaConfig>): number {
@@ -1023,7 +1023,7 @@ TRAIT EXTRACTION REQUIREMENTS:
 - Include traits in "suggestedTraits" field as an array of strings
 - Focus on adjectives that describe their personality, tone, or approach
 - Extract styleTags as an array of single-word descriptors (e.g., ["friendly", "casual", "professional"])
-- Extract communicationStyle preferences (e.g., "concise", "detailed", "conversational")
+- Extract communicationPrefs as an array of communication preferences (e.g., ["concise", "detailed", "conversational"])
 
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
@@ -1049,7 +1049,7 @@ REQUIRED JSON FORMAT:
   "extractedData": {
     "toneDescription": "single comprehensive tone description",
     "styleTags": ["tag1", "tag2", "tag3"],
-    "communicationStyle": "communication preference description",
+    "communicationPrefs": ["pref1", "pref2", "pref3"],
     "audienceDescription": "audience details if mentioned",
     "avatarObjective": "goals if mentioned",
     "boundaries": "boundaries if mentioned"
@@ -1245,8 +1245,8 @@ REQUIRED JSON FORMAT:
     })
 
     // Enhanced debug logging for key fields
-    if (cleaned.communicationStyle) {
-      console.log('[COMMUNICATION-DEBUG] Extracted communicationStyle:', cleaned.communicationStyle)
+    if (cleaned.communicationPrefs) {
+      console.log('[COMMUNICATION-DEBUG] Extracted communicationPrefs:', cleaned.communicationPrefs)
     }
 
     return cleaned

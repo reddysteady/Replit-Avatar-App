@@ -30,10 +30,10 @@ interface BadgeHeaderProps {
 }
 
 const iconMap = {
+  avatarObjective: Target,
+  audienceDescription: Users,
   toneDescription: MessageCircle,
   styleTags: Sparkles,
-  audienceDescription: Users,
-  avatarObjective: Target,
   boundaries: Shield,
   communicationPrefs: MessageSquare,
 }
@@ -133,10 +133,10 @@ export const BadgeHeader: React.FC<BadgeHeaderProps> = ({ badges }) => {
                 >
                   <IconComponent size={12} />
                   <span className="font-medium">
+                    {badge.id === 'objective' && 'Goal Setter'}
+                    {badge.id === 'audience' && 'Audience Expert'}
                     {badge.id === 'tone' && 'Tone Master'}
                     {badge.id === 'style' && 'Style Curator'}
-                    {badge.id === 'audience' && 'Audience Expert'}
-                    {badge.id === 'objective' && 'Goal Setter'}
                     {badge.id === 'boundaries' && 'Boundary Keeper'}
                     {badge.id === 'communication' && 'Communication Pro'}
                   </span>

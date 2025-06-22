@@ -8,10 +8,7 @@ export interface CorePersonaContext {
     whenTeaching: string;
     whenChallenged: string;
   };
-  communicationPrefs: {
-    verbosity: 'concise' | 'detailed' | 'balanced';
-    formality: 'formal' | 'casual' | 'mixed';
-  };
+  communicationPrefs: string[];
   boundaries: string[];
   audienceDescription: string;
   avatarObjective: string[];
@@ -66,10 +63,7 @@ export interface AvatarPersonaConfig {
   /**
    * Communication preferences for tone and style.
    */
-  communicationPrefs?: {
-    verbosity: 'concise' | 'detailed' | 'balanced'
-    formality: 'formal' | 'casual' | 'mixed'
-  }
+  communicationPrefs?: string[]
   /**
    * Core persona context with structured tone profiles
    */

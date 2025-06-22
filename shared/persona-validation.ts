@@ -263,12 +263,13 @@ export function validateExtractionForBadges(
 
   // Communication preferences validation
   validations.communication = {
-    hasData: !!(extraction.communicationPrefs && extraction.communicationPrefs.length > 15),
+    hasData: !!(extraction.communicationPrefs && Array.isArray(extraction.communicationPrefs) && extraction.communicationPrefs.length > 0),
     hasContext: conversationHistory.some(msg =>
       /communicate|talk|respond|reply|format|length|detail|formal|casual/i.test(msg)
     ),
-    quality: !!(extraction.communicationPrefs && extraction.communicationPrefs.length > 25 &&
-      /(formal|casual|detailed|brief|concise|verbose|structured)/i.test(extraction.communicationPrefs.toLowerCase())),
+    quality: !!(extraction.communicationPrefs && Array.isArray(extraction.communicationPrefs) && 
+      extraction.communicationPrefs.length >= 2 &&
+      extraction.communicationPrefs.some(pref => /(formal|casual|detailed|brief|concise|verbose|structured)/i.test(pref))),
     confidence: 0
   }
 

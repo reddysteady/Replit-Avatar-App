@@ -49,6 +49,20 @@ export interface BadgeConfig {
 
 export const BADGE_CONFIGS: BadgeConfig[] = [
   {
+    id: 'objective',
+    category: 'avatarObjective',
+    threshold: 1,
+    name: 'Goal Setter',
+    description: 'Set avatar objectives'
+  },
+  {
+    id: 'audience',
+    category: 'audienceDescription',
+    threshold: 1,
+    name: 'Audience Expert',
+    description: 'Described target audience'
+  },
+  {
     id: 'tone',
     category: 'toneDescription',
     threshold: 1,
@@ -63,20 +77,6 @@ export const BADGE_CONFIGS: BadgeConfig[] = [
     description: 'Selected style tags'
   },
   {
-    id: 'audience',
-    category: 'audienceDescription',
-    threshold: 1,
-    name: 'Audience Expert',
-    description: 'Described target audience'
-  },
-  {
-    id: 'objective',
-    category: 'avatarObjective',
-    threshold: 1,
-    name: 'Goal Setter',
-    description: 'Set avatar objectives'
-  },
-  {
     id: 'boundaries',
     category: 'boundaries',
     threshold: 1,
@@ -88,6 +88,6 @@ export const BADGE_CONFIGS: BadgeConfig[] = [
     category: 'communicationPrefs',
     threshold: 1,
     name: 'Communication Pro',
-    description: 'Communication preferences set'
+    description: 'Communication preferences'
   }
 ]
