@@ -1269,7 +1269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const startTime = Date.now()
 
-      const result = await aiService.extractPersonalityAndRespond(messages, currentConfig, initialMessage, confirmedTraits)
+      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig, initialMessage, confirmedTraits)
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
       const userMessages = messages?.filter(m => m.role === 'user') || []
