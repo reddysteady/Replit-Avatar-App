@@ -201,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages.push({
             source,
             content,
-            externalId: `test-${source}-${Date.now()}-${i}`,
+            externalId: 'test-' + source + '-' + Date.now() + '-' + i,
             senderId,
             senderName,
             senderAvatar: avatar,
@@ -336,9 +336,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         // See CHANGELOG.md for 2025-06-16 [Fixed]
-        const senderId = `${faker.internet.userName().toLowerCase()}.${faker.string.nanoid(6)}`
+        const senderId = faker.internet.userName().toLowerCase() + '.' + faker.string.nanoid(6)
         const senderName = faker.person.fullName()
-        const senderAvatar = `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`
+        const senderAvatar = 'https://images.unsplash.com/photo-' + (1500000000000 + Math.floor(Math.random() * 1000)) + '?w=64&h=64&fit=crop&crop=face'
 
         const thread = await storage.findOrCreateThreadByParticipant(
           1,
@@ -351,7 +351,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const message = await storage.addMessageToThread(thread.id, {
           source,
           content: faker.lorem.sentence(),
-          externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${i}`,
+          externalId: 'faker-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + i,
           senderId,
           senderName,
           senderAvatar,
@@ -409,18 +409,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           : undefined
 
       const messageContent =
-        content ?? `Hi ${thread.participantName}, this is a test message.`
+        content ?? ('Hi ' + thread.participantName + ', this is a test message.')
 
       // Ensure no id field is present in the message data
       const messageData = {
         source: thread.source || 'instagram',
         content: messageContent,
-        externalId: `faker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        externalId: 'faker-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
         senderId: thread.externalParticipantId,
         senderName: thread.participantName,
         senderAvatar:
           thread.participantAvatar ||
-          `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 1000)}?w=64&h=64&fit=crop&crop=face`,
+          'https://images.unsplash.com/photo-' + (1500000000000 + Math.floor(Math.random() * 1000)) + '?w=64&h=64&fit=crop&crop=face',
         timestamp: new Date(),
         status: 'new',
         isHighIntent: false,
@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.addMessageToThread(threadId, {
           source: 'instagram',
           content: aiReplyContent,
-          externalId: `auto-${Date.now()}`,
+          externalId: 'auto-' + Date.now(),
           senderId: '0',
           senderName: 'Auto-Reply Bot',
           senderAvatar: undefined,
@@ -1058,7 +1058,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (aiError: any) {
         console.error('Error generating AI reply:', aiError.message)
         return res.status(500).json({
-          message: `Failed to generate AI reply: ${aiError.message}`,
+          message: 'Failed to generate AI reply: ' + aiError.message,
           fallback: true,
         })
       }
@@ -1585,8 +1585,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           <html>
             <body>
               <script>
-                window.opener.postMessage({ type: 'INSTAGRAM_AUTH_SUCCESS' }, '*');
-                window.close();
+                if (window.opener) {
+                  window.opener.postMessage('INSTAGRAM_AUTH_SUCCESS', '*');
+                  window.close();
+                }
               </script>
               <p>Authentication successful! You can close this window.</p>
             </body>
@@ -1594,7 +1596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `
 
         return res.send(html)
-      } else{
+      } else {
         return res.redirect('/?error=instagram_auth_failed')
       }
     } catch (error: any) {
