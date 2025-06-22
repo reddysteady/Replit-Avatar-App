@@ -473,7 +473,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   // Helper function to generate enhanced traits with proper categorization
   const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
     console.log('[TRAIT-DEBUG] generateTraitsFromExtractedConfig called with:', config)
-    
+
     const baseTraits: PersonalityTrait[] = [];
 
     // Extract core traits from style tags (limit to 3-4 core traits)
@@ -495,7 +495,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         .split(/[,\s]+/)
         .filter(word => word.length > 3 && /^[a-zA-Z]+$/.test(word))
         .slice(0, 3);
-      
+
       toneWords.forEach((word, index) => {
         baseTraits.push({
           id: `tone-${index}`,
@@ -512,9 +512,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       const conversationHistory = messages
         .filter(msg => msg.role === 'user')
         .map(msg => msg.content);
-      
+
       const conversationText = conversationHistory.join(' ').toLowerCase();
-      
+
       // Analyze conversation for trait hints
       if (conversationText.includes('humor') || conversationText.includes('joke') || conversationText.includes('fun')) {
         baseTraits.push({ id: 'conv-1', label: 'Humorous', selected: true, type: 'extracted' });
@@ -525,7 +525,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       if (conversationText.includes('casual') || conversationText.includes('relax') || conversationText.includes('chill')) {
         baseTraits.push({ id: 'conv-3', label: 'Casual', selected: true, type: 'extracted' });
       }
-      
+
       console.log('[TRAIT-DEBUG] Added conversation-based traits:', baseTraits)
     }
 
@@ -659,24 +659,24 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     initialTraits={(() => {
                       console.log('[TRAIT-DEBUG] Generating traits, extracted config:', chatState.extractedConfig)
                       console.log('[TRAIT-DEBUG] Suggested traits:', suggestedTraits)
-                      
+
                       // Priority order: suggestedTraits > chatState traits > generated traits > fallback
                       if (suggestedTraits?.length > 0) {
                         console.log('[TRAIT-DEBUG] Using suggested traits:', suggestedTraits)
                         return suggestedTraits
                       }
-                      
+
                       if (chatState.chipSelectorTraits?.length > 0) {
                         console.log('[TRAIT-DEBUG] Using state manager traits:', chatState.chipSelectorTraits)
                         return chatState.chipSelectorTraits
                       }
-                      
+
                       const generatedTraits = generateTraitsFromExtractedConfig(chatState.extractedConfig)
                       if (generatedTraits.length > 0) {
                         console.log('[TRAIT-DEBUG] Using generated traits:', generatedTraits)
                         return generatedTraits
                       }
-                      
+
                       // Fallback traits if everything else fails
                       const fallbackTraits = [
                         { id: 'fallback-1', label: 'Friendly', selected: true, type: 'extracted' as const },
