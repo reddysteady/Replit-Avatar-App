@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -21,17 +20,23 @@ interface PersonalityTraitCloudProps {
   initialTraits?: PersonalityTrait[]
   onConfirm?: (selectedTraits: PersonalityTrait[]) => void
   className?: string
+  showAntonyms?: boolean
 }
 
 const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
   initialTraits = [],
   onConfirm,
   className,
+  showAntonyms = true,
 }) => {
   const [traits, setTraits] = useState<PersonalityTrait[]>(initialTraits)
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [newTraitInput, setNewTraitInput] = useState("")
+  const [newTraitInput, setNewTraitInput] = useState('')
   const [showAddInput, setShowAddInput] = useState(false)
+
+  // Categorize traits by type
+  const extractedTraits = traits.filter(trait => trait.type === 'extracted')
+  const adjacentTraits = traits.filter(trait => trait.type === 'adjacent')
+  const antonymTraits = traits.filter(trait => trait.type === 'antonym')
 
   const toggleTrait = (id: string) => {
     setTraits(prev => 
@@ -121,16 +126,13 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-3">
-          {/* Extracted Traits */}
+        {/* From our conversation */}
+        {extractedTraits.length > 0 && (
           <div>
-            <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              From our conversation
-            </div>
+            <h4 className="text-xs font-medium text-gray-600 mb-2">From our conversation</h4>
             <div className="flex flex-wrap gap-2">
               <AnimatePresence>
-                {traits.filter(t => !t.category || t.category === 'extracted').map((trait) => (
+                {extractedTraits.map((trait) => (
                   <motion.button
                     key={trait.id}
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -163,98 +165,125 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
               </AnimatePresence>
             </div>
           </div>
+        )}
 
-          {/* Adjacent/Related Traits */}
-          {traits.some(t => t.category === 'adjacent') && (
-            <div>
-              <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                Related traits you might like
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <AnimatePresence>
-                  {traits.filter(t => t.category === 'adjacent').map((trait) => (
-                    <motion.button
-                      key={trait.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleTrait(trait.id)}
-                      className={cn(
-                        "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                        trait.selected
-                          ? "bg-green-100 text-green-800 border border-green-300"
-                          : "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
-                      )}
-                    >
-                      {trait.label}
-                      {trait.selected && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeTrait(trait.id)
-                          }}
-                          className="ml-1 hover:bg-green-200 rounded-full p-0.5 transition-colors"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
-                    </motion.button>
-                  ))}
-                </AnimatePresence>
-              </div>
+        {/* Related traits you might like */}
+        {adjacentTraits.length > 0 && (
+          <div>
+            <h4 className="text-xs font-medium text-gray-600 mb-2">Related traits you might like</h4>
+            <div className="flex flex-wrap gap-2">
+              <AnimatePresence>
+                {adjacentTraits.map((trait) => (
+                  <motion.button
+                    key={trait.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => toggleTrait(trait.id)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                      trait.selected
+                        ? "bg-green-100 text-green-800 border border-green-300"
+                        : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100"
+                    )}
+                  >
+                    {trait.label}
+                    {trait.selected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeTrait(trait.id)
+                        }}
+                        className="ml-1 hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </motion.button>
+                ))}
+              </AnimatePresence>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Antonym Traits */}
-          {traits.some(t => t.category === 'antonym') && (
-            <div>
-              <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
-                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                Opposite traits (for contrast)
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <AnimatePresence>
-                  {traits.filter(t => t.category === 'antonym').map((trait) => (
-                    <motion.button
-                      key={trait.id}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleTrait(trait.id)}
-                      className={cn(
-                        "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
-                        trait.selected
-                          ? "bg-orange-100 text-orange-800 border border-orange-300"
-                          : "bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100"
-                      )}
-                    >
-                      {trait.label}
-                      {trait.selected && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            removeTrait(trait.id)
-                          }}
-                          className="ml-1 hover:bg-orange-200 rounded-full p-0.5 transition-colors"
-                        >
-                          <X size={12} />
-                        </button>
-                      )}
-                    </motion.button>
-                  ))}
-                </AnimatePresence>
-              </div>
+        {/* Traits you aren't */}
+        {showAntonyms && antonymTraits.length > 0 && (
+          <div>
+            <h4 className="text-xs font-medium text-gray-600 mb-2">Traits you aren't</h4>
+            <div className="flex flex-wrap gap-2">
+              <AnimatePresence>
+                {antonymTraits.map((trait) => (
+                  <motion.button
+                    key={trait.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => toggleTrait(trait.id)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                      trait.selected
+                        ? "bg-red-100 text-red-800 border border-red-300"
+                        : "bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100"
+                    )}
+                  >
+                    {trait.label}
+                    {trait.selected && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeTrait(trait.id)
+                        }}
+                        className="ml-1 hover:bg-red-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </motion.button>
+                ))}
+              </AnimatePresence>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Add Custom Trait Button */}
-          <div className="flex flex-wrap gap-2">
-            {showAddInput ? (
+        {/* Add new trait section */}
+        <div className="flex flex-wrap gap-2">
+          <AnimatePresence>
+            {traits.filter(trait => !['extracted', 'adjacent', 'antonym'].includes(trait.type || '')).map((trait) => (
+              <motion.button
+                key={trait.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleTrait(trait.id)}
+                className={cn(
+                  "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
+                  trait.selected
+                    ? "bg-gray-200 text-gray-800 border border-gray-300"
+                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                )}
+              >
+                {trait.label}
+                {trait.selected && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removeTrait(trait.id)
+                    }}
+                    className="ml-1 hover:bg-gray-300 rounded-full p-0.5 transition-colors"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </motion.button>
+            ))}
+          </AnimatePresence>
+          {showAddInput ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -294,7 +323,6 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
               Add trait
             </motion.button>
           )}
-          </div>
         </div>
 
         <div className="flex justify-end pt-2">

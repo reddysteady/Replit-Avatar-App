@@ -587,17 +587,18 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     <PersonalityTraitCloud
                       initialTraits={createExpandedTraits(
                         suggestedTraits.length > 0 ? suggestedTraits : [
-                          { id: '1', label: 'Friendly', selected: true },
-                          { id: '2', label: 'Humorous', selected: true },
-                          { id: '3', label: 'Engaging', selected: true }
+                          { id: '1', label: 'Friendly', selected: true, type: 'extracted' },
+                          { id: '2', label: 'Humorous', selected: true, type: 'extracted' },
+                          { id: '3', label: 'Engaging', selected: true, type: 'extracted' }
                         ],
                         messages.map(m => m.content),
                         {
                           includeAdjacent: true,
-                          includeAntonyms: chatState.personaStage === 'refinement'
+                          includeAntonyms: true
                         }
                       )}
                       onConfirm={handleChipConfirmation}
+                      showAntonyms={true}
                       className="max-w-full"
                     />
                   </div>
