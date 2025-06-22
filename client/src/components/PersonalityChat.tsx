@@ -319,8 +319,23 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       console.log('[PERSONALITY-STATE] State updated:', {
         stage: updatedState.currentStage,
         fieldsCollected: updatedState.fieldsCollected,
-        showChipSelector: updatedState.showCompleteButton,
-        badgeCount: updatedState.badgeSystem.totalEarned
+        showChipSelector: updatedState.showChipSelector,
+        showCompleteButton: updatedState.showCompleteButton,
+        badgeCount: updatedState.badgeSystem.totalEarned,
+        extractedConfig: updatedState.extractedConfig,
+        messageCount: updatedState.messageCount
+      })
+
+      // Debug badge validation
+      console.log('[BADGE-DEBUG] Badge system state:', {
+        badges: updatedState.badgeSystem.badges.map(b => ({
+          id: b.id,
+          category: b.category,
+          earned: b.earned,
+          threshold: b.threshold
+        })),
+        extractedConfigKeys: Object.keys(updatedState.extractedConfig),
+        extractedConfigValues: updatedState.extractedConfig
       })
 
       // Handle badge animations - only for genuinely new badges
@@ -677,18 +692,42 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                         return generatedTraits
                       }
 
-                      // Fallback traits if everything else fails
-                      const fallbackTraits = [
-                        { id: 'fallback-1', label: 'Friendly', selected: true, type: 'extracted' as const },
-                        { id: 'fallback-2', label: 'Helpful', selected: true, type: 'extracted' as const },
-                        { id: 'fallback-3', label: 'Conversational', selected: true, type: 'extracted' as const },
-                        { id: 'fallback-4', label: 'Engaging', selected: false, type: 'adjacent' as const },
-                        { id: 'fallback-5', label: 'Approachable', selected: false, type: 'adjacent' as const },
-                        { id: 'fallback-6', label: 'Distant', selected: false, type: 'antonym' as const },
-                        { id: 'fallback-7', label: 'Formal', selected: false, type: 'antonym' as const }
+                      // Enhanced fallback traits based on conversation
+                      const conversationKeywords = messages
+                        .filter(msg => msg.role === 'user')
+                        .map(msg => msg.content.toLowerCase())
+                        .join(' ')
+
+                      const detectedTraits = []
+                      if (conversationKeywords.includes('humor') || conversationKeywords.includes('joke') || conversationKeywords.includes('fun')) {
+                        detectedTraits.push({ id: 'detected-1', label: 'Humorous', selected: true, type: 'extracted' as const })
+                      }
+                      if (conversationKeywords.includes('help') || conversationKeywords.includes('assist') || conversationKeywords.includes('support')) {
+                        detectedTraits.push({ id: 'detected-2', label: 'Helpful', selected: true, type: 'extracted' as const })
+                      }
+                      if (conversationKeywords.includes('casual') || conversationKeywords.includes('relax') || conversationKeywords.includes('chill')) {
+                        detectedTraits.push({ id: 'detected-3', label: 'Casual', selected: true, type: 'extracted' as const })
+                      }
+
+                      // Add default traits if none detected
+                      if (detectedTraits.length === 0) {
+                        detectedTraits.push(
+                          { id: 'default-1', label: 'Friendly', selected: true, type: 'extracted' as const },
+                          { id: 'default-2', label: 'Engaging', selected: true, type: 'extracted' as const }
+                        )
+                      }
+
+                      // Add adjacent and antonym traits
+                      const enhancedTraits = [
+                        ...detectedTraits,
+                        { id: 'adjacent-1', label: 'Approachable', selected: false, type: 'adjacent' as const },
+                        { id: 'adjacent-2', label: 'Supportive', selected: false, type: 'adjacent' as const },
+                        { id: 'antonym-1', label: 'Distant', selected: false, type: 'antonym' as const },
+                        { id: 'antonym-2', label: 'Formal', selected: false, type: 'antonym' as const }
                       ]
-                      console.log('[TRAIT-DEBUG] Using fallback traits:', fallbackTraits)
-                      return fallbackTraits
+                      
+                      console.log('[TRAIT-DEBUG] Enhanced fallback traits based on conversation:', enhancedTraits)
+                      return enhancedTraits
                     })()}
                     onConfirm={handleChipConfirmation}
                     showAntonyms={true}

@@ -150,7 +150,7 @@ export class PersonaChatStateManager {
 
     // Update core state
     this.state.fieldsCollected = newFieldCount
-    this.state.messageCount = newMessageCount
+    this.state.messageCount = messageCount
     this.state.extractedConfig = mergedConfig
     this.state.progressPercentage = calculateProgress(mergedConfig)
 
