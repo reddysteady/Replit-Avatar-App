@@ -12,6 +12,8 @@ interface PersonalityTrait {
   label: string
   selected: boolean
   type?: 'extracted' | 'adjacent' | 'antonym'
+  category?: string
+  relatedTo?: string
   confidence?: number
 }
 
@@ -128,7 +130,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
             </div>
             <div className="flex flex-wrap gap-2">
               <AnimatePresence>
-                {traits.filter(t => !t.type || t.type === 'extracted').map((trait) => (
+                {traits.filter(t => !t.category || t.category === 'extracted').map((trait) => (
                   <motion.button
                     key={trait.id}
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -163,7 +165,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
           </div>
 
           {/* Adjacent/Related Traits */}
-          {traits.some(t => t.type === 'adjacent') && (
+          {traits.some(t => t.category === 'adjacent') && (
             <div>
               <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -171,7 +173,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
               </div>
               <div className="flex flex-wrap gap-2">
                 <AnimatePresence>
-                  {traits.filter(t => t.type === 'adjacent').map((trait) => (
+                  {traits.filter(t => t.category === 'adjacent').map((trait) => (
                     <motion.button
                       key={trait.id}
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -207,7 +209,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
           )}
 
           {/* Antonym Traits */}
-          {traits.some(t => t.type === 'antonym') && (
+          {traits.some(t => t.category === 'antonym') && (
             <div>
               <div className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
                 <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
@@ -215,7 +217,7 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
               </div>
               <div className="flex flex-wrap gap-2">
                 <AnimatePresence>
-                  {traits.filter(t => t.type === 'antonym').map((trait) => (
+                  {traits.filter(t => t.category === 'antonym').map((trait) => (
                     <motion.button
                       key={trait.id}
                       initial={{ opacity: 0, scale: 0.8 }}

@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dial
 import PersonalityTraitCloud, { PersonalityTrait } from './ui/personality-trait-cloud'
 import VoiceInput from './ui/voice-input'
 import { motion } from 'framer-motion'
+import { createExpandedTraits } from '../lib/trait-expansion'
 import { PersonaChatStateManager, ExtractionResult } from '../lib/PersonaChatStateManager'
 import BadgeHeader from './ui/badge-header'
 import BadgeAnimation from './ui/badge-animation'
@@ -584,11 +585,20 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                       <Bot className="h-4 w-4" />
                     </div>
                     <PersonalityTraitCloud
-                      initialTraits={suggestedTraits}
+                      initialTraits={createExpandedTraits(
+                        suggestedTraits.length > 0 ? suggestedTraits : [
+                          { id: '1', label: 'Friendly', selected: true },
+                          { id: '2', label: 'Humorous', selected: true },
+                          { id: '3', label: 'Engaging', selected: true }
+                        ],
+                        messages.map(m => m.content),
+                        {
+                          includeAdjacent: true,
+                          includeAntonyms: chatState.personaStage === 'refinement'
+                        }
+                      )}
                       onConfirm={handleChipConfirmation}
                       className="max-w-full"
-                      includeAdjacent={true}
-                      includeAntonyms={chatState.personaStage === 'refinement'}
                     />
                   </div>
                 )}
