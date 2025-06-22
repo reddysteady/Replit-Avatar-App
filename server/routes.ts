@@ -1376,6 +1376,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         confirmedTraits
       )
 
+      // CRITICAL: Log extraction results to debug field collection
+      console.log('[FIELD-EXTRACTION-DEBUG] AI extraction result analysis:', {
+        hasExtractedData: !!result.extractedData,
+        extractedFields: result.extractedData ? Object.keys(result.extractedData) : [],
+        fieldValues: result.extractedData,
+        messageCount: messages?.length || 0,
+        lastUserMessage: messages?.filter(m => m.role === 'user')?.pop()?.content?.substring(0, 100)
+      })
+
       // ENHANCED DEBUG: Detailed result analysis
       console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
         personaMode: result.personaMode,

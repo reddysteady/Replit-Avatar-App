@@ -149,23 +149,16 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
                     className={cn(
                       "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all",
                       trait.selected
-                        ? "bg-blue-100 text-blue-800 border border-blue-300"
+                        ? trait.type === 'extracted'
+                          ? "bg-blue-100 text-blue-800 border border-blue-300"
+                          : trait.type === 'adjacent' 
+                            ? "bg-green-100 text-green-800 border border-green-300"
+                            : trait.type === 'antonym'
+                              ? "bg-orange-100 text-orange-800 border border-orange-300" 
+                              : "bg-blue-100 text-blue-800 border border-blue-300"
                         : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
                     )}
-                  >
-                    {trait.label}
-                    {trait.selected && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeTrait(trait.id)
-                        }}
-                        className="ml-1 hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                  </motion.button>
+                  ></motion.button>
                 ))}
               </AnimatePresence>
             </div>

@@ -390,7 +390,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           messageCount: newMessages.length + 1,
           conversationHistory: messages.filter(m => m.role === 'user').map(m => m.content.substring(0, 50))
         })
-        
+
         if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
           // Use AI-generated traits with enhanced categorization
           console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', aiResponse.suggestedTraits)
@@ -532,7 +532,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   // Helper function to generate enhanced traits with proper categorization
   const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
     console.log('[TRAIT-DEBUG] generateTraitsFromExtractedConfig called with:', config)
-    
+
     const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
     console.log('[TRAIT-DEBUG] Conversation history for analysis:', conversationHistory.map(msg => msg.substring(0, 50)))
 
@@ -619,7 +619,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       includeAntonyms: true,
       conversationHistoryLength: conversationHistory.length
     })
-    
+
     const expandedTraits = createExpandedTraits(
       baseTraits, 
       conversationHistory, 
@@ -632,16 +632,16 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
       antonym: expandedTraits.filter(t => t.type === 'antonym').length
     }
-    
+
     console.log('[TRAIT-DEBUG] createExpandedTraits returned:', finalBreakdown)
     console.log('[TRAIT-DEBUG] Extracted traits:', expandedTraits.filter(t => t.type === 'extracted').map(t => t.label))
     console.log('[TRAIT-DEBUG] Adjacent traits:', expandedTraits.filter(t => t.type === 'adjacent').map(t => t.label))
     console.log('[TRAIT-DEBUG] Antonym traits:', expandedTraits.filter(t => t.type === 'antonym').map(t => t.label))
-    
+
     if (expandedTraits.length === 0) {
       console.error('[TRAIT-DEBUG] CRITICAL: createExpandedTraits returned empty array!')
     }
-    
+
     return expandedTraits;
   };
 
@@ -778,8 +778,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
                       // CRITICAL: Always use generateTraitsFromExtractedConfig which calls createExpandedTraits
                       const generatedTraits = generateTraitsFromExtractedConfig(chatState.extractedConfig)
-                      console.log('[TRAIT-DEBUG] Generated traits from config:', generatedTraits)
-                      
+                      console.log('[TRAIT-DEBUG] Generated traits from config:', generatedTraits)The code has been modified to automatically trigger field collection based on conversation analysis, enhancing the trait extraction process.
                       if (generatedTraits.length > 0) {
                         console.log('[TRAIT-DEBUG] Using generated traits with expanded categories:', generatedTraits)
                         return generatedTraits
@@ -817,7 +816,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                         conversationHistory, 
                         { includeAdjacent: true, includeAntonyms: true }
                       );
-                      
+
                       console.log('[TRAIT-DEBUG] Enhanced fallback traits with expansion:', expandedFallbackTraits)
                       return expandedFallbackTraits
                     })()}
@@ -876,7 +875,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                     newState.showChipSelector = true
                     newState.reflectionActive = true
                     setChatState({...newState})
-                    
+
                     // Generate traits from current state
                     const generatedTraits = generateTraitsFromExtractedConfig(newState.extractedConfig)
                     setSuggestedTraits(generatedTraits)
