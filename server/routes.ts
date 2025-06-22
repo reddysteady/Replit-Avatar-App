@@ -1835,11 +1835,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { enabled, source } = schema.parse(req.body)
       const userId = 1 // For MVP, assume user ID 1
 
-      log(`Updating ${source} auto-replies to: ${enabled}`)
+      log('Updating ' + source + ' auto-replies to: ' + enabled)
 
       // First get existing settings
       const existingSettings = await storage.getSettings(userId)
-      log(`Current settings: ${JSON.stringify(existingSettings)}`)
+      log('Current settings: ' + JSON.stringify(existingSettings))
 
       let updates: any = {}
       if (source === 'instagram') {
@@ -1883,10 +1883,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      log(`Applying updates: ${JSON.stringify(updates)}`)
+      log('Applying updates: ' + JSON.stringify(updates))
 
       const updatedSettings = await storage.updateSettings(userId, updates)
-      log(`Settings updated successfully: ${JSON.stringify(updatedSettings)}`)
+      log('Settings updated successfully: ' + JSON.stringify(updatedSettings))
 
       res.json({ success: true, settings: updatedSettings })
     } catch (error: any) {
@@ -2236,12 +2236,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const startTime = Date.now()
 
-      log(`[PERSONALITY-BACKEND] Extracting for message: "${message.substring(0, 50)}..." (count: ${messageCount})`)
+      log('[PERSONALITY-BACKEND] Extracting for message: "' + message.substring(0, 50) + '..." (count: ' + messageCount + ')')
 
       const result = await extractPersonalityAndRespond(message, messageCount)
 
       const responseTime = Date.now() - startTime
-      log(`[PERSONALITY-BACKEND] Extraction completed in ${responseTime}ms`)
+      log('[PERSONALITY-BACKEND] Extraction completed in ' + responseTime + 'ms')
 
       // Log the conversation to chat logger
       await chatLogger.logPersonalityExtraction(
