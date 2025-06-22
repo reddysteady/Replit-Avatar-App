@@ -528,13 +528,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/threads/:id/messages', async (req, res) => {
     try {
       const threadId = parseInt(req.params.id)
-      log(`Fetching messages for thread ID: ${threadId}`)
+      log('Fetching messages for thread ID: ' + threadId)
 
       // Get messages from storage
       const threadMessages = await storage.getThreadMessages(threadId)
 
       // More detailed logging to trace parent-child relationships
-      log(`Thread #${threadId} contains ${threadMessages.length} messages`)
+      log('Thread #' + threadId + ' contains ' + threadMessages.length + ' messages')
 
       // Track parent-child relationships for better debugging
       const parentMap = new Map()
