@@ -240,7 +240,18 @@ export type Settings = typeof settings.$inferSelect & {
   apiKeys: Record<string, any>
   aiSettings: Record<string, any>
   notificationSettings: Record<string, any>
-  personaConfig?: Record<string, any>
+  personaConfig?: {
+    toneDescription?: string
+    toneTraits?: string[]
+    styleTags?: string[]
+    communicationPrefs?: string[]
+    allowedTopics?: string[]
+    restrictedTopics?: string[]
+    fallbackReply?: string
+    avatarObjective?: string[]
+    audienceDescription?: string
+    boundaries?: string[]
+  }
   systemPrompt?: string
 }
 

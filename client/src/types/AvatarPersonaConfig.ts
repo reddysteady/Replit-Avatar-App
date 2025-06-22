@@ -33,9 +33,17 @@ export interface AvatarPersonaConfig {
    */
   toneDescription: string
   /**
+   * Individual tone adjectives for trait cloud display.
+   */
+  toneTraits?: string[]
+  /**
    * Additional style keywords to reinforce the desired voice.
    */
   styleTags: string[]
+  /**
+   * Individual communication preferences for trait cloud display.
+   */
+  communicationPrefs?: string[]
   /**
    * Topics that the avatar is allowed to discuss.
    */

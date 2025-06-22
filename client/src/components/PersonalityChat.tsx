@@ -555,20 +555,46 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
     const baseTraits: PersonalityTrait[] = [];
 
-    // Extract core traits from style tags (limit to 3-4 core traits)
+    // PRIORITY 1: Extract from new toneTraits array
+    if (config.toneTraits?.length > 0) {
+      config.toneTraits.slice(0, 4).forEach((trait, index) => {
+        baseTraits.push({ 
+          id: `tone-${index}`, 
+          label: trait, 
+          selected: true, 
+          type: 'extracted' as const
+        });
+      });
+      console.log('[TRAIT-DEBUG] Added traits from toneTraits:', config.toneTraits)
+    }
+
+    // PRIORITY 2: Extract from styleTags (existing)
     if (config.styleTags?.length > 0) {
       config.styleTags.slice(0, 4).forEach((tag, index) => {
         baseTraits.push({ 
-          id: `core-${index}`, 
+          id: `style-${index}`, 
           label: tag, 
           selected: true, 
           type: 'extracted' as const
         });
       });
-      console.log('[TRAIT-DEBUG] Added traits from styleTags:', baseTraits)
+      console.log('[TRAIT-DEBUG] Added traits from styleTags:', config.styleTags)
     }
 
-    // Extract from tone description if available
+    // PRIORITY 3: Extract from new communicationPrefs array
+    if (config.communicationPrefs?.length > 0) {
+      config.communicationPrefs.slice(0, 3).forEach((pref, index) => {
+        baseTraits.push({ 
+          id: `comm-${index}`, 
+          label: pref, 
+          selected: true, 
+          type: 'extracted' as const
+        });
+      });
+      console.log('[TRAIT-DEBUG] Added traits from communicationPrefs:', config.communicationPrefs)
+    }
+
+    // FALLBACK: Extract from tone description if no individual traits available
     if (config.toneDescription && baseTraits.length < 3) {
       const toneWords = config.toneDescription
         .split(/[,\s]+/)
@@ -577,13 +603,13 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       toneWords.forEach((word, index) => {
         baseTraits.push({
-          id: `tone-${index}`,
+          id: `tone-desc-${index}`,
           label: word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
           selected: true,
           type: 'extracted' as const
         });
       });
-      console.log('[TRAIT-DEBUG] Added traits from toneDescription:', toneWords)
+      console.log('[TRAIT-DEBUG] Added fallback traits from toneDescription:', toneWords)
     }
 
     // ENHANCED: Analyze conversation for trait hints with more comprehensive detection

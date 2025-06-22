@@ -839,3 +839,340 @@ export class AIService {
       return 'concise'
     }
     return 'balanced'
+  }
+
+  /**
+   * Extracts mentioned topics from conversation
+   */
+  private extractMentionedTopics(messages: any[]): string[] {
+    const topicKeywords = [
+      'business', 'fitness', 'health', 'technology', 'travel', 'food', 'art', 'music',
+      'education', 'finance', 'marketing', 'design', 'coding', 'writing', 'photography'
+    ]
+    
+    const content = messages.map(m => m.content).join(' ').toLowerCase()
+    return topicKeywords.filter(topic => content.includes(topic))
+  }
+
+  /**
+   * Extracts user examples from conversation
+   */
+  private extractUserExamples(messages: any[]): string[] {
+    const userMessages = messages.filter(m => m.role === 'user')
+    return userMessages
+      .filter(m => m.content.includes('example') || m.content.includes('like') || m.content.includes('such as'))
+      .map(m => m.content)
+      .slice(0, 3)
+  }
+
+  /**
+   * Detects user tone from recent messages
+   */
+  private detectUserTone(messages: any[]): string {
+    const userMessages = messages.filter(m => m.role === 'user')
+    if (userMessages.length === 0) return 'neutral'
+    
+    const combinedText = userMessages.map(m => m.content).join(' ').toLowerCase()
+    
+    if (combinedText.includes('excited') || combinedText.includes('amazing') || combinedText.includes('!')) {
+      return 'enthusiastic'
+    } else if (combinedText.includes('professional') || combinedText.includes('business')) {
+      return 'professional'
+    } else if (combinedText.includes('fun') || combinedText.includes('humor') || combinedText.includes('joke')) {
+      return 'casual'
+    }
+    return 'balanced'
+  }
+
+  /**
+   * Determines conversation stage based on progress
+   */
+  private determineConversationStage(userMessageCount: number, fieldsCollected: number, confirmedTraits?: string[]): string {
+    if (confirmedTraits && confirmedTraits.length > 0) {
+      return 'completion'
+    } else if (userMessageCount >= 7 && fieldsCollected >= 2) {
+      return 'reflection_checkpoint'
+    } else if (userMessageCount >= 4 && fieldsCollected >= 1) {
+      return 'discovery'
+    } else if (userMessageCount >= 1) {
+      return 'introduction'
+    }
+    return 'initial'
+  }
+
+  /**
+   * Identifies missing fields in current config
+   */
+  private identifyMissingFields(config: Partial<AvatarPersonaConfig>): string[] {
+    const requiredFields = [
+      'avatarObjective',
+      'audienceDescription', 
+      'toneDescription',
+      'styleTags',
+      'communicationPrefs',
+      'boundaries'
+    ]
+    
+    return requiredFields.filter(field => {
+      const value = config[field as keyof AvatarPersonaConfig]
+      if (!value) return true
+      if (typeof value === 'string') return value.length < 3
+      if (Array.isArray(value)) return value.length === 0
+      return false
+    })
+  }
+
+  /**
+   * Counts meaningful fields in current config
+   */
+  private countMeaningfulFields(config: Partial<AvatarPersonaConfig>): number {
+    return countValidFields(config)
+  }
+
+  /**
+   * Builds the personality extraction prompt based on conversation state
+   */
+  private buildPersonalityExtractionPrompt(conversationState: any): string {
+    const { stage, missingFields, conversationTone, lastUserMessage } = conversationState
+
+    const basePrompt = `You are an AI personality coach helping someone set up their digital avatar. Your role is to:
+
+1. **Extract individual personality traits** from conversation in specific formats
+2. **Generate natural follow-up responses** to continue the conversation
+3. **Suggest trait validation** when appropriate
+
+## CRITICAL: Extract Individual Terms Only
+
+For trait cloud display, extract these parameters as arrays of individual adjectives:
+
+- **toneTraits**: 3-5 individual tone adjectives (e.g., ["Friendly", "Professional", "Enthusiastic"])
+- **styleTags**: 3-5 individual style terms (e.g., ["Conversational", "Detailed", "Direct"])  
+- **communicationPrefs**: 3-5 individual communication preferences (e.g., ["Concise", "Example-driven", "Interactive"])
+
+## Response Format
+
+Return valid JSON with this structure:
+{
+  "response": "Your natural conversational response (keep it under 120 words)",
+  "extractedData": {
+    "toneTraits": ["Friendly", "Warm"],
+    "styleTags": ["Conversational", "Detailed"], 
+    "communicationPrefs": ["Interactive", "Example-driven"],
+    "toneDescription": "Brief description of overall tone",
+    "avatarObjective": ["Main goal or purpose"],
+    "audienceDescription": "Target audience description",
+    "boundaries": ["Any mentioned limits"],
+    "allowedTopics": ["Topics they're comfortable with"],
+    "restrictedTopics": ["Topics to avoid"]
+  },
+  "showChipSelector": false,
+  "suggestedTraits": [],
+  "personaMode": "guidance",
+  "confidenceScore": 0.7,
+  "isComplete": false
+}
+
+## Conversation Stage: ${stage}
+
+${stage === 'reflection_checkpoint' ? `
+**TRIGGER TRAIT CLOUD**: Set "showChipSelector": true and generate suggestedTraits with this structure:
+[
+  {"id": "1", "label": "TraitName", "selected": true, "type": "extracted"},
+  {"id": "2", "label": "RelatedTrait", "selected": false, "type": "adjacent"},
+  {"id": "3", "label": "OppositeTrait", "selected": false, "type": "antonym"}
+]
+` : ''}
+
+## Current Analysis Context
+- Missing fields: ${missingFields?.slice(0, 3).join(', ') || 'None'}
+- User message count: ${conversationState.userMessageCount}
+- Conversation tone: ${conversationTone}
+- Last message: "${lastUserMessage?.substring(0, 100) || 'None'}"
+
+Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural conversation while gathering personality insights.`
+
+    return basePrompt
+  }
+
+  /**
+   * Processes the AI extraction response
+   */
+  private processExtractionResponse(content: string, conversationState: any): any {
+    try {
+      const parsed = JSON.parse(content)
+      
+      // Validate and clean extracted data
+      const extractedData = this.validateExtractedData(parsed.extractedData || {})
+      
+      // Determine if chip selector should be shown
+      const showChipSelector = parsed.showChipSelector || conversationState.stage === 'reflection_checkpoint'
+      
+      // Generate suggested traits if chip selector is active
+      let suggestedTraits = parsed.suggestedTraits || []
+      if (showChipSelector && suggestedTraits.length === 0) {
+        suggestedTraits = this.generateFallbackTraits(extractedData, conversationState)
+      }
+
+      return {
+        response: parsed.response || "Let's continue building your personality profile.",
+        extractedData,
+        showChipSelector,
+        suggestedTraits,
+        personaMode: parsed.personaMode || 'guidance',
+        confidenceScore: parsed.confidenceScore || 0.5,
+        isComplete: parsed.isComplete || false,
+        reflectionCheckpoint: showChipSelector
+      }
+    } catch (error) {
+      console.error('[PERSONALITY-ERROR] Failed to parse AI response:', error)
+      return this.createFallbackResponse("I had trouble processing that. Could you tell me more about your communication style?", 'guidance')
+    }
+  }
+
+  /**
+   * Validates and cleans extracted data to ensure individual terms
+   */
+  private validateExtractedData(data: any): Partial<AvatarPersonaConfig> {
+    const cleaned: any = {}
+    
+    // Ensure toneTraits are individual terms
+    if (data.toneTraits && Array.isArray(data.toneTraits)) {
+      cleaned.toneTraits = data.toneTraits.filter(t => typeof t === 'string' && t.length < 20)
+    }
+    
+    // Ensure styleTags are individual terms  
+    if (data.styleTags && Array.isArray(data.styleTags)) {
+      cleaned.styleTags = data.styleTags.filter(t => typeof t === 'string' && t.length < 20)
+    }
+    
+    // Ensure communicationPrefs are individual terms
+    if (data.communicationPrefs && Array.isArray(data.communicationPrefs)) {
+      cleaned.communicationPrefs = data.communicationPrefs.filter(t => typeof t === 'string' && t.length < 20)
+    }
+    
+    // Copy other fields as-is
+    const otherFields = ['toneDescription', 'avatarObjective', 'audienceDescription', 'boundaries', 'allowedTopics', 'restrictedTopics']
+    otherFields.forEach(field => {
+      if (data[field]) {
+        cleaned[field] = data[field]
+      }
+    })
+    
+    return cleaned
+  }
+
+  /**
+   * Generates fallback traits when AI doesn't provide them
+   */
+  private generateFallbackTraits(extractedData: any, conversationState: any): any[] {
+    const traits: any[] = []
+    let idCounter = 1
+    
+    // Extract from toneTraits
+    if (extractedData.toneTraits?.length > 0) {
+      extractedData.toneTraits.forEach((trait: string) => {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: trait,
+          selected: true,
+          type: 'extracted'
+        })
+      })
+    }
+    
+    // Extract from styleTags
+    if (extractedData.styleTags?.length > 0) {
+      extractedData.styleTags.forEach((trait: string) => {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: trait,
+          selected: true,
+          type: 'extracted'
+        })
+      })
+    }
+    
+    // Extract from communicationPrefs
+    if (extractedData.communicationPrefs?.length > 0) {
+      extractedData.communicationPrefs.forEach((trait: string) => {
+        traits.push({
+          id: (idCounter++).toString(),
+          label: trait,
+          selected: true,
+          type: 'extracted'
+        })
+      })
+    }
+    
+    // Add adjacent traits
+    const adjacentTraits = this.generateAdjacentTraits(traits.map(t => t.label))
+    adjacentTraits.forEach(trait => {
+      traits.push({
+        id: (idCounter++).toString(),
+        label: trait,
+        selected: false,
+        type: 'adjacent'
+      })
+    })
+    
+    // Add antonym traits
+    const antonymTraits = this.generateAntonymTraits(traits.filter(t => t.type === 'extracted').map(t => t.label))
+    antonymTraits.forEach(trait => {
+      traits.push({
+        id: (idCounter++).toString(),
+        label: trait,
+        selected: false,
+        type: 'antonym'
+      })
+    })
+    
+    return traits
+  }
+
+  /**
+   * Generates adjacent/related traits
+   */
+  private generateAdjacentTraits(baseTraits: string[]): string[] {
+    const adjacentMap: Record<string, string[]> = {
+      'Friendly': ['Warm', 'Welcoming', 'Approachable'],
+      'Professional': ['Polished', 'Competent', 'Reliable'],
+      'Humorous': ['Playful', 'Witty', 'Entertaining'],
+      'Direct': ['Clear', 'Straightforward', 'Honest'],
+      'Creative': ['Innovative', 'Imaginative', 'Original'],
+      'Analytical': ['Logical', 'Systematic', 'Detail-oriented'],
+      'Conversational': ['Informal', 'Chatty', 'Engaging'],
+      'Detailed': ['Thorough', 'Comprehensive', 'Meticulous']
+    }
+    
+    const adjacent: string[] = []
+    baseTraits.forEach(trait => {
+      const related = adjacentMap[trait] || []
+      adjacent.push(...related.slice(0, 2))
+    })
+    
+    return [...new Set(adjacent)].slice(0, 6)
+  }
+
+  /**
+   * Generates antonym/opposite traits
+   */
+  private generateAntonymTraits(baseTraits: string[]): string[] {
+    const antonymMap: Record<string, string[]> = {
+      'Friendly': ['Formal', 'Reserved'],
+      'Professional': ['Casual', 'Relaxed'],
+      'Humorous': ['Serious', 'Formal'],
+      'Direct': ['Indirect', 'Diplomatic'],
+      'Creative': ['Traditional', 'Conventional'],
+      'Analytical': ['Intuitive', 'Spontaneous'],
+      'Conversational': ['Formal', 'Structured'],
+      'Detailed': ['Concise', 'Brief']
+    }
+    
+    const antonyms: string[] = []
+    baseTraits.forEach(trait => {
+      const opposite = antonymMap[trait] || []
+      antonyms.push(...opposite.slice(0, 1))
+    })
+    
+    return [...new Set(antonyms)].slice(0, 4)
+  }

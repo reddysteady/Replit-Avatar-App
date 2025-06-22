@@ -145,9 +145,19 @@ export class GPTTraitTester {
 
   private validateAIResponse(response: any): boolean {
     const requiredFields = ['response', 'extractedData', 'personaMode']
-    return requiredFields.every(field => field in response) &&
+    const hasRequiredFields = requiredFields.every(field => field in response) &&
            typeof response.response === 'string' &&
            typeof response.extractedData === 'object'
+    
+    // Validate new trait arrays structure
+    const extractedData = response.extractedData || {}
+    const hasTraitArrays = (
+      (extractedData.toneTraits && Array.isArray(extractedData.toneTraits)) ||
+      (extractedData.styleTags && Array.isArray(extractedData.styleTags)) ||
+      (extractedData.communicationPrefs && Array.isArray(extractedData.communicationPrefs))
+    )
+    
+    return hasRequiredFields && (hasTraitArrays || extractedData.toneDescription)
   }
 
   private extractTraitsFromResponse(response: any): string[] {
@@ -160,13 +170,23 @@ export class GPTTraitTester {
       ).filter(Boolean))
     }
 
+    // Extract from extractedData.toneTraits (NEW)
+    if (response.extractedData?.toneTraits && Array.isArray(response.extractedData.toneTraits)) {
+      traits.push(...response.extractedData.toneTraits)
+    }
+
     // Extract from extractedData.styleTags
     if (response.extractedData?.styleTags && Array.isArray(response.extractedData.styleTags)) {
       traits.push(...response.extractedData.styleTags)
     }
 
-    // Extract from toneDescription (look for adjectives)
-    if (response.extractedData?.toneDescription) {
+    // Extract from extractedData.communicationPrefs (NEW)
+    if (response.extractedData?.communicationPrefs && Array.isArray(response.extractedData.communicationPrefs)) {
+      traits.push(...response.extractedData.communicationPrefs)
+    }
+
+    // Extract from toneDescription (fallback for legacy responses)
+    if (response.extractedData?.toneDescription && traits.length === 0) {
       const toneWords = response.extractedData.toneDescription
         .split(/[,\s]+/)
         .filter((word: string) => word.length > 3 && /^[a-zA-Z]+$/.test(word))
