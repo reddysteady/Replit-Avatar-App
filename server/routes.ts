@@ -786,7 +786,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
-  app.delete('/api/messages/:id', async (req, res) => {
+  app.delete('/api/messages/:id', async (req, res) =>```tool_code
+{
     try {
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
@@ -1199,55 +1200,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'I believe consistency is more important than frequency when it comes to content creation',
           'My content creation philosophy centers on providing value first, monetization second',
         ]
-
-  // Chat logging endpoints for review and enhancement
-  app.get('/api/chat-logs', async (req, res) => {
-    try {
-      const userId = parseInt(req.query.userId as string) || 1
-      const limit = parseInt(req.query.limit as string) || 100
-      const sessionId = req.query.sessionId as string
-
-      let logs
-      if (sessionId) {
-        logs = await chatLogger.getSessionHistory(sessionId)
-      } else {
-        logs = await chatLogger.getChatHistory(userId, limit)
-      }
-
-      res.json({ logs, total: logs.length })
-    } catch (error: any) {
-      console.error('Error retrieving chat logs:', error)
-      res.status(500).json({ error: 'Failed to fetch chat logs' })
-    }
-  })
-
-  // Export chat logs as JSON for analysis
-  app.get('/api/chat-logs/export', async (req, res) => {
-    try {
-      const userId = parseInt(req.query.userId as string) || 1
-      const logs = await chatLogger.getChatHistory(userId, 1000)
-
-      const exportData = {
-        exportDate: new Date().toISOString(),
-        userId,
-        totalLogs: logs.length,
-        logs: logs.map(log => ({
-          timestamp: log.timestamp,
-          type: log.messageType,
-          content: log.content,
-          metadata: log.metadata
-        }))
-      }
-
-      res.setHeader('Content-Type', 'application/json')
-      res.setHeader('Content-Disposition', `attachment; filename="chat-logs-${userId}-${Date.now()}.json"`)
-      res.json(exportData)
-    } catch (error: any) {
-      console.error('Error exporting chat logs:', error)
-      res.status(500).json({ error: 'Failed to export chat logs' })
-    }
-  })
-
 
         // For real implementation:
         // try {
@@ -1699,7 +1651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           instagramPageId: '',
           instagramWebhookUrl: '',
           youtube: settings.youtubeToken || '',
-          openai: settings.openaiToken || '',
+          openai: settings.openaiToken|| '',
           airtable: settings.airtableToken || '',
           airtableBaseId: settings.airtableBaseId || '',
           airtableTableName: settings.airtableTableName || 'Leads',
@@ -2230,6 +2182,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
     } catch (error: any) {
       res.status(500).json({ message: error.message })
+    }
+  })
+
+  // Chat logging endpoints for review and enhancement
+  app.get('/api/chat-logs', async (req, res) => {
+    try {
+      const userId = parseInt(req.query.userId as string) || 1
+      const limit = parseInt(req.query.limit as string) || 100
+      const sessionId = req.query.sessionId as string
+
+      let logs
+      if (sessionId) {
+        logs = await chatLogger.getSessionHistory(sessionId)
+      } else {
+        logs = await chatLogger.getChatHistory(userId, limit)
+      }
+
+      res.json({ logs, total: logs.length })
+    } catch (error: any) {
+      console.error('Error retrieving chat logs:', error)
+      res.status(500).json({ error: 'Failed to fetch chat logs' })
+    }
+  })
+
+  // Export chat logs as JSON for analysis
+  app.get('/api/chat-logs/export', async (req, res) => {
+    try {
+      const userId = parseInt(req.query.userId as string) || 1
+      const logs = await chatLogger.getChatHistory(userId, 1000)
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        userId,
+        totalLogs: logs.length,
+        logs: logs.map(log => ({
+          timestamp: log.timestamp,
+          type: log.messageType,
+          content: log.content,
+          metadata: log.metadata
+        }))
+      }
+
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Content-Disposition', `attachment; filename="chat-logs-${userId}-${Date.now()}.json"`)
+      res.json(exportData)
+    } catch (error: any) {
+      console.error('Error exporting chat logs:', error)
+      res.status(500).json({ error: 'Failed to export chat logs' })
     }
   })
 
