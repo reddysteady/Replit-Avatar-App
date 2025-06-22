@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Log detailed information with full message content
       log(
-        `Thread messages with parentIds: ${JSON.stringify(
+        'Thread messages with parentIds: ' + JSON.stringify(
           threadMessages.map((m) => ({
             id: m.id,
             content: (m.content || '').substring(0, 50),
@@ -567,7 +567,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hasReplies: childrenMap.has(m.id),
             timestamp: m.timestamp,
           })),
-        )}`,
+        ),
       )
 
       // Make sure all messages have parentMessageId explicitly set as a number or null
@@ -2064,18 +2064,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (let i = 0; i < 3; i++) {
           const thread = await storage.findOrCreateThreadByParticipant(
             1,
-            `test-user-${i}`,
-            `Test User ${i + 1}`,
+            'test-user-' + i,
+            'Test User ' + (i + 1),
             'instagram',
-            `https://images.unsplash.com/photo-${1500000000000 + i}?w=64&h=64`,
+            'https://images.unsplash.com/photo-' + (1500000000000 + i) + '?w=64&h=64',
           )
 
           await storage.addMessageToThread(thread.id, {
             source: 'instagram',
-            content: `Hello, this is test message ${i + 1}`,
-            externalId: `test-${Date.now()}-${i}`,
-            senderId: `test-user-${i}`,
-            senderName: `Test User ${i + 1}`,
+            content: 'Hello, this is test message ' + (i + 1),
+            externalId: 'test-' + Date.now() + '-' + i,
+            senderId: 'test-user-' + i,
+            senderName: 'Test User ' + (i + 1),
             timestamp: new Date(),
             status: 'new',
             isHighIntent: i === 1, // Make one high intent
@@ -2215,7 +2215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.setHeader('Content-Type', 'application/json')
-      res.setHeader('Content-Disposition', `attachment; filename="chat-logs-${userId}-${Date.now()}.json"`)
+      res.setHeader('Content-Disposition', 'attachment; filename="chat-logs-' + userId + '-' + Date.now() + '.json"')
       res.json(exportData)
     } catch (error: any) {
       console.error('Error exporting chat logs:', error)
@@ -2228,7 +2228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { message, messageCount = 1 } = req.body
       const userId = 1 // Default user for now
-      const sessionId = req.headers['x-session-id'] as string || `session-${Date.now()}`
+      const sessionId = req.headers['x-session-id'] as string || ('session-' + Date.now())
 
       if (!message || typeof message !== 'string') {
         return res.status(400).json({ error: 'Message is required' })
@@ -2264,7 +2264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Log the error recovery
-      const sessionId = req.headers['x-session-id'] as string || `session-${Date.now()}`
+      const sessionId = req.headers['x-session-id'] as string || 'session-' + Date.now()
       await chatLogger.logPersonalityExtraction(
         1, // userId
         req.body.message || 'Unknown message',
