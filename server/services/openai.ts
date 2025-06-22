@@ -555,7 +555,6 @@ export class AIService {
       const systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
-      const userMessages = messages?.filter(m => m.role === 'user') || []
       console.log('[TRAIT-EXTRACTION-DEBUG] Conversation analysis:', {
         totalUserMessages: userMessages.length,
         conversationKeywords: userMessages.join(' ').toLowerCase().split(' ').filter(w => 
