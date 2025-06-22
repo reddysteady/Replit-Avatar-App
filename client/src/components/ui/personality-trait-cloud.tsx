@@ -18,6 +18,26 @@ interface PersonalityTrait {
 
 interface PersonalityTraitCloudProps {
   initialTraits?: PersonalityTrait[]
+  onConfirm?: (selectedTraits: PersonalityTrait[], category?: string) => void
+  className?: string
+  category?: string
+  onComplete?: () => void
+}
+
+const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
+  initialTraits = [],
+  onConfirm,
+  className,
+  category = "tone",
+  onComplete
+}) => {
+  const [traits, setTraits] = useState<PersonalityTrait[]>(initialTraits)
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [newTraitInput, setNewTraitInput] = useState("")
+  const [showAddInput, setShowAddInput] = useState(false)
+
+interface PersonalityTraitCloudProps {
+  initialTraits?: PersonalityTrait[]
   onConfirm?: (selectedTraits: PersonalityTrait[]) => void
   className?: string
   showAntonyms?: boolean
