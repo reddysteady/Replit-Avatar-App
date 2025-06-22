@@ -550,9 +550,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           childrenMap.get(msg.parentMessageId).push(msg.id)
           parentMap.set(msg.id, msg.parentMessageId)
 
-          log(`Message ${msg.id} is a reply to parent ${msg.parentMessageId}`)
+          log('Message ' + msg.id + ' is a reply to parent ' + msg.parentMessageId)
         } else {
-          log(`Message ${msg.id} is a top-level message`)
+          log('Message ' + msg.id + ' is a top-level message')
         }
       })
 
@@ -591,13 +591,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
 
       log(
-        `Processed messages with parentIds: ${JSON.stringify(
+        'Processed messages with parentIds: ' + JSON.stringify(
           processedMessages.map((m) => ({
             id: m.id,
             parentId: m.parentMessageId,
             type: typeof m.parentMessageId,
           })),
-        )}`,
+        ),
       )
 
       res.json(processedMessages)
@@ -646,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       log(
-        `Creating reply to message ${parentId}, original value: ${parentMessageId}`,
+        'Creating reply to message ' + parentId + ', original value: ' + parentMessageId,
       )
 
       // Create outbound message (creator's reply)
@@ -660,7 +660,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         senderName: 'Creator',
         senderId: 'creator-id',
         senderAvatar: null,
-        externalId: `reply-${Date.now()}`,
+        externalId: 'reply-' + Date.now(),
         metadata: {},
         isAiGenerated: false,
         userId: 1,
@@ -1581,19 +1581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         log('Instagram authentication completed successfully')
 
         // Close the popup and redirect to Instagram page
-        const html = `
-          <html>
-            <body>
-              <script>
-                if (window.opener) {
-                  window.opener.postMessage('INSTAGRAM_AUTH_SUCCESS', '*');
-                  window.close();
-                }
-              </script>
-              <p>Authentication successful! You can close this window.</p>
-            </body>
-          </html>
-        `
+        const html = '<html><body><script>if(window.opener){window.opener.postMessage("INSTAGRAM_AUTH_SUCCESS","*");window.close();}</script><p>Authentication successful! You can close this window.</p></body></html>'
 
         return res.send(html)
       } else {
@@ -1691,7 +1679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/settings', async (req, res) => {
     try {
-      log(`Settings POST request body: ${JSON.stringify(req.body)}`, 'debug')
+      log('Settings POST request body: ' + JSON.stringify(req.body), 'debug')
 
       const schema = z.object({
         apiKeys: z
@@ -1819,15 +1807,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedSettings = await storage.updateSettings(userId, updates)
       res.json({ success: true, settings: updatedSettings })
     } catch (error: any) {
-      log(`Settings update error: ${error.message}`, 'error')
+      log('Settings update error: ' + error.message, 'error')
       if (error.issues && Array.isArray(error.issues)) {
         // This is a Zod validation error
         const zodError = error.issues
-          .map((issue: any) => `${issue.path.join('.')}: ${issue.message}`)
+          .map((issue: any) => issue.path.join('.') + ': ' + issue.message)
           .join(', ')
         return res
           .status(400)
-          .json({ message: `Validation error: ${zodError}` })
+          .json({ message: 'Validation error: ' + zodError })
       }
       res.status(500).json({ message: error.message })
     }
@@ -1836,7 +1824,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/settings/ai-auto-replies', async (req, res) => {
     try {
       log(
-        `API Request received: /api/settings/ai-auto-replies ${JSON.stringify(req.body)}`,
+        'API Request received: /api/settings/ai-auto-replies ' + JSON.stringify(req.body),
       )
 
       const schema = z.object({
