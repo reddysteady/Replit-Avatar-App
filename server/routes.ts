@@ -1269,12 +1269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const startTime = Date.now()
 
-    try {
-    const { messages, currentConfig, confirmedTraits, sessionId } = req.body
-    console.log('[PERSONALITY-EXTRACT] Received request:', {
-      messageCount: messages?.length,
-      hasCurrentConfig: !!currentConfig,
-      currentConfigKeys: currentConfig ? Object.keys(currentConfig) : [],
+    const result = await extractPersonalityAndRespond(messages, messages?.length || 1, currentConfig, confirmedTraits)
       currentConfig: currentConfig,
       confirmedTraits: confirmedTraits?.length || 0,
       lastUserMessage: messages?.filter(m => m.role === 'user')?.slice(-1)?.[0]?.content?.substring(0, 100),
