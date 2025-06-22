@@ -1267,32 +1267,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isTestPayload: messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('professional tone'))
       })
 
-    const startTime = Date.now()
+      const startTime = Date.now()
 
-    const result = await extractPersonalityAndRespond(messages, messages?.length || 1, currentConfig, confirmedTraits)
-      currentConfig: currentConfig,
-      confirmedTraits: confirmedTraits?.length || 0,
-      lastUserMessage: messages?.filter(m => m.role === 'user')?.slice(-1)?.[0]?.content?.substring(0, 100),
-      allUserMessages: messages?.filter(m => m.role === 'user')?.map(m => m.content.substring(0, 50))
-    })
+      const result = await extractPersonalityAndRespond(messages, messages?.length || 1, currentConfig, confirmedTraits)
 
-    // CRITICAL DEBUG: Log conversation content for trait extraction analysis
-    const userMessages = messages?.filter(m => m.role === 'user') || []
-    console.log('[TRAIT-EXTRACTION-DEBUG] Conversation analysis:', {
-      totalUserMessages: userMessages.length,
-      conversationKeywords: userMessages.join(' ').toLowerCase().split(' ').filter(w => 
-        ['humor', 'humorous', 'joke', 'funny', 'help', 'helpful', 'casual', 'formal', 'creative', 'analytical'].includes(w)
-      ),
-      conversationSample: userMessages.slice(-3).map(msg => ({
-        content: msg.content,
-        length: msg.content.length,
-        hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional/i.test(msg.content)
-      }))
-    })
+      // CRITICAL DEBUG: Log conversation content for trait extraction analysis
+      const userMessages = messages?.filter(m => m.role === 'user') || []
+      console.log('[TRAIT-EXTRACTION-DEBUG] Conversation analysis:', {
+        totalUserMessages: userMessages.length,
+        conversationKeywords: userMessages.join(' ').toLowerCase().split(' ').filter(w => 
+          ['humor', 'humorous', 'joke', 'funny', 'help', 'helpful', 'casual', 'formal', 'creative', 'analytical'].includes(w)
+        ),
+        conversationSample: userMessages.slice(-3).map(msg => ({
+          content: msg.content,
+          length: msg.content.length,
+          hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional/i.test(msg.content)
+        }))
+      })
 
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Messages array is required' })
-    }
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' })
+      }
 
       // Handle session state for Phase 1
       let session = null
@@ -1316,7 +1311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
-      const result = await aiService.extractPersonalityFromConversation(
+      const aiResult = await aiService.extractPersonalityFromConversation(
         messages || [],
         currentConfig || {},
         initialMessage || false,
@@ -1325,28 +1320,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // CRITICAL: Log extraction results to debug field collection
       console.log('[FIELD-EXTRACTION-DEBUG] AI extraction result analysis:', {
-        hasExtractedData: !!result.extractedData,
-        extractedFields: result.extractedData ? Object.keys(result.extractedData) : [],
-        fieldValues: result.extractedData,
+        hasExtractedData: !!aiResult.extractedData,
+        extractedFields: aiResult.extractedData ? Object.keys(aiResult.extractedData) : [],
+        fieldValues: aiResult.extractedData,
         messageCount: messages?.length || 0,
         lastUserMessage: messages?.filter(m => m.role === 'user')?.pop()?.content?.substring(0, 100)
       })
 
       // ENHANCED DEBUG: Detailed result analysis
       console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
-        personaMode: result.personaMode,
-        isComplete: result.isComplete,
-        showChipSelector: result.showChipSelector,
-        hasResponse: !!result.response,
-        responseLength: result.response?.length || 0,
-        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0,
-        extractedDataKeys: result.extractedData ? Object.keys(result.extractedData) : [],
-        extractedDataValues: result.extractedData,
-        hasSuggestedTraits: !!result.suggestedTraits && result.suggestedTraits.length > 0,
-        suggestedTraitsCount: result.suggestedTraits?.length || 0,
-        suggestedTraitsDetail: result.suggestedTraits,
-        fallbackUsed: result.fallbackUsed,
-        confidenceScore: result.confidenceScore
+        personaMode: aiResult.personaMode,
+        isComplete: aiResult.isComplete,
+        showChipSelector: aiResult.showChipSelector,
+        hasResponse: !!aiResult.response,
+        responseLength: aiResult.response?.length || 0,
+        hasExtractedData: !!aiResult.extractedData && Object.keys(aiResult.extractedData).length > 0,
+        extractedDataKeys: aiResult.extractedData ? Object.keys(aiResult.extractedData) : [],
+        extractedDataValues: aiResult.extractedData,
+        hasSuggestedTraits: !!aiResult.suggestedTraits && aiResult.suggestedTraits.length > 0,
+        suggestedTraitsCount: aiResult.suggestedTraits?.length || 0,
+        suggestedTraitsDetail: aiResult.suggestedTraits,
+        fallbackUsed: aiResult.fallbackUsed,
+        confidenceScore: aiResult.confidenceScore
       })
 
       // CRITICAL: Check if traits are being generated
