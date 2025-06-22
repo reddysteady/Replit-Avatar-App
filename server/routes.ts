@@ -1398,7 +1398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
       ]
 
-      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)])
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
 
       const fallbackResult = {
         response: randomFallback,
