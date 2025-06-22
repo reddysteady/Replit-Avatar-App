@@ -582,6 +582,17 @@ export class AIService {
 
       const result = this.processExtractionResponse(content, conversationState)
 
+      // CRITICAL: Log trait extraction details
+      console.log('[TRAIT-EXTRACTION-DEBUG] AI response processing:', {
+        personaMode: result.personaMode,
+        isComplete: result.isComplete,
+        showChipSelector: result.showChipSelector,
+        extractedFields: Object.keys(result.extractedData),
+        suggestedTraitsCount: result.suggestedTraits?.length || 0,
+        suggestedTraits: result.suggestedTraits,
+        conversationContext: conversationState.conversationContext
+      })
+
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-EXTRACT] Extraction completed:', {
           personaMode: result.personaMode,
@@ -980,6 +991,12 @@ CONVERSATION FLOW RULES:
 - Build naturally on their responses to create a flowing conversation
 - Keep the conversation engaging and focused on learning about their personality
 
+TRAIT EXTRACTION REQUIREMENTS:
+- Analyze the user's language for personality traits (e.g., "humorous", "analytical", "supportive")
+- Extract 3-5 specific traits from their communication style
+- Include traits in "suggestedTraits" field as an array of strings
+- Focus on adjectives that describe their personality, tone, or approach
+
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
 
@@ -1002,6 +1019,7 @@ REQUIRED JSON FORMAT:
 {
   "response": "Your engaging follow-up question that builds on their response",
   "extractedData": {relevant personality insights from their response},
+  "suggestedTraits": ["trait1", "trait2", "trait3"],
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "confidenceScore": ${Math.min(0.95, fieldsCollected / this.TARGET_FIELD_COUNT)},
