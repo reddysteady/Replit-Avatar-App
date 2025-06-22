@@ -1519,8 +1519,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Use the dynamic protocol and host for webhook URL
       const baseUrl =
-        process.env.WEBHOOK_BASE_URL || `${req.protocol}://${req.get('host')}`
-      const webhookUrl = `${baseUrl}/webhook/instagram`
+        process.env.WEBHOOK_BASE_URL || (req.protocol + '://' + req.get('host'))
+      const webhookUrl = baseUrl + '/webhook/instagram'
 
       // Pass the user ID (using ID 1 for now) to the webhook setup
       const result = await instagramService.setupWebhook(webhookUrl, 1)
