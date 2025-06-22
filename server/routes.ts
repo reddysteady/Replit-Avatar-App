@@ -37,6 +37,7 @@ import { oauthService } from './services/oauth'
 import { log } from './logger'
 import { personaStateManager } from './persona-state-manager'
 import { chatLogger } from './services/chatLogger'
+import { Request, Response } from 'express';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Threaded messages API endpoint with recursive SQL
@@ -786,6 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   })
 
   app.delete('/api/messages/:id', async (req, res) => {
+    Adding logging and validation to the personality extraction endpoint to improve testing and debugging.```text
     try {
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
@@ -1305,15 +1307,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   })
 
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
-  app.post('/api/ai/personality-extract', async (req, res) => {
-    console.log('[PERSONALITY-ENDPOINT] Request received:', {
-      hasMessages: !!req.body.messages,
-      messageCount: req.body.messages?.length || 0,
-      hasCurrentConfig: !!req.body.currentConfig,
-      initialMessage: req.body.initialMessage,
-      hasConfirmedTraits: !!req.body.confirmedTraits,
-      sessionId: req.body.sessionId
-    })
+  app.post('/api/ai/personality-extract', async (req: Request, res: Response) => {
+    try {
+      const { messages, currentConfig = {}, initialMessage = false, confirmedTraits } = req.body
+      console.log('[PERSONALITY-EXTRACTION] Starting extraction:', {
+        messageCount: messages?.length || 0,
+        hasCurrentConfig: !!currentConfig,
+        initialMessage,
+        isTestPayload: messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('professional tone'))
+      })
 
     const startTime = Date.now()
 
@@ -1434,6 +1436,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           sessionId,
           responseTime
         )
+      }
+
+      // Enhanced logging for trait extraction testing
+      console.log('[PERSONALITY-EXTRACTION] Completed with result:', {
+        hasResponse: !!result.response,
+        extractedDataKeys: Object.keys(result.extractedData || {}),
+        personaMode: result.personaMode,
+        showChipSelector: result.showChipSelector,
+        suggestedTraits: result.suggestedTraits,
+        traitsCount: result.suggestedTraits?.length || 0,
+        extractedToneDescription: result.extractedData?.toneDescription,
+        extractedStyleTags: result.extractedData?.styleTags,
+        isTestPayload: messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('professional tone'))
+      })
+
+      // Log test-specific validation
+      if (messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('humor'))) {
+        console.log('[GPT-TEST-VALIDATION] Humor test - checking for humor-related traits:', {
+          suggestedTraits: result.suggestedTraits,
+          hasHumorTraits: result.suggestedTraits?.some((t: any) => 
+            typeof t === 'string' ? 
+              /humor|funny|witty|playful|comedy/i.test(t) :
+              /humor|funny|witty|playful|comedy/i.test(t.label || '')
+          ),
+          toneDescription: result.extractedData?.toneDescription,
+          styleTags: result.extractedData?.styleTags
+        })
       }
 
       res.json(result)
@@ -1614,7 +1643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `
 
         return res.send(html)
-      } else {
+      } else{
         return res.redirect('/?error=instagram_auth_failed')
       }
     } catch (error: any) {

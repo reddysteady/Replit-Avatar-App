@@ -19,6 +19,7 @@ import BadgeAnimation from './ui/badge-animation'
 import BadgeEarnedToast from './ui/badge-earned-toast'
 import SpecialBadgeAnimation from './ui/special-badge-animation'
 import { PERSONA_STAGES } from '../lib/constants'
+import { gptTraitTester } from '@/lib/gpt-trait-test'
 
 interface PersonalityChatProps {
   onComplete: (config: AvatarPersonaConfig) => void
@@ -644,6 +645,46 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
     return expandedTraits;
   };
+
+  // Initialize with empty state and run GPT trait tests
+  useEffect(() => {
+    const initialState = stateManager.getState()
+    setChatState(initialState)
+    console.log('[PERSONALITY-CHAT] Component initialized with state:', initialState)
+
+    // Run GPT trait extraction test in background
+    const runGPTTest = async () => {
+      try {
+        console.log('[GPT-TEST] Starting background trait extraction test...')
+        const testResult = await gptTraitTester.runComprehensiveTest()
+
+        if (!testResult.overallSuccess) {
+          console.error('🚨 [GPT-TEST] CRITICAL: GPT trait extraction is failing!', {
+            failedTests: testResult.testResults.filter(r => !r.success),
+            summary: testResult.summary
+          })
+
+          // Show warning in UI for failed tests
+          testResult.testResults.forEach(result => {
+            if (!result.success) {
+              console.error(`❌ [GPT-TEST] ${result.error}`, {
+                expectedTraits: result.expectedTraits,
+                extractedTraits: result.extractedTraits,
+                missingTraits: result.missingTraits
+              })
+            }
+          })
+        } else {
+          console.log('✅ [GPT-TEST] All trait extraction tests passed!', testResult.summary)
+        }
+      } catch (error) {
+        console.error('🚨 [GPT-TEST] CRITICAL: Failed to run trait extraction test:', error)
+      }
+    }
+
+    // Run test after a short delay to not block initial render
+    setTimeout(runGPTTest, 1000)
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
