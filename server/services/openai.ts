@@ -1176,3 +1176,6 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
     
     return [...new Set(antonyms)].slice(0, 4)
   }
+}
+
+export const aiService = new AIService()
