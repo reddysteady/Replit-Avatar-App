@@ -778,7 +778,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
                       // CRITICAL: Always use generateTraitsFromExtractedConfig which calls createExpandedTraits
                       const generatedTraits = generateTraitsFromExtractedConfig(chatState.extractedConfig)
-                      console.log('[TRAIT-DEBUG] Generated traits from config:', generatedTraits)The code has been modified to automatically trigger field collection based on conversation analysis, enhancing the trait extraction process.
+                      console.log('[TRAIT-DEBUG] Generated traits from config:', generatedTraits)
                       if (generatedTraits.length > 0) {
                         console.log('[TRAIT-DEBUG] Using generated traits with expanded categories:', generatedTraits)
                         return generatedTraits
