@@ -117,6 +117,7 @@ export function createExpandedTraits(
 
   console.log('[TRAIT-EXPANSION] createExpandedTraits called with:', {
     initialTraitsCount: initialTraits.length,
+    initialTraits: initialTraits.map(t => ({ label: t.label, type: t.type })),
     includeAdjacent,
     includeAntonyms,
     conversationHistoryLength: conversationHistory.length
@@ -129,25 +130,40 @@ export function createExpandedTraits(
   }))
 
   let expandedTraits = [...markedInitialTraits]
-  console.log('[TRAIT-EXPANSION] Starting with initial traits:', markedInitialTraits)
+  console.log('[TRAIT-EXPANSION] Starting with marked initial traits:', markedInitialTraits)
 
   if (includeAdjacent) {
+    console.log('[TRAIT-EXPANSION] Generating adjacent traits...')
     const adjacentTraits = generateAdjacentTraits(markedInitialTraits, conversationHistory)
     console.log('[TRAIT-EXPANSION] Generated adjacent traits:', adjacentTraits)
     expandedTraits = [...expandedTraits, ...adjacentTraits]
+    console.log('[TRAIT-EXPANSION] Traits after adding adjacent:', expandedTraits.length)
+  } else {
+    console.log('[TRAIT-EXPANSION] Skipping adjacent traits (includeAdjacent=false)')
   }
 
   if (includeAntonyms) {
+    console.log('[TRAIT-EXPANSION] Generating antonym traits...')
     const antonymTraits = generateAntonymTraits(markedInitialTraits)
     console.log('[TRAIT-EXPANSION] Generated antonym traits:', antonymTraits)
     expandedTraits = [...expandedTraits, ...antonymTraits]
+    console.log('[TRAIT-EXPANSION] Traits after adding antonyms:', expandedTraits.length)
+  } else {
+    console.log('[TRAIT-EXPANSION] Skipping antonym traits (includeAntonyms=false)')
   }
 
-  console.log('[TRAIT-EXPANSION] Final expanded traits:', {
+  const finalBreakdown = {
     total: expandedTraits.length,
     extracted: expandedTraits.filter(t => t.type === 'extracted').length,
     adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
     antonym: expandedTraits.filter(t => t.type === 'antonym').length
+  }
+  
+  console.log('[TRAIT-EXPANSION] Final expanded traits breakdown:', finalBreakdown)
+  console.log('[TRAIT-EXPANSION] Final traits by type:', {
+    extracted: expandedTraits.filter(t => t.type === 'extracted').map(t => t.label),
+    adjacent: expandedTraits.filter(t => t.type === 'adjacent').map(t => t.label),
+    antonym: expandedTraits.filter(t => t.type === 'antonym').map(t => t.label)
   })
 
   return expandedTraits

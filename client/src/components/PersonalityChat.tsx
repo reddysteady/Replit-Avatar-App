@@ -565,9 +565,11 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       console.log('[TRAIT-DEBUG] Added conversation-based traits:', baseTraits)
     }
 
-    // Generate full trait set with adjacent and antonyms using the expansion library
+    // CRITICAL FIX: Always call createExpandedTraits to generate adjacent and antonym traits
     console.log('[TRAIT-DEBUG] Calling createExpandedTraits with options: includeAdjacent=true, includeAntonyms=true')
     const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
+    
+    // Ensure we have the trait expansion import
     const expandedTraits = createExpandedTraits(
       baseTraits, 
       conversationHistory, 
@@ -580,6 +582,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
       antonym: expandedTraits.filter(t => t.type === 'antonym').length
     })
+    
+    // Log each trait type for debugging
+    console.log('[TRAIT-DEBUG] Extracted traits:', expandedTraits.filter(t => t.type === 'extracted'))
+    console.log('[TRAIT-DEBUG] Adjacent traits:', expandedTraits.filter(t => t.type === 'adjacent'))
+    console.log('[TRAIT-DEBUG] Antonym traits:', expandedTraits.filter(t => t.type === 'antonym'))
+    
     console.log('[TRAIT-DEBUG] Final expanded traits:', expandedTraits)
     return expandedTraits;
   };
@@ -715,48 +723,50 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                         return chatState.chipSelectorTraits
                       }
 
+                      // CRITICAL: Always use generateTraitsFromExtractedConfig which calls createExpandedTraits
                       const generatedTraits = generateTraitsFromExtractedConfig(chatState.extractedConfig)
+                      console.log('[TRAIT-DEBUG] Generated traits from config:', generatedTraits)
+                      
                       if (generatedTraits.length > 0) {
-                        console.log('[TRAIT-DEBUG] Using generated traits:', generatedTraits)
+                        console.log('[TRAIT-DEBUG] Using generated traits with expanded categories:', generatedTraits)
                         return generatedTraits
                       }
 
-                      // Enhanced fallback traits based on conversation
+                      // Enhanced fallback with proper expansion
                       const conversationKeywords = messages
                         .filter(msg => msg.role === 'user')
                         .map(msg => msg.content.toLowerCase())
                         .join(' ')
 
-                      const detectedTraits = []
+                      const baseTraits = []
                       if (conversationKeywords.includes('humor') || conversationKeywords.includes('joke') || conversationKeywords.includes('fun')) {
-                        detectedTraits.push({ id: 'detected-1', label: 'Humorous', selected: true, type: 'extracted' as const })
+                        baseTraits.push({ id: 'detected-1', label: 'Humorous', selected: true, type: 'extracted' as const })
                       }
                       if (conversationKeywords.includes('help') || conversationKeywords.includes('assist') || conversationKeywords.includes('support')) {
-                        detectedTraits.push({ id: 'detected-2', label: 'Helpful', selected: true, type: 'extracted' as const })
+                        baseTraits.push({ id: 'detected-2', label: 'Helpful', selected: true, type: 'extracted' as const })
                       }
                       if (conversationKeywords.includes('casual') || conversationKeywords.includes('relax') || conversationKeywords.includes('chill')) {
-                        detectedTraits.push({ id: 'detected-3', label: 'Casual', selected: true, type: 'extracted' as const })
+                        baseTraits.push({ id: 'detected-3', label: 'Casual', selected: true, type: 'extracted' as const })
                       }
 
                       // Add default traits if none detected
-                      if (detectedTraits.length === 0) {
-                        detectedTraits.push(
+                      if (baseTraits.length === 0) {
+                        baseTraits.push(
                           { id: 'default-1', label: 'Friendly', selected: true, type: 'extracted' as const },
                           { id: 'default-2', label: 'Engaging', selected: true, type: 'extracted' as const }
                         )
                       }
 
-                      // Add adjacent and antonym traits
-                      const enhancedTraits = [
-                        ...detectedTraits,
-                        { id: 'adjacent-1', label: 'Approachable', selected: false, type: 'adjacent' as const },
-                        { id: 'adjacent-2', label: 'Supportive', selected: false, type: 'adjacent' as const },
-                        { id: 'antonym-1', label: 'Distant', selected: false, type: 'antonym' as const },
-                        { id: 'antonym-2', label: 'Formal', selected: false, type: 'antonym' as const }
-                      ]
+                      // Use createExpandedTraits for fallback too
+                      const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
+                      const expandedFallbackTraits = createExpandedTraits(
+                        baseTraits, 
+                        conversationHistory, 
+                        { includeAdjacent: true, includeAntonyms: true }
+                      );
                       
-                      console.log('[TRAIT-DEBUG] Enhanced fallback traits based on conversation:', enhancedTraits)
-                      return enhancedTraits
+                      console.log('[TRAIT-DEBUG] Enhanced fallback traits with expansion:', expandedFallbackTraits)
+                      return expandedFallbackTraits
                     })()}
                     onConfirm={handleChipConfirmation}
                     showAntonyms={true}
