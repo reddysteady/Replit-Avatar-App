@@ -309,6 +309,13 @@ const DesktopHeader = ({
               >
                 API Keys
               </NavItem>
+              <NavItem
+                to="/settings/chat-logs"
+                activePaths={['/settings/chat-logs']}
+                className="pl-8"
+              >
+                Chat Logs
+              </NavItem>
             </CollapsibleContent>
           </Collapsible>
 
