@@ -787,6 +787,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/messages/:id', async (req, res) => {
     try {
+      ```text
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
       if (!success) {
@@ -1224,7 +1225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.query.userId as string) || 1
       const logs = await chatLogger.getChatHistory(userId, 1000)
-      
+
       const exportData = {
         exportDate: new Date().toISOString(),
         userId,
@@ -1305,36 +1306,114 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req, res) => {
+    console.log('[PERSONALITY-ENDPOINT] Request received:', {
+      hasMessages: !!req.body.messages,
+      messageCount: req.body.messages?.length || 0,
+      hasCurrentConfig: !!req.body.currentConfig,
+      initialMessage: req.body.initialMessage,
+      hasConfirmedTraits: !!req.body.confirmedTraits,
+      sessionId: req.body.sessionId
+    })
+
+    const startTime = Date.now()
+
     try {
-      const { messages, currentConfig, enablePersonaPreview, transitionThreshold, initialMessage } = req.body
+      const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
 
       // Handle session state for Phase 1
-      // let session = null
-      // if (sessionId) {
-      //   session = await personaStateManager.restoreSession(sessionId)
-      // }
+      let session = null
+      if (sessionId) {
+        console.log('[PERSONALITY-ENDPOINT] Restoring session:', sessionId)
+        try {
+          session = await personaStateManager.restoreSession(sessionId)
+        } catch (sessionError) {
+          console.warn('[PERSONALITY-ENDPOINT] Session restore failed:', sessionError.message)
+        }
+      }
 
-      // if (!session && !initialMessage) {
-      //   // Create new session for ongoing conversations
-      //   session = await personaStateManager.createSession('1') // MVP: assume user ID 1
-      // }
+      if (!session && !initialMessage) {
+        console.log('[PERSONALITY-ENDPOINT] Creating new session')
+        try {
+          // Create new session for ongoing conversations
+          session = await personaStateManager.createSession('1') // MVP: assume user ID 1
+        } catch (sessionError) {
+          console.warn('[PERSONALITY-ENDPOINT] Session creation failed:', sessionError.message)
+        }
+      }
 
-      const { confirmedTraits } = req.body
+      console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
       const result = await aiService.extractPersonalityFromConversation(
-        messages,
+        messages || [],
         currentConfig || {},
-        enablePersonaPreview || false,
-        transitionThreshold || 4
+        initialMessage || false,
+        confirmedTraits
       )
+
+      console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
+        personaMode: result.personaMode,
+        isComplete: result.isComplete,
+        showChipSelector: result.showChipSelector,
+        hasResponse: !!result.response,
+        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0,
+        fallbackUsed: result.fallbackUsed
+      })
+
+      if (process.env.DEBUG_AI) {
+        console.debug('[DEBUG-AI] Personality extract result:', {
+          personaMode: result.personaMode,
+          isComplete: result.isComplete,
+          showChipSelector: result.showChipSelector,
+          fallbackUsed: result.fallbackUsed
+        })
+      }
+
+      // Log the conversation for review and enhancement
+      const responseTime = Date.now() - startTime
+      const lastUserMessage = messages?.filter(m => m.role === 'user')?.pop()?.content || ''
+
+      if (lastUserMessage) {
+        await chatLogger.logPersonalityExtraction(
+          1, // MVP: assume user ID 1
+          lastUserMessage,
+          result,
+          sessionId,
+          responseTime
+        )
+      }
+
       res.json(result)
     } catch (error: any) {
-      res.status(500).json({
-        error: 'Failed to process personality extraction',
-        response:
-          "I'm having some technical difficulties. Let me try a different approach - what's the main goal you have with your audience?",
+      console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 3),
+        name: error.name,
+        status: error.status
+      })
+
+      // Return a proper fallback response instead of just an error
+      const fallbackQuestions = [
+        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
+        "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
+        "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
+      ]
+
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
+
+      const fallbackResult = {
+        response: randomFallback,
         extractedData: {},
         isComplete: false,
-      })
+        personaMode: 'guidance',
+        confidenceScore: 0,
+        showChipSelector: false,
+        suggestedTraits: [],
+        reflectionCheckpoint: false,
+        fallbackUsed: true,
+        errorRecovered: true
+      }
+
+      console.log('[PERSONALITY-ENDPOINT] Returning fallback result')
+      res.json(fallbackResult) // Return 200 with fallback instead of 500
     }
   })
 
@@ -2073,114 +2152,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req, res) => {
-    console.log('[PERSONALITY-ENDPOINT] Request received:', {
-      hasMessages: !!req.body.messages,
-      messageCount: req.body.messages?.length || 0,
-      hasCurrentConfig: !!req.body.currentConfig,
-      initialMessage: req.body.initialMessage,
-      hasConfirmedTraits: !!req.body.confirmedTraits,
-      sessionId: req.body.sessionId
-    })
-
-    const startTime = Date.now()
-    
     try {
-      const { messages, currentConfig, initialMessage, confirmedTraits, sessionId } = req.body
+      const { message, messageCount = 1 } = req.body
+      const userId = 1 // Default user for now
+      const sessionId = req.headers['x-session-id'] as string || `session-${Date.now()}`
 
-      // Handle session state for Phase 1
-      let session = null
-      if (sessionId) {
-        console.log('[PERSONALITY-ENDPOINT] Restoring session:', sessionId)
-        try {
-          session = await personaStateManager.restoreSession(sessionId)
-        } catch (sessionError) {
-          console.warn('[PERSONALITY-ENDPOINT] Session restore failed:', sessionError.message)
-        }
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ error: 'Message is required' })
       }
 
-      if (!session && !initialMessage) {
-        console.log('[PERSONALITY-ENDPOINT] Creating new session')
-        try {
-          // Create new session for ongoing conversations
-          session = await personaStateManager.createSession('1') // MVP: assume user ID 1
-        } catch (sessionError) {
-          console.warn('[PERSONALITY-ENDPOINT] Session creation failed:', sessionError.message)
-        }
-      }
+      const startTime = Date.now()
 
-      console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
-      const result = await aiService.extractPersonalityFromConversation(
-        messages || [],
-        currentConfig || {},
-        initialMessage || false,
-        confirmedTraits
-      )
+      log(`[PERSONALITY-BACKEND] Extracting for message: "${message.substring(0, 50)}..." (count: ${messageCount})`)
 
-      console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
-        personaMode: result.personaMode,
-        isComplete: result.isComplete,
-        showChipSelector: result.showChipSelector,
-        hasResponse: !!result.response,
-        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0,
-        fallbackUsed: result.fallbackUsed
-      })
+      const result = await extractPersonalityAndRespond(message, messageCount)
 
-      if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] Personality extract result:', {
-          personaMode: result.personaMode,
-          isComplete: result.isComplete,
-          showChipSelector: result.showChipSelector,
-          fallbackUsed: result.fallbackUsed
-        })
-      }
-
-      // Log the conversation for review and enhancement
       const responseTime = Date.now() - startTime
-      const lastUserMessage = messages?.filter(m => m.role === 'user')?.pop()?.content || ''
-      
-      if (lastUserMessage) {
-        await chatLogger.logPersonalityExtraction(
-          1, // MVP: assume user ID 1
-          lastUserMessage,
-          result,
-          sessionId,
-          responseTime
-        )
-      }
+      log(`[PERSONALITY-BACKEND] Extraction completed in ${responseTime}ms`)
+
+      // Log the conversation to chat logger
+      await chatLogger.logPersonalityExtraction(
+        userId,
+        message,
+        result,
+        sessionId,
+        responseTime
+      )
 
       res.json(result)
     } catch (error: any) {
-      console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
-        message: error.message,
-        stack: error.stack?.split('\n').slice(0, 3),
-        name: error.name,
-        status: error.status
-      })
+      console.error('Error in personality extraction:', error)
 
-      // Return a proper fallback response instead of just an error
-      const fallbackQuestions = [
-        "I'm curious - when someone asks you a question in your comments, what's your natural instinct? Do you dive deep, keep it snappy, or something in between?",
-        "Hey there! I'm excited to help you create your AI avatar. Let's start with something fun - if your biggest fan asked you to describe your communication style in three words, what would they be?",
-        "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
-      ]
-
-      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
-
-      const fallbackResult = {
-        response: randomFallback,
-        extractedData: {},
-        isComplete: false,
-        personaMode: 'guidance',
-        confidenceScore: 0,
-        showChipSelector: false,
-        suggestedTraits: [],
-        reflectionCheckpoint: false,
+      const fallbackResponse = {
+        error: 'Failed to process personality extraction',
         fallbackUsed: true,
-        errorRecovered: true
+        errorRecovered: true,
+        response: "I'm having trouble processing that right now. Could you tell me more about what you're looking to achieve with your avatar?"
       }
 
-      console.log('[PERSONALITY-ENDPOINT] Returning fallback result')
-      res.json(fallbackResult) // Return 200 with fallback instead of 500
+      // Log the error recovery
+      const sessionId = req.headers['x-session-id'] as string || `session-${Date.now()}`
+      await chatLogger.logPersonalityExtraction(
+        1, // userId
+        req.body.message || 'Unknown message',
+        fallbackResponse,
+        sessionId,
+        Date.now() - Date.now()
+      )
+
+      res.status(500).json(fallbackResponse)
     }
   })
 
