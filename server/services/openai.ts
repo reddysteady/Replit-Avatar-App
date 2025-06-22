@@ -507,6 +507,15 @@ export class AIService {
       // Validate API key format
       const settings = await storage.getSettings(1)
       const currentKey = keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
+      
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] Key validation:', {
+          hasCurrentKey: !!currentKey,
+          keyLength: currentKey?.length || 0,
+          keyFormat: currentKey ? currentKey.substring(0, 10) + '...' : 'None'
+        })
+      }
+      
       if (currentKey && !this.isValidKeyFormat(currentKey)) {
         console.error('[PERSONALITY-ERROR] Invalid API key format:', {
           keySource,
@@ -604,9 +613,10 @@ export class AIService {
       }
 
       if (error.code === 'invalid_api_key' || error.status === 401) {
-        console.error('[PERSONALITY-ERROR] Invalid OpenAI API key')
+        console.error('[PERSONALITY-ERROR] Invalid OpenAI API key - authentication failed')
+        console.error('[PERSONALITY-ERROR] User needs to provide valid OpenAI API key for GPT extraction to work')
         return this.createFallbackResponse(
-          "There's an issue with the API configuration. Let's continue manually - tell me about your communication style.",
+          "The AI extraction system needs a valid OpenAI API key to work properly. For now, let's continue manually - tell me about your communication style and I'll help you set up your personality traits.",
           'guidance',
           true
         )

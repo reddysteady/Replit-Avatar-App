@@ -40,6 +40,9 @@ This command starts the Express server which:
 3. Handles both backend and frontend in a single process
 
 ## Recent Changes
+- 2025-06-22: Identified critical issue - GPT extraction failing due to invalid OpenAI API key (401 authentication error)
+- 2025-06-22: Enhanced error debugging for OpenAI service with comprehensive logging and fallback detection
+- 2025-06-22: All trait cloud tests failing because OpenAI API calls cannot authenticate - requires valid API key
 - 2025-06-21: Fixed critical syntax errors in server/routes.ts preventing application startup - app now running successfully
 - 2025-06-21: Fixed duplicate AI message issue by implementing proper message deduplication and unique ID generation
 - 2025-06-21: Resolved badge notification timing problems - badges now only animate when genuinely earned
