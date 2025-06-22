@@ -518,7 +518,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     }
 
     // Extract from tone description if available
-    if (config.toneDescription && baseTraits.length < 2) {
+    if (config.toneDescription && baseTraits.length < 3) {
       const toneWords = config.toneDescription
         .split(/[,\s]+/)
         .filter(word => word.length > 3 && /^[a-zA-Z]+$/.test(word))
@@ -554,16 +554,32 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         baseTraits.push({ id: 'conv-3', label: 'Casual', selected: true, type: 'extracted' });
       }
 
+      // Add fallback traits if none detected
+      if (baseTraits.length === 0) {
+        baseTraits.push(
+          { id: 'fallback-1', label: 'Engaging', selected: true, type: 'extracted' },
+          { id: 'fallback-2', label: 'Thoughtful', selected: true, type: 'extracted' }
+        );
+      }
+
       console.log('[TRAIT-DEBUG] Added conversation-based traits:', baseTraits)
     }
 
-    // Generate full trait set with adjacent and antonyms
+    // Generate full trait set with adjacent and antonyms using the expansion library
+    console.log('[TRAIT-DEBUG] Calling createExpandedTraits with options: includeAdjacent=true, includeAntonyms=true')
+    const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
     const expandedTraits = createExpandedTraits(
       baseTraits, 
-      messages.filter(msg => msg.role === 'user').map(msg => msg.content), 
+      conversationHistory, 
       { includeAdjacent: true, includeAntonyms: true }
     );
 
+    console.log('[TRAIT-DEBUG] createExpandedTraits returned:', expandedTraits.length, 'traits')
+    console.log('[TRAIT-DEBUG] Trait breakdown:', {
+      extracted: expandedTraits.filter(t => t.type === 'extracted').length,
+      adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
+      antonym: expandedTraits.filter(t => t.type === 'antonym').length
+    })
     console.log('[TRAIT-DEBUG] Final expanded traits:', expandedTraits)
     return expandedTraits;
   };

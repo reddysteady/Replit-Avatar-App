@@ -96,6 +96,18 @@ export function generateContextualTraits(
   }
 }
 
+export interface TraitExpansionOptions {
+  includeAdjacent?: boolean
+  includeAntonyms?: boolean
+}
+
+export interface PersonalityTrait {
+  id: string
+  label: string
+  selected: boolean
+  type?: 'extracted' | 'adjacent' | 'antonym'
+}
+
 export function createExpandedTraits(
   initialTraits: PersonalityTrait[],
   conversationHistory: string[],
@@ -103,23 +115,40 @@ export function createExpandedTraits(
 ): PersonalityTrait[] {
   const { includeAdjacent = true, includeAntonyms = true } = options
 
+  console.log('[TRAIT-EXPANSION] createExpandedTraits called with:', {
+    initialTraitsCount: initialTraits.length,
+    includeAdjacent,
+    includeAntonyms,
+    conversationHistoryLength: conversationHistory.length
+  })
+
   // Ensure initial traits have proper type
   const markedInitialTraits = initialTraits.map(trait => ({
     ...trait,
-    type: trait.type || 'extracted'
+    type: (trait.type || 'extracted') as 'extracted' | 'adjacent' | 'antonym'
   }))
 
   let expandedTraits = [...markedInitialTraits]
+  console.log('[TRAIT-EXPANSION] Starting with initial traits:', markedInitialTraits)
 
   if (includeAdjacent) {
     const adjacentTraits = generateAdjacentTraits(markedInitialTraits, conversationHistory)
+    console.log('[TRAIT-EXPANSION] Generated adjacent traits:', adjacentTraits)
     expandedTraits = [...expandedTraits, ...adjacentTraits]
   }
 
   if (includeAntonyms) {
     const antonymTraits = generateAntonymTraits(markedInitialTraits)
+    console.log('[TRAIT-EXPANSION] Generated antonym traits:', antonymTraits)
     expandedTraits = [...expandedTraits, ...antonymTraits]
   }
+
+  console.log('[TRAIT-EXPANSION] Final expanded traits:', {
+    total: expandedTraits.length,
+    extracted: expandedTraits.filter(t => t.type === 'extracted').length,
+    adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
+    antonym: expandedTraits.filter(t => t.type === 'antonym').length
+  })
 
   return expandedTraits
 }
@@ -128,6 +157,8 @@ function generateAdjacentTraits(
   baseTraits: PersonalityTrait[],
   conversationHistory: string[]
 ): PersonalityTrait[] {
+  console.log('[TRAIT-EXPANSION] generateAdjacentTraits called with base traits:', baseTraits.map(t => t.label))
+  
   // Enhanced adjacent trait mapping
   const adjacentMap: Record<string, string[]> = {
     'Friendly': ['Warm', 'Welcoming', 'Approachable', 'Sociable'],
@@ -141,7 +172,11 @@ function generateAdjacentTraits(
     'Professional': ['Polished', 'Competent', 'Reliable', 'Authoritative'],
     'Casual': ['Relaxed', 'Laid-back', 'Informal', 'Easy-going'],
     'Energetic': ['Vibrant', 'Lively', 'Spirited', 'Enthusiastic'],
-    'Thoughtful': ['Reflective', 'Considerate', 'Mindful', 'Deliberate']
+    'Thoughtful': ['Reflective', 'Considerate', 'Mindful', 'Deliberate'],
+    'Authentic': ['Genuine', 'Honest', 'Real', 'Sincere'],
+    'Responsive': ['Attentive', 'Quick', 'Reactive', 'Alert'],
+    'Helpful': ['Supportive', 'Useful', 'Assisting', 'Beneficial'],
+    'Casual': ['Informal', 'Relaxed', 'Easy-going', 'Comfortable']
   }
 
   const adjacentTraits: PersonalityTrait[] = []
@@ -149,20 +184,26 @@ function generateAdjacentTraits(
 
   baseTraits.forEach(trait => {
     const adjacents = adjacentMap[trait.label] || []
+    console.log('[TRAIT-EXPANSION] For trait', trait.label, 'found adjacents:', adjacents)
+    
+    // Take 2-3 adjacent traits per base trait
     adjacents.slice(0, 3).forEach(adjLabel => {
       adjacentTraits.push({
         id: `adj_${idCounter++}`,
         label: adjLabel,
         selected: false,
-        type: 'adjacent'
+        type: 'adjacent' as const
       })
     })
   })
 
+  console.log('[TRAIT-EXPANSION] Generated adjacent traits:', adjacentTraits)
   return adjacentTraits
 }
 
 function generateAntonymTraits(baseTraits: PersonalityTrait[]): PersonalityTrait[] {
+  console.log('[TRAIT-EXPANSION] generateAntonymTraits called with base traits:', baseTraits.map(t => t.label))
+  
   // Enhanced antonym mapping
   const antonymMap: Record<string, string[]> = {
     'Friendly': ['Distant', 'Cold', 'Aloof'],
@@ -176,7 +217,10 @@ function generateAntonymTraits(baseTraits: PersonalityTrait[]): PersonalityTrait
     'Analytical': ['Intuitive', 'Emotional', 'Spontaneous'],
     'Energetic': ['Calm', 'Subdued', 'Low-key'],
     'Casual': ['Formal', 'Structured', 'Rigid'],
-    'Thoughtful': ['Impulsive', 'Spontaneous', 'Quick']
+    'Thoughtful': ['Impulsive', 'Spontaneous', 'Quick'],
+    'Authentic': ['Fake', 'Artificial', 'Insincere'],
+    'Responsive': ['Unresponsive', 'Slow', 'Delayed'],
+    'Helpful': ['Unhelpful', 'Obstructive', 'Hindering']
   }
 
   const antonymTraits: PersonalityTrait[] = []
@@ -184,15 +228,19 @@ function generateAntonymTraits(baseTraits: PersonalityTrait[]): PersonalityTrait
 
   baseTraits.forEach(trait => {
     const antonyms = antonymMap[trait.label] || []
+    console.log('[TRAIT-EXPANSION] For trait', trait.label, 'found antonyms:', antonyms)
+    
+    // Take 2 antonym traits per base trait
     antonyms.slice(0, 2).forEach(antLabel => {
       antonymTraits.push({
         id: `ant_${idCounter++}`,
         label: antLabel,
         selected: false,
-        type: 'antonym'
+        type: 'antonym' as const
       })
     })
   })
 
+  console.log('[TRAIT-EXPANSION] Generated antonym traits:', antonymTraits)
   return antonymTraits
 }
