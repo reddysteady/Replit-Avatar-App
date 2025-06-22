@@ -949,9 +949,9 @@ export class AIService {
         break
     }
 
-    // Handle reflection checkpoints
+    // Handle reflection checkpoints with trait extraction
     if (stage === 'reflection_checkpoint') {
-      stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned, then show chip selector for validation.'
+      stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned, then extract 6-10 individual personality traits from the conversation.'
       responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
     }
 
@@ -971,6 +971,13 @@ CONVERSATION FLOW RULES:
 - ALWAYS ask meaningful follow-up questions based on what the user shares
 - Build naturally on their responses to create a flowing conversation
 - Keep the conversation engaging and focused on learning about their personality
+
+TRAIT EXTRACTION REQUIREMENTS:
+When showing chip selector (reflection phase), you MUST extract 6-10 individual personality traits from the conversation:
+- Analyze their word choices, communication style, interests, and expressed preferences
+- Extract single-word adjectives that describe their personality (e.g., "Humorous", "Professional", "Creative")
+- Focus on traits evident from their actual responses and communication patterns
+- Include both primary traits (obvious from conversation) and nuanced traits (inferred from style)
 
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
@@ -994,6 +1001,7 @@ REQUIRED JSON FORMAT:
 {
   "response": "Your engaging follow-up question that builds on their response",
   "extractedData": {relevant personality insights from their response},
+  "suggestedTraits": ${stage === 'reflection_checkpoint' ? '["Trait1", "Trait2", "Trait3", "Trait4", "Trait5", "Trait6"] // 6-10 single-word personality traits extracted from conversation analysis' : '[]'},
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "confidenceScore": ${Math.min(0.95, fieldsCollected / this.TARGET_FIELD_COUNT)},
