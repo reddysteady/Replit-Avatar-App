@@ -507,7 +507,7 @@ export class AIService {
       // Validate API key format
       const settings = await storage.getSettings(1)
       const currentKey = keySource === 'env' ? process.env.OPENAI_API_KEY : settings.openaiToken
-      
+
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-EXTRACT] Key validation:', {
           hasCurrentKey: !!currentKey,
@@ -515,7 +515,7 @@ export class AIService {
           keyFormat: currentKey ? currentKey.substring(0, 10) + '...' : 'None'
         })
       }
-      
+
       if (currentKey && !this.isValidKeyFormat(currentKey)) {
         console.error('[PERSONALITY-ERROR] Invalid API key format:', {
           keySource,
@@ -622,11 +622,13 @@ export class AIService {
         )
       }
 
-      return this.handleExtractionError(error, { 
-        stage: 'core_collection', 
-        fieldsCollected: this.countMeaningfulFields(currentConfig), 
-        missingFields: this.identifyMissingFields(currentConfig)
-      })
+      // Default fallback for other errors
+      return this.createFallbackResponse(
+        "AI Voice Setup is currently unavailable due to technical difficulties. Please visit the Settings > Avatar page to configure your personality traits manually.",
+        'guidance',
+        true,
+        true
+      )
     }
   }
 
@@ -636,7 +638,8 @@ export class AIService {
   private createFallbackResponse(
     responseText: string, 
     personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance',
-    fallbackUsed: boolean = false
+    isComplete: boolean = false,
+    shouldShowManualSetup: boolean = false
   ): any {
     return {
       response: responseText,
@@ -647,7 +650,12 @@ export class AIService {
       showChipSelector: false,
       suggestedTraits: [],
       reflectionCheckpoint: false,
-      ...(fallbackUsed && { fallbackUsed: true })
+      ...(shouldShowManualSetup && { shouldRedirectToManualSetup: true }),
+      sessionState: fallbackUsed ? {
+        fallbackUsed: true,
+        errorRecovery: true,
+        timestamp: new Date().toISOString()
+      } : undefined
     }
   }
 
@@ -874,7 +882,7 @@ export class AIService {
   private determineConversationStage(userMessages: number, fieldsCollected: number, confirmedTraits?: string[]): string {
     // Ensure we ask at least 4-6 questions before considering completion
     const MIN_QUESTIONS_REQUIRED = 5
-    
+
     // Simple linear progression - never jump stages prematurely
     if (userMessages <= 1) return 'introduction'
 
@@ -949,9 +957,9 @@ export class AIService {
         break
     }
 
-    // Handle reflection checkpoints with trait extraction
+    // Handle reflection checkpoints
     if (stage === 'reflection_checkpoint') {
-      stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned, then extract 6-10 individual personality traits from the conversation.'
+      stageInstructions = 'REFLECTION PHASE: Summarize what you\'ve learned, then show chip selector for validation.'
       responseFormat = '"showChipSelector": true, "reflectionCheckpoint": true,'
     }
 
@@ -971,13 +979,6 @@ CONVERSATION FLOW RULES:
 - ALWAYS ask meaningful follow-up questions based on what the user shares
 - Build naturally on their responses to create a flowing conversation
 - Keep the conversation engaging and focused on learning about their personality
-
-TRAIT EXTRACTION REQUIREMENTS:
-When showing chip selector (reflection phase), you MUST extract 6-10 individual personality traits from the conversation:
-- Analyze their word choices, communication style, interests, and expressed preferences
-- Extract single-word adjectives that describe their personality (e.g., "Humorous", "Professional", "Creative")
-- Focus on traits evident from their actual responses and communication patterns
-- Include both primary traits (obvious from conversation) and nuanced traits (inferred from style)
 
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
@@ -1001,7 +1002,6 @@ REQUIRED JSON FORMAT:
 {
   "response": "Your engaging follow-up question that builds on their response",
   "extractedData": {relevant personality insights from their response},
-  "suggestedTraits": ${stage === 'reflection_checkpoint' ? '["Trait1", "Trait2", "Trait3", "Trait4", "Trait5", "Trait6"] // 6-10 single-word personality traits extracted from conversation analysis' : '[]'},
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
   "confidenceScore": ${Math.min(0.95, fieldsCollected / this.TARGET_FIELD_COUNT)},
@@ -1086,7 +1086,8 @@ REQUIRED JSON FORMAT:
       return this.createFallbackResponse(
         "Let me try a different approach - what's the most important thing your audience values about how you communicate?",
         'guidance',
-        true // Mark as fallback for debugging
+        true, // Mark as fallback for debugging
+        false
       )
     }
 
@@ -1333,7 +1334,8 @@ REQUIRED JSON FORMAT:
   private createFallbackResponse(
     responseText: string, 
     personaMode: 'guidance' | 'blended' | 'persona_preview' = 'guidance',
-    fallbackUsed: boolean = false
+    isComplete: boolean = false,
+    shouldShowManualSetup: boolean = false
   ): any {
     return {
       response: responseText,
@@ -1343,12 +1345,13 @@ REQUIRED JSON FORMAT:
       confidenceScore: 0,
       showChipSelector: false,
       suggestedTraits: [],
-      reflectionCheckpoint: false,
-      sessionState: fallbackUsed ? {
+      isFinished: isComplete || shouldShowManualSetup,
+      shouldRedirectToManualSetup: shouldShowManualSetup,
+      sessionState: {
         fallbackUsed: true,
         errorRecovery: true,
         timestamp: new Date().toISOString()
-      } : undefined
+      }
     }
   }
 

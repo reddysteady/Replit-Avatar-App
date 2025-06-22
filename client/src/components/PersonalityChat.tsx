@@ -46,6 +46,7 @@ interface PersonalityExtractionResponse {
   showChipSelector?: boolean
   suggestedTraits?: PersonalityTrait[]
   reflectionCheckpoint?: boolean
+  shouldRedirectToManualSetup?: boolean
 }
 
 export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatProps) {
@@ -382,57 +383,62 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
       // Handle UI updates based on new state
       if (updatedState.showChipSelector) {
-        console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud triggered - using GPT-provided traits')
+        console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud triggered:', {
+          showChipSelector: updatedState.showChipSelector,
+          aiSuggestedTraits: aiResponse.suggestedTraits?.length || 0,
+          aiSuggestedTraitsDetail: aiResponse.suggestedTraits,
+          extractedConfigKeys: Object.keys(updatedState.extractedConfig),
+          extractedConfig: updatedState.extractedConfig,
+          messageCount: newMessages.length + 1,
+          conversationHistory: messages.filter(m => m.role === 'user').map(m => m.content.substring(0, 50))
+        })
 
         if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
-          // Convert GPT string traits to PersonalityTrait objects with expansion
-          const baseTraits = aiResponse.suggestedTraits.map((traitLabel: string, index: number) => ({
-            id: `gpt-${index}`,
-            label: traitLabel,
-            selected: true,
-            type: 'extracted' as const
-          }))
-
-          // Use createExpandedTraits to add adjacent and antonym options
-          const conversationHistory = messages.filter(m => m.role === 'user').map(m => m.content)
-          const expandedTraits = createExpandedTraits(
-            baseTraits, 
-            conversationHistory, 
-            { includeAdjacent: true, includeAntonyms: true }
-          )
-
-          console.log('[TRAIT-EXTRACTION-DEBUG] GPT traits expanded:', {
-            originalTraits: baseTraits.map(t => t.label),
-            expandedCount: expandedTraits.length,
-            breakdown: {
-              extracted: expandedTraits.filter(t => t.type === 'extracted').length,
-              adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
-              antonym: expandedTraits.filter(t => t.type === 'antonym').length
-            }
-          })
-
-          setSuggestedTraits(expandedTraits)
+          // Use AI-generated traits with enhanced categorization
+          console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', aiResponse.suggestedTraits)
+          setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
+            ...trait,
+            type: trait.type || 'extracted' // Default to extracted if not specified
+          })))
         } else {
-          // Fallback: minimal trait generation if GPT completely fails
-          console.warn('[TRAIT-EXTRACTION-DEBUG] GPT provided no traits - using minimal fallback')
-          const fallbackTraits = [
-            { id: 'fallback-1', label: 'Engaging', selected: true, type: 'extracted' as const },
-            { id: 'fallback-2', label: 'Thoughtful', selected: true, type: 'extracted' as const },
-            { id: 'fallback-3', label: 'Authentic', selected: true, type: 'extracted' as const }
-          ]
-          
-          const conversationHistory = messages.filter(m => m.role === 'user').map(m => m.content)
-          const expandedFallback = createExpandedTraits(
-            fallbackTraits, 
-            conversationHistory, 
-            { includeAdjacent: true, includeAntonyms: true }
-          )
-          
-          setSuggestedTraits(expandedFallback)
+          // Generate traits from extracted config if AI didn't provide any
+          console.log('[TRAIT-EXTRACTION-DEBUG] AI provided no traits, generating from config:', updatedState.extractedConfig)
+          console.log('[TRAIT-EXTRACTION-DEBUG] About to call generateTraitsFromExtractedConfig with conversation context')
+          const generatedTraits = generateTraitsFromExtractedConfig(updatedState.extractedConfig)
+          setSuggestedTraits(generatedTraits)
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits count:', generatedTraits.length)
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits breakdown:', {
+            extracted: generatedTraits.filter(t => t.type === 'extracted').length,
+            adjacent: generatedTraits.filter(t => t.type === 'adjacent').length,
+            antonym: generatedTraits.filter(t => t.type === 'antonym').length,
+            total: generatedTraits.length
+          })
         }
+      } else {
+        console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud NOT triggered:', {
+          showChipSelector: updatedState.showChipSelector,
+          messageCount: newMessages.length + 1,
+          extractedConfigKeys: Object.keys(updatedState.extractedConfig),
+          fieldsCollected: updatedState.fieldsCollected
+        })
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
+
+      // Handle manual setup redirection
+      if (aiResponse.shouldRedirectToManualSetup) {
+        toast({
+          title: 'AI Voice Setup Unavailable',
+          description: 'Please visit Settings > Avatar to configure your personality manually.',
+          variant: 'destructive',
+          action: {
+            altText: 'Go to Settings',
+            action: () => window.location.href = '/settings/avatar'
+          }
+        })
+        setIsFinished(true)
+        return
+      }
 
       // Trigger visual effects for persona mode changes
       if (aiResponse.personaMode === 'blended' || aiResponse.personaMode === 'persona_preview') {
@@ -952,6 +958,31 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                   >
                     <Sparkles className="h-4 w-4" />
                     Continue to Setup
+                  </Button>
+                </motion.div>
+              )}
+
+              {/* Manual Setup Button - shown when AI is unavailable */}
+              {isFinished && messages.length > 0 && messages[messages.length - 1]?.content?.includes('AI Voice Setup is') && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-center gap-3"
+                >
+                  <Button 
+                    onClick={() => window.location.href = '/settings/avatar'}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 flex items-center gap-2"
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    Go to Manual Setup
+                  </Button>
+                  <Button 
+                    onClick={onSkip}
+                    variant="outline"
+                    className="px-6 py-2 flex items-center gap-2"
+                  >
+                    <SkipForward className="h-4 w-4" />
+                    Skip Setup
                   </Button>
                 </motion.div>
               )}
