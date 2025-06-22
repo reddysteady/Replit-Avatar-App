@@ -787,7 +787,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   })
 
   app.delete('/api/messages/:id', async (req, res) => {
-    Adding logging and validation to the personality extraction endpoint to improve testing and debugging.```text
     try {
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
