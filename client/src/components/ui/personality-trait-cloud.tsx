@@ -5,6 +5,8 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createExpandedTraits } from "@/lib/trait-expansion"
+import type { AvatarPersonaConfig } from "@/types/AvatarPersonaConfig"
 
 interface PersonalityTrait {
   id: string
@@ -336,22 +338,24 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
   )
 }
 
-// Helper function to generate traits from extracted config with limits
+// Helper function to generate traits from extracted config with expansion
 const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
-  const traits: PersonalityTrait[] = [];
+  console.log('[TRAIT-GENERATION] Generating traits from config:', config)
+  
+  const extractedTraits: PersonalityTrait[] = [];
   let traitCount = 0;
-  const maxTraits = 4; // Limit to 4 extracted traits
+  const maxTraits = 4;
 
-  // Extract individual adjectives from toneDescription
+  // Extract individual adjectives from toneDescription  
   if (config.toneDescription && traitCount < maxTraits) {
     const adjectives = config.toneDescription
       .split(/[,\s]+/)
       .filter(word => word.length > 2)
-      .slice(0, 2); // Take only first 2 adjectives
+      .slice(0, 2);
 
     adjectives.forEach((adjective, index) => {
       if (traitCount < maxTraits) {
-        traits.push({ 
+        extractedTraits.push({ 
           id: `tone-${index}`, 
           label: adjective.charAt(0).toUpperCase() + adjective.slice(1).toLowerCase(), 
           selected: true, 
@@ -365,7 +369,7 @@ const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>)
   // Add style tags as separate traits
   if (config.styleTags && traitCount < maxTraits) {
     config.styleTags.slice(0, maxTraits - traitCount).forEach((tag, index) => {
-      traits.push({ 
+      extractedTraits.push({ 
         id: `style-${index}`, 
         label: tag, 
         selected: true, 
@@ -375,7 +379,17 @@ const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>)
     });
   }
 
-  return traits;
+  console.log('[TRAIT-GENERATION] Base extracted traits:', extractedTraits)
+  
+  // Use createExpandedTraits to add adjacent and antonym traits
+  const expandedTraits = createExpandedTraits(
+    extractedTraits, 
+    [], // No conversation history needed here
+    { includeAdjacent: true, includeAntonyms: true }
+  )
+  
+  console.log('[TRAIT-GENERATION] Final expanded traits:', expandedTraits)
+  return expandedTraits;
 };
 
 export default PersonalityTraitCloud
