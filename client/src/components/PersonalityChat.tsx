@@ -387,7 +387,8 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           aiSuggestedTraitsDetail: aiResponse.suggestedTraits,
           extractedConfigKeys: Object.keys(updatedState.extractedConfig),
           extractedConfig: updatedState.extractedConfig,
-          messageCount: newMessages.length + 1
+          messageCount: newMessages.length + 1,
+          conversationHistory: messages.filter(m => m.role === 'user').map(m => m.content.substring(0, 50))
         })
         
         if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
@@ -400,10 +401,24 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         } else {
           // Generate traits from extracted config if AI didn't provide any
           console.log('[TRAIT-EXTRACTION-DEBUG] AI provided no traits, generating from config:', updatedState.extractedConfig)
+          console.log('[TRAIT-EXTRACTION-DEBUG] About to call generateTraitsFromExtractedConfig with conversation context')
           const generatedTraits = generateTraitsFromExtractedConfig(updatedState.extractedConfig)
           setSuggestedTraits(generatedTraits)
-          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits:', generatedTraits)
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits count:', generatedTraits.length)
+          console.log('[TRAIT-EXTRACTION-DEBUG] Generated fallback traits breakdown:', {
+            extracted: generatedTraits.filter(t => t.type === 'extracted').length,
+            adjacent: generatedTraits.filter(t => t.type === 'adjacent').length,
+            antonym: generatedTraits.filter(t => t.type === 'antonym').length,
+            total: generatedTraits.length
+          })
         }
+      } else {
+        console.log('[TRAIT-EXTRACTION-DEBUG] Trait cloud NOT triggered:', {
+          showChipSelector: updatedState.showChipSelector,
+          messageCount: newMessages.length + 1,
+          extractedConfigKeys: Object.keys(updatedState.extractedConfig),
+          fieldsCollected: updatedState.fieldsCollected
+        })
       }
 
       setCurrentPersonaMode(aiResponse.personaMode || 'guidance')
@@ -517,6 +532,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   // Helper function to generate enhanced traits with proper categorization
   const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
     console.log('[TRAIT-DEBUG] generateTraitsFromExtractedConfig called with:', config)
+    
+    const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
+    console.log('[TRAIT-DEBUG] Conversation history for analysis:', conversationHistory.map(msg => msg.substring(0, 50)))
 
     const baseTraits: PersonalityTrait[] = [];
 
@@ -527,7 +545,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           id: `core-${index}`, 
           label: tag, 
           selected: true, 
-          type: 'extracted' 
+          type: 'extracted' as const
         });
       });
       console.log('[TRAIT-DEBUG] Added traits from styleTags:', baseTraits)
@@ -545,66 +563,85 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           id: `tone-${index}`,
           label: word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
           selected: true,
-          type: 'extracted'
+          type: 'extracted' as const
         });
       });
       console.log('[TRAIT-DEBUG] Added traits from toneDescription:', toneWords)
     }
 
-    // If still no base traits, provide conversation-based defaults
+    // ENHANCED: Analyze conversation for trait hints with more comprehensive detection
     if (baseTraits.length === 0) {
-      const conversationHistory = messages
-        .filter(msg => msg.role === 'user')
-        .map(msg => msg.content);
-
       const conversationText = conversationHistory.join(' ').toLowerCase();
+      console.log('[TRAIT-DEBUG] Analyzing conversation text:', conversationText.substring(0, 200))
 
-      // Analyze conversation for trait hints
-      if (conversationText.includes('humor') || conversationText.includes('joke') || conversationText.includes('fun')) {
-        baseTraits.push({ id: 'conv-1', label: 'Humorous', selected: true, type: 'extracted' });
-      }
-      if (conversationText.includes('help') || conversationText.includes('inform') || conversationText.includes('teach')) {
-        baseTraits.push({ id: 'conv-2', label: 'Helpful', selected: true, type: 'extracted' });
-      }
-      if (conversationText.includes('casual') || conversationText.includes('relax') || conversationText.includes('chill')) {
-        baseTraits.push({ id: 'conv-3', label: 'Casual', selected: true, type: 'extracted' });
-      }
+      // More comprehensive trait detection
+      const traitDetectors = [
+        { keywords: ['humor', 'joke', 'fun', 'funny', 'laugh', 'comedy'], trait: 'Humorous' },
+        { keywords: ['help', 'assist', 'support', 'guide', 'teach', 'inform'], trait: 'Helpful' },
+        { keywords: ['casual', 'relax', 'chill', 'laid-back', 'informal'], trait: 'Casual' },
+        { keywords: ['creative', 'art', 'design', 'innovate', 'imagine'], trait: 'Creative' },
+        { keywords: ['technical', 'analyze', 'detail', 'precise', 'systematic'], trait: 'Analytical' },
+        { keywords: ['professional', 'business', 'formal', 'corporate'], trait: 'Professional' },
+        { keywords: ['friendly', 'warm', 'welcoming', 'social'], trait: 'Friendly' },
+        { keywords: ['energetic', 'excited', 'enthusiastic', 'dynamic'], trait: 'Energetic' }
+      ];
+
+      traitDetectors.forEach((detector, index) => {
+        const hasKeywords = detector.keywords.some(keyword => conversationText.includes(keyword));
+        if (hasKeywords && baseTraits.length < 4) {
+          baseTraits.push({ 
+            id: `conv-${index}`, 
+            label: detector.trait, 
+            selected: true, 
+            type: 'extracted' as const 
+          });
+          console.log('[TRAIT-DEBUG] Detected trait from conversation:', detector.trait, 'based on keywords:', detector.keywords.filter(k => conversationText.includes(k)));
+        }
+      });
 
       // Add fallback traits if none detected
       if (baseTraits.length === 0) {
         baseTraits.push(
-          { id: 'fallback-1', label: 'Engaging', selected: true, type: 'extracted' },
-          { id: 'fallback-2', label: 'Thoughtful', selected: true, type: 'extracted' }
+          { id: 'fallback-1', label: 'Engaging', selected: true, type: 'extracted' as const },
+          { id: 'fallback-2', label: 'Thoughtful', selected: true, type: 'extracted' as const }
         );
+        console.log('[TRAIT-DEBUG] Added fallback traits (no conversation analysis possible)')
       }
 
-      console.log('[TRAIT-DEBUG] Added conversation-based traits:', baseTraits)
+      console.log('[TRAIT-DEBUG] Final base traits from conversation analysis:', baseTraits)
     }
 
     // CRITICAL FIX: Always call createExpandedTraits to generate adjacent and antonym traits
-    console.log('[TRAIT-DEBUG] Calling createExpandedTraits with options: includeAdjacent=true, includeAntonyms=true')
-    const conversationHistory = messages.filter(msg => msg.role === 'user').map(msg => msg.content);
+    console.log('[TRAIT-DEBUG] Calling createExpandedTraits with:', {
+      baseTraitsCount: baseTraits.length,
+      baseTraits: baseTraits.map(t => t.label),
+      includeAdjacent: true,
+      includeAntonyms: true,
+      conversationHistoryLength: conversationHistory.length
+    })
     
-    // Ensure we have the trait expansion import
     const expandedTraits = createExpandedTraits(
       baseTraits, 
       conversationHistory, 
       { includeAdjacent: true, includeAntonyms: true }
     );
 
-    console.log('[TRAIT-DEBUG] createExpandedTraits returned:', expandedTraits.length, 'traits')
-    console.log('[TRAIT-DEBUG] Trait breakdown:', {
+    const finalBreakdown = {
+      total: expandedTraits.length,
       extracted: expandedTraits.filter(t => t.type === 'extracted').length,
       adjacent: expandedTraits.filter(t => t.type === 'adjacent').length,
       antonym: expandedTraits.filter(t => t.type === 'antonym').length
-    })
+    }
     
-    // Log each trait type for debugging
-    console.log('[TRAIT-DEBUG] Extracted traits:', expandedTraits.filter(t => t.type === 'extracted'))
-    console.log('[TRAIT-DEBUG] Adjacent traits:', expandedTraits.filter(t => t.type === 'adjacent'))
-    console.log('[TRAIT-DEBUG] Antonym traits:', expandedTraits.filter(t => t.type === 'antonym'))
+    console.log('[TRAIT-DEBUG] createExpandedTraits returned:', finalBreakdown)
+    console.log('[TRAIT-DEBUG] Extracted traits:', expandedTraits.filter(t => t.type === 'extracted').map(t => t.label))
+    console.log('[TRAIT-DEBUG] Adjacent traits:', expandedTraits.filter(t => t.type === 'adjacent').map(t => t.label))
+    console.log('[TRAIT-DEBUG] Antonym traits:', expandedTraits.filter(t => t.type === 'antonym').map(t => t.label))
     
-    console.log('[TRAIT-DEBUG] Final expanded traits:', expandedTraits)
+    if (expandedTraits.length === 0) {
+      console.error('[TRAIT-DEBUG] CRITICAL: createExpandedTraits returned empty array!')
+    }
+    
     return expandedTraits;
   };
 
