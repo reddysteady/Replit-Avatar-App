@@ -308,6 +308,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         newMessages.length + 1,
         userMessage
       )
+      console.log('[TRAIT-DEBUG] Updated state after extraction:', {
+        showChipSelector: updatedState.showChipSelector,
+        chipSelectorTraits: updatedState.chipSelectorTraits,
+        extractedConfig: updatedState.extractedConfig,
+        aiResponseTraits: aiResponse.suggestedTraits
+      })
       setChatState(updatedState)
 
       console.log('[PERSONALITY-STATE] State updated:', {
@@ -466,10 +472,12 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   // Helper function to generate enhanced traits with proper categorization
   const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
+    console.log('[TRAIT-DEBUG] generateTraitsFromExtractedConfig called with:', config)
+    
     const baseTraits: PersonalityTrait[] = [];
 
     // Extract core traits from style tags (limit to 3-4 core traits)
-    if (config.styleTags) {
+    if (config.styleTags?.length > 0) {
       config.styleTags.slice(0, 4).forEach((tag, index) => {
         baseTraits.push({ 
           id: `core-${index}`, 
@@ -478,20 +486,57 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
           type: 'extracted' 
         });
       });
+      console.log('[TRAIT-DEBUG] Added traits from styleTags:', baseTraits)
     }
 
-    // Use conversation history to generate expanded traits
-    const conversationHistory = messages
-      .filter(msg => msg.role === 'user')
-      .map(msg => msg.content);
+    // Extract from tone description if available
+    if (config.toneDescription && baseTraits.length < 2) {
+      const toneWords = config.toneDescription
+        .split(/[,\s]+/)
+        .filter(word => word.length > 3 && /^[a-zA-Z]+$/.test(word))
+        .slice(0, 3);
+      
+      toneWords.forEach((word, index) => {
+        baseTraits.push({
+          id: `tone-${index}`,
+          label: word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+          selected: true,
+          type: 'extracted'
+        });
+      });
+      console.log('[TRAIT-DEBUG] Added traits from toneDescription:', toneWords)
+    }
+
+    // If still no base traits, provide conversation-based defaults
+    if (baseTraits.length === 0) {
+      const conversationHistory = messages
+        .filter(msg => msg.role === 'user')
+        .map(msg => msg.content);
+      
+      const conversationText = conversationHistory.join(' ').toLowerCase();
+      
+      // Analyze conversation for trait hints
+      if (conversationText.includes('humor') || conversationText.includes('joke') || conversationText.includes('fun')) {
+        baseTraits.push({ id: 'conv-1', label: 'Humorous', selected: true, type: 'extracted' });
+      }
+      if (conversationText.includes('help') || conversationText.includes('inform') || conversationText.includes('teach')) {
+        baseTraits.push({ id: 'conv-2', label: 'Helpful', selected: true, type: 'extracted' });
+      }
+      if (conversationText.includes('casual') || conversationText.includes('relax') || conversationText.includes('chill')) {
+        baseTraits.push({ id: 'conv-3', label: 'Casual', selected: true, type: 'extracted' });
+      }
+      
+      console.log('[TRAIT-DEBUG] Added conversation-based traits:', baseTraits)
+    }
 
     // Generate full trait set with adjacent and antonyms
     const expandedTraits = createExpandedTraits(
       baseTraits, 
-      conversationHistory, 
+      messages.filter(msg => msg.role === 'user').map(msg => msg.content), 
       { includeAdjacent: true, includeAntonyms: true }
     );
 
+    console.log('[TRAIT-DEBUG] Final expanded traits:', expandedTraits)
     return expandedTraits;
   };
 
@@ -610,14 +655,45 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 )}
 
                 {chatState.showChipSelector && (
-
                   <PersonalityTraitCloud
-                    initialTraits={generateTraitsFromExtractedConfig(chatState.extractedConfig)}
+                    initialTraits={(() => {
+                      console.log('[TRAIT-DEBUG] Generating traits, extracted config:', chatState.extractedConfig)
+                      console.log('[TRAIT-DEBUG] Suggested traits:', suggestedTraits)
+                      
+                      // Priority order: suggestedTraits > chatState traits > generated traits > fallback
+                      if (suggestedTraits?.length > 0) {
+                        console.log('[TRAIT-DEBUG] Using suggested traits:', suggestedTraits)
+                        return suggestedTraits
+                      }
+                      
+                      if (chatState.chipSelectorTraits?.length > 0) {
+                        console.log('[TRAIT-DEBUG] Using state manager traits:', chatState.chipSelectorTraits)
+                        return chatState.chipSelectorTraits
+                      }
+                      
+                      const generatedTraits = generateTraitsFromExtractedConfig(chatState.extractedConfig)
+                      if (generatedTraits.length > 0) {
+                        console.log('[TRAIT-DEBUG] Using generated traits:', generatedTraits)
+                        return generatedTraits
+                      }
+                      
+                      // Fallback traits if everything else fails
+                      const fallbackTraits = [
+                        { id: 'fallback-1', label: 'Friendly', selected: true, type: 'extracted' as const },
+                        { id: 'fallback-2', label: 'Helpful', selected: true, type: 'extracted' as const },
+                        { id: 'fallback-3', label: 'Conversational', selected: true, type: 'extracted' as const },
+                        { id: 'fallback-4', label: 'Engaging', selected: false, type: 'adjacent' as const },
+                        { id: 'fallback-5', label: 'Approachable', selected: false, type: 'adjacent' as const },
+                        { id: 'fallback-6', label: 'Distant', selected: false, type: 'antonym' as const },
+                        { id: 'fallback-7', label: 'Formal', selected: false, type: 'antonym' as const }
+                      ]
+                      console.log('[TRAIT-DEBUG] Using fallback traits:', fallbackTraits)
+                      return fallbackTraits
+                    })()}
                     onConfirm={handleChipConfirmation}
                     showAntonyms={true}
                     className="max-w-full"
                   />
-
                 )}
               </div>
               <div ref={messagesEndRef} />

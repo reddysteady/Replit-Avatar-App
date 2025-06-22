@@ -58,6 +58,7 @@ export interface PersonaChatState {
 
   // Configuration
   extractedConfig: Partial<AvatarPersonaConfig>
+  chipSelectorTraits?: any[]
 }
 
 export interface ExtractionResult {
@@ -101,11 +102,23 @@ export class PersonaChatStateManager {
       conversationHistory: [],
       extractionHistory: [],
       qualityMetrics: {},
-      extractedConfig: {}
+      extractedConfig: {},
+      chipSelectorTraits: []
     }
   }
 
-  updateFromExtraction(result: ExtractionResult, newMessageCount: number, userMessage?: string): PersonaChatState {
+  // Update based on extraction results
+  updateFromExtraction(
+    result: ExtractionResult, 
+    messageCount: number, 
+    userMessage?: string
+  ): PersonaChatState {
+    console.log('[STATE-DEBUG] updateFromExtraction called with:', {
+      messageCount,
+      resultKeys: Object.keys(result),
+      showChipSelector: result.showChipSelector,
+      suggestedTraits: result.suggestedTraits
+    })
     const previousFieldCount = this.state.fieldsCollected
     const mergedConfig = { ...this.state.extractedConfig, ...result.extractedData }
     const newFieldCount = countValidFields(mergedConfig)
@@ -183,12 +196,17 @@ export class PersonaChatStateManager {
       this.state.stageJustAdvanced = false
     }
 
-    // Handle chip validation triggers
-    if (needsChipValidation || result.reflectionCheckpoint) {
+    // Handle chip selector logic
+    if (result.showChipSelector && !this.state.reflectionActive) {
+      console.log('[STATE-MANAGER] Activating chip selector')
       this.state.showChipSelector = true
       this.state.reflectionActive = true
-      this.state.chipValidationComplete = false
-      this.state.currentStage = 'reflection_checkpoint'
+
+      // Store suggested traits if provided
+      if (result.suggestedTraits?.length > 0) {
+        this.state.chipSelectorTraits = result.suggestedTraits
+        console.log('[STATE-DEBUG] Stored suggested traits:', result.suggestedTraits)
+      }
     }
 
     // Update stage if not in forced validation
@@ -362,7 +380,8 @@ export class PersonaChatStateManager {
       conversationHistory: [],
       extractionHistory: [],
       qualityMetrics: {},
-      extractedConfig: {}
+      extractedConfig: {},
+      chipSelectorTraits: []
     }
   }
 
