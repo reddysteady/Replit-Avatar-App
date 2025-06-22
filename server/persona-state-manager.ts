@@ -5,6 +5,7 @@ interface PersonaState {
   config: AvatarPersonaConfig
   lastUsed: Date
   messageCount: number
+  sessionId?: string
 }
 
 class PersonaStateManager {
@@ -72,6 +73,16 @@ class PersonaStateManager {
    */
   getAllPersonas(): Map<number, PersonaState> {
     return new Map(this.personas)
+  }
+
+  /**
+   * Create a new session for a user
+   */
+  createSession(userId: number): string {
+    const sessionId = `session_${userId}_${Date.now()}`
+    const state = this.getPersonaState(userId)
+    state.sessionId = sessionId
+    return sessionId
   }
 }
 

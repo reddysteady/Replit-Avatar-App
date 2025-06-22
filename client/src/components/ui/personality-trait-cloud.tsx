@@ -36,23 +36,6 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
   const [newTraitInput, setNewTraitInput] = useState("")
   const [showAddInput, setShowAddInput] = useState(false)
 
-interface PersonalityTraitCloudProps {
-  initialTraits?: PersonalityTrait[]
-  onConfirm?: (selectedTraits: PersonalityTrait[]) => void
-  className?: string
-  showAntonyms?: boolean
-}
-
-const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
-  initialTraits = [],
-  onConfirm,
-  className,
-  showAntonyms = true,
-}) => {
-  const [traits, setTraits] = useState<PersonalityTrait[]>(initialTraits)
-  const [newTraitInput, setNewTraitInput] = useState('')
-  const [showAddInput, setShowAddInput] = useState(false)
-
   // Categorize traits by type
   const extractedTraits = traits.filter(trait => trait.type === 'extracted')
   const adjacentTraits = traits.filter(trait => trait.type === 'adjacent')
