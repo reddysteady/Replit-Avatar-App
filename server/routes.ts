@@ -785,9 +785,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })
 
-  app.delete('/api/messages/:id', async (req, res) => {
+  app<replit_final_file>
+.delete('/api/messages/:id', async (req, res) => {
     try {
-      ```text
       const messageId = parseInt(req.params.id)
       const success = await storage.deleteMessage(messageId)
       if (!success) {
@@ -1217,7 +1217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ logs, total: logs.length })
     } catch (error: any) {
       console.error('Error retrieving chat logs:', error)
-      res.status(500).json({ error: 'Failed to retrieve chat logs' })
+      res.status(500).json({ error: 'Failed to fetch chat logs' })
     }
   })
 
@@ -1398,7 +1398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "Here's something I'm wondering - when you're responding to your audience, do you find yourself being more of a teacher, a friend, or something else entirely?"
       ]
 
-      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)]
+      const randomFallback = fallbackQuestions[Math.floor(Math.random() * fallbackQuestions.length)])
 
       const fallbackResult = {
         response: randomFallback,
