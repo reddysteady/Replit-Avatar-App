@@ -836,7 +836,7 @@ export class AIService {
     } else if (combinedText.length > 100) {
       return 'detailed'
     } else if (combinedText.split(' ').length < 10) {
-      return 'concise'
+      return 'concise'```text
     }
     return 'balanced'
   }
@@ -849,7 +849,7 @@ export class AIService {
       'business', 'fitness', 'health', 'technology', 'travel', 'food', 'art', 'music',
       'education', 'finance', 'marketing', 'design', 'coding', 'writing', 'photography'
     ]
-    
+
     const content = messages.map(m => m.content).join(' ').toLowerCase()
     return topicKeywords.filter(topic => content.includes(topic))
   }
@@ -871,9 +871,9 @@ export class AIService {
   private detectUserTone(messages: any[]): string {
     const userMessages = messages.filter(m => m.role === 'user')
     if (userMessages.length === 0) return 'neutral'
-    
+
     const combinedText = userMessages.map(m => m.content).join(' ').toLowerCase()
-    
+
     if (combinedText.includes('excited') || combinedText.includes('amazing') || combinedText.includes('!')) {
       return 'enthusiastic'
     } else if (combinedText.includes('professional') || combinedText.includes('business')) {
@@ -912,7 +912,7 @@ export class AIService {
       'communicationPrefs',
       'boundaries'
     ]
-    
+
     return requiredFields.filter(field => {
       const value = config[field as keyof AvatarPersonaConfig]
       if (!value) return true
@@ -1000,18 +1000,132 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
   private processExtractionResponse(content: string, conversationState: any): any {
     try {
       const parsed = JSON.parse(content)
-      
+
       // Validate and clean extracted data
       const extractedData = this.validateExtractedData(parsed.extractedData || {})
-      
+
       // Determine if chip selector should be shown
       const showChipSelector = parsed.showChipSelector || conversationState.stage === 'reflection_checkpoint'
-      
+
       // Generate suggested traits if chip selector is active
       let suggestedTraits = parsed.suggestedTraits || []
-      if (showChipSelector && suggestedTraits.length === 0) {
-        suggestedTraits = this.generateFallbackTraits(extractedData, conversationState)
-      }
+      
+// Generate suggested traits for trait cloud
+        if (showChipSelector) {
+          console.log('[AI-EXTRACTION] Generating trait suggestions for chip selector')
+
+          // Extract traits from the current config with proper type marking
+          const extractedTraits: any[] = []
+
+          // PRIORITY 1: Add traits from toneTraits (mark as extracted)
+          if (extractedData.toneTraits?.length > 0) {
+            extractedData.toneTraits.forEach((trait: string, index) => {
+              extractedTraits.push({
+                id: `tone-extracted-${index}`,
+                label: trait,
+                selected: true,
+                type: 'extracted' as const,
+                category: 'tone'
+              })
+            })
+            console.log('[AI-EXTRACTION] Added tone traits as extracted:', extractedData.toneTraits)
+          }
+
+          // PRIORITY 2: Add traits from styleTags (mark as extracted)
+          if (extractedData.styleTags?.length > 0) {
+            extractedData.styleTags.forEach((trait: string, index) => {
+              extractedTraits.push({
+                id: `style-extracted-${index}`,
+                label: trait,
+                selected: true,
+                type: 'extracted' as const,
+                category: 'style'
+              })
+            })
+            console.log('[AI-EXTRACTION] Added style traits as extracted:', extractedData.styleTags)
+          }
+
+          // PRIORITY 3: Add traits from communicationPrefs (mark as extracted)
+          if (extractedData.communicationPrefs?.length > 0) {
+            extractedData.communicationPrefs.forEach((trait: string, index) => {
+              extractedTraits.push({
+                id: `comm-extracted-${index}`,
+                label: trait,
+                selected: true,
+                type: 'extracted' as const,
+                category: 'communication'
+              })
+            })
+            console.log('[AI-EXTRACTION] Added communication traits as extracted:', extractedData.communicationPrefs)
+          }
+
+          // FALLBACK: If no individual traits available, parse from descriptions
+          if (extractedTraits.length === 0) {
+            console.log('[AI-EXTRACTION] No individual traits found, parsing from descriptions...')
+
+            // Parse tone description for adjectives
+            if (extractedData.toneDescription) {
+              const toneWords = extractedData.toneDescription
+                .split(/[,\s]+/)
+                .filter(word => word.length > 3 && /^[a-zA-Z]+$/.test(word))
+                .slice(0, 3)
+
+              toneWords.forEach((word, index) => {
+                extractedTraits.push({
+                  id: `tone-parsed-${index}`,
+                  label: word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+                  selected: true,
+                  type: 'extracted' as const,
+                  category: 'tone'
+                })
+              })
+              console.log('[AI-EXTRACTION] Parsed traits from toneDescription:', toneWords)
+            }
+          }
+
+          // Generate adjacent traits (2-3 per extracted trait)
+          const adjacentTraits: any[] = []
+          extractedTraits.forEach((trait, baseIndex) => {
+            const relatedTerms = this.generateAdjacentTraits(trait.label ? [trait.label]:[])
+            relatedTerms.slice(0, 2).forEach((relatedTrait, index) => {
+              adjacentTraits.push({
+                id: `adjacent-${baseIndex}-${index}`,
+                label: relatedTrait,
+                selected: false,
+                type: 'adjacent' as const,
+                category: trait.category || 'tone',
+                relatedTo: trait.id
+              })
+            })
+          })
+
+          // Generate antonym traits (1-2 per extracted trait)
+          const antonymTraits: any[] = []
+          extractedTraits.slice(0, 2).forEach((trait, baseIndex) => {
+            const oppositeTerms = this.generateAntonymTraits(trait.label ? [trait.label]:[])
+            oppositeTerms.slice(0, 1).forEach((antonymTrait, index) => {
+              antonymTraits.push({
+                id: `antonym-${baseIndex}-${index}`,
+                label: antonymTrait,
+                selected: false,
+                type: 'antonym' as const,
+                category: trait.category || 'tone',
+                relatedTo: trait.id
+              })
+            })
+          })
+
+          // Combine all traits with extracted first
+          suggestedTraits = [...extractedTraits, ...adjacentTraits, ...antonymTraits]
+
+          console.log('[AI-EXTRACTION] Generated trait breakdown with proper types:', {
+            extracted: extractedTraits.length,
+            extractedTraits: extractedTraits.map(t => `${t.label} (${t.type})`),
+            adjacent: adjacentTraits.length,
+            antonym: antonymTraits.length,
+            total: suggestedTraits.length
+          })
+        }
 
       return {
         response: parsed.response || "Let's continue building your personality profile.",
@@ -1034,22 +1148,22 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
    */
   private validateExtractedData(data: any): Partial<AvatarPersonaConfig> {
     const cleaned: any = {}
-    
+
     // Ensure toneTraits are individual terms
     if (data.toneTraits && Array.isArray(data.toneTraits)) {
       cleaned.toneTraits = data.toneTraits.filter(t => typeof t === 'string' && t.length < 20)
     }
-    
+
     // Ensure styleTags are individual terms  
     if (data.styleTags && Array.isArray(data.styleTags)) {
       cleaned.styleTags = data.styleTags.filter(t => typeof t === 'string' && t.length < 20)
     }
-    
+
     // Ensure communicationPrefs are individual terms
     if (data.communicationPrefs && Array.isArray(data.communicationPrefs)) {
       cleaned.communicationPrefs = data.communicationPrefs.filter(t => typeof t === 'string' && t.length < 20)
     }
-    
+
     // Copy other fields as-is
     const otherFields = ['toneDescription', 'avatarObjective', 'audienceDescription', 'boundaries', 'allowedTopics', 'restrictedTopics']
     otherFields.forEach(field => {
@@ -1057,7 +1171,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         cleaned[field] = data[field]
       }
     })
-    
+
     return cleaned
   }
 
@@ -1067,7 +1181,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
   private generateFallbackTraits(extractedData: any, conversationState: any): any[] {
     const traits: any[] = []
     let idCounter = 1
-    
+
     // Extract from toneTraits
     if (extractedData.toneTraits?.length > 0) {
       extractedData.toneTraits.forEach((trait: string) => {
@@ -1079,7 +1193,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         })
       })
     }
-    
+
     // Extract from styleTags
     if (extractedData.styleTags?.length > 0) {
       extractedData.styleTags.forEach((trait: string) => {
@@ -1091,7 +1205,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         })
       })
     }
-    
+
     // Extract from communicationPrefs
     if (extractedData.communicationPrefs?.length > 0) {
       extractedData.communicationPrefs.forEach((trait: string) => {
@@ -1103,7 +1217,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         })
       })
     }
-    
+
     // Add adjacent traits
     const adjacentTraits = this.generateAdjacentTraits(traits.map(t => t.label))
     adjacentTraits.forEach(trait => {
@@ -1114,7 +1228,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         type: 'adjacent'
       })
     })
-    
+
     // Add antonym traits
     const antonymTraits = this.generateAntonymTraits(traits.filter(t => t.type === 'extracted').map(t => t.label))
     antonymTraits.forEach(trait => {
@@ -1125,7 +1239,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         type: 'antonym'
       })
     })
-    
+
     return traits
   }
 
@@ -1143,13 +1257,13 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       'Conversational': ['Informal', 'Chatty', 'Engaging'],
       'Detailed': ['Thorough', 'Comprehensive', 'Meticulous']
     }
-    
+
     const adjacent: string[] = []
     baseTraits.forEach(trait => {
       const related = adjacentMap[trait] || []
       adjacent.push(...related.slice(0, 2))
     })
-    
+
     return [...new Set(adjacent)].slice(0, 6)
   }
 
@@ -1167,13 +1281,13 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       'Conversational': ['Formal', 'Structured'],
       'Detailed': ['Concise', 'Brief']
     }
-    
+
     const antonyms: string[] = []
     baseTraits.forEach(trait => {
       const opposite = antonymMap[trait] || []
       antonyms.push(...opposite.slice(0, 1))
     })
-    
+
     return [...new Set(antonyms)].slice(0, 4)
   }
 }
