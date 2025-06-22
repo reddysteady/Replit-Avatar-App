@@ -492,6 +492,12 @@ export class AIService {
 
       if (!hasKey) {
         console.error('[PERSONALITY-ERROR] No OpenAI API key available')
+        console.error('[PERSONALITY-ERROR] Key check details:', {
+          envKey: !!process.env.OPENAI_API_KEY,
+          envKeyLength: process.env.OPENAI_API_KEY?.length || 0,
+          storageKey: !!settings.openaiToken,
+          storageKeyLength: settings.openaiToken?.length || 0
+        })
         return this.createFallbackResponse(
           "I need an OpenAI API key to help with personality setup. Please add your API key in Settings.",
           'guidance'
@@ -554,6 +560,10 @@ export class AIService {
         max_tokens: 800
       })
 
+      if (process.env.DEBUG_AI) {
+        console.debug('[PERSONALITY-EXTRACT] OpenAI request successful')
+      }
+
       const content = response.choices[0]?.message?.content || '{}'
 
       if (process.env.DEBUG_AI) {
@@ -578,8 +588,29 @@ export class AIService {
       console.error('[PERSONALITY-ERROR] Extraction failed:', {
         message: error.message,
         status: error.status,
-        type: error.constructor.name
+        code: error.code,
+        type: error.constructor.name,
+        stack: error.stack?.split('\n').slice(0, 5)
       })
+
+      // Check if it's an API key or quota issue
+      if (error.code === 'insufficient_quota' || error.status === 429) {
+        console.error('[PERSONALITY-ERROR] OpenAI quota exceeded')
+        return this.createFallbackResponse(
+          "I'm having trouble accessing the AI service right now. Let's continue manually - what kind of content do you create?",
+          'guidance',
+          true
+        )
+      }
+
+      if (error.code === 'invalid_api_key' || error.status === 401) {
+        console.error('[PERSONALITY-ERROR] Invalid OpenAI API key')
+        return this.createFallbackResponse(
+          "There's an issue with the API configuration. Let's continue manually - tell me about your communication style.",
+          'guidance',
+          true
+        )
+      }
 
       return this.handleExtractionError(error, { 
         stage: 'core_collection', 
