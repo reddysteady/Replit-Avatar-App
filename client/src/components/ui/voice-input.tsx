@@ -67,6 +67,7 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
 
       recognition.onend = () => {
         setIsRecording(false)
+        setError(null)
       }
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -129,6 +130,7 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
       recognitionRef.current.stop()
+      setIsRecording(false)
     }
   }
 
@@ -139,6 +141,22 @@ export default function VoiceInput({ onTranscript, disabled = false, className }
       startRecording()
     }
   }
+
+  // Effect to handle external stop requests
+  useEffect(() => {
+    const handleStopRecording = () => {
+      if (isRecording) {
+        stopRecording()
+      }
+    }
+
+    // Listen for global events that should stop recording
+    document.addEventListener('voiceInputStop', handleStopRecording)
+    
+    return () => {
+      document.removeEventListener('voiceInputStop', handleStopRecording)
+    }
+  }, [isRecording])
 
   if (!isSupported) {
     return null // Don't render if not supported

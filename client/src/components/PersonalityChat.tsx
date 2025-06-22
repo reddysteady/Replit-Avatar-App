@@ -232,6 +232,9 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading || isFinished || chatState.reflectionActive) return
 
+    // Stop any active voice recording
+    document.dispatchEvent(new CustomEvent('voiceInputStop'))
+
     console.log('[PERSONALITY-STATE] Sending message:', inputValue.trim())
 
     const userMessage: ChatMessage = {
