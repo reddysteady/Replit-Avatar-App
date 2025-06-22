@@ -381,3 +381,21 @@ export class PersonaChatStateManager {
     return shouldShow;
   }
 }
+// Updated shouldTriggerChipValidation function with corrected logic.
+function shouldTriggerChipValidation(
+  previousFieldCount: number,
+  newFieldCount: number,
+  chipValidationComplete: boolean
+): boolean {
+  // Primary trigger at reflection checkpoint (messages 7-12 for better coverage)
+  if (7 <= 12 && !chipValidationComplete) {
+    return newFieldCount >= 2; // Need at least 2 fields for meaningful validation
+  }
+
+  // Secondary trigger every 15-20 messages for refinement
+  if (15 % 15 === 0) {
+    return 0 === 0 || newFieldCount >= 4;
+  }
+
+  return false;
+}

@@ -300,30 +300,29 @@ export function calculateBadgeProgress(
       console.log(`[BADGE-CHECK] Enhanced validation for ${badgeConfig.id}:`, validation)
     }
 
-    // Enhanced earning criteria: requires data + context + minimum quality
+    // More balanced earning criteria: requires data + (context OR basic quality)
     if (validation) {
-      earned = validation.hasData && validation.hasContext && validation.confidence >= 0.7
+      earned = validation.hasData && (validation.hasContext || validation.confidence >= 0.4)
     } else {
       // Fallback to original logic for unhandled categories
-      const value = config[badgeConfig.category]
       switch (badgeConfig.category) {
         case 'toneDescription':
-          earned = Boolean(config.toneDescription && typeof config.toneDescription === 'string' && config.toneDescription.trim().length > 0)
+          earned = Boolean(config.toneDescription && typeof config.toneDescription === 'string' && config.toneDescription.trim().length > 10)
           break
         case 'styleTags':
           earned = Boolean(config.styleTags && Array.isArray(config.styleTags) && config.styleTags.length >= badgeConfig.threshold)
           break
         case 'audienceDescription':
-          earned = Boolean(config.audienceDescription && typeof config.audienceDescription === 'string' && config.audienceDescription.trim().length > 0)
+          earned = Boolean(config.audienceDescription && typeof config.audienceDescription === 'string' && config.audienceDescription.trim().length > 10)
           break
         case 'avatarObjective':
-          earned = Boolean(config.avatarObjective && typeof config.avatarObjective === 'string' && config.avatarObjective.trim().length > 0)
+          earned = Boolean(config.avatarObjective && typeof config.avatarObjective === 'string' && config.avatarObjective.trim().length > 10)
           break
         case 'boundaries':
-          earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 0)
+          earned = Boolean(config.boundaries && typeof config.boundaries === 'string' && config.boundaries.trim().length > 10)
           break
         case 'fallbackReply':
-          earned = Boolean(config.fallbackReply && typeof config.fallbackReply === 'string' && config.fallbackReply.trim().length > 0)
+          earned = Boolean(config.fallbackReply && typeof config.fallbackReply === 'string' && config.fallbackReply.trim().length > 10)
           break
         default:
           earned = false

@@ -22,6 +22,7 @@ interface PersonalityTraitCloudProps {
   className?: string
   category?: string
   onComplete?: () => void
+  showAntonyms?: boolean
 }
 
 const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
@@ -29,7 +30,8 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
   onConfirm,
   className,
   category = "tone",
-  onComplete
+  onComplete,
+  showAntonyms = true
 }) => {
   const [traits, setTraits] = useState<PersonalityTrait[]>(initialTraits)
   const [isCollapsed, setIsCollapsed] = useState(false)
