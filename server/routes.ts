@@ -1291,6 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle session state for Phase 1
       let session = null
+      const sessionId = req.body.sessionId || 'session_' + Date.now()
       if (sessionId) {
         console.log('[PERSONALITY-ENDPOINT] Restoring session:', sessionId)
         try {
