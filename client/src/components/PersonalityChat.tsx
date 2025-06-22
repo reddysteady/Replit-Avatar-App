@@ -62,7 +62,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   // Badge animation states
   const [showBadgeAnimation, setShowBadgeAnimation] = useState(false)
-  const [animatingBadge, setAnimatingBadge] = useState<any>(null)
+  const [animatingBadge, setAnimatingBadge = useState<any>(null)
   const [showBadgeToast, setShowBadgeToast] = useState(false)
   const [toastBadge, setToastBadge] = useState<any>(null)
   const [showSpecialAnimation, setShowSpecialAnimation] = useState(false)
@@ -393,7 +393,7 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
 
   const handleVoiceTranscript = (transcript: string) => {
     if (transcript.trim()) {
-      setInputValue(transcript)
+      setInputValue((prevInputValue) => prevInputValue + transcript);
       // Auto-focus input after transcript is received
       setTimeout(() => {
         inputRef.current?.focus()
@@ -464,6 +464,23 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
       timeZoneName: 'short'
     })
   }
+
+  // Helper function to generate traits from extracted config
+  const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
+    const traits: PersonalityTrait[] = [];
+
+    if (config.toneDescription) {
+      traits.push({ id: 'toneDescription', label: config.toneDescription, selected: true, type: 'extracted' });
+    }
+
+    if (config.styleTags) {
+      config.styleTags.forEach((tag, index) => {
+        traits.push({ id: `styleTag-${index}`, label: tag, selected: true, type: 'extracted' });
+      });
+    }
+
+    return traits;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -580,28 +597,14 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
                 )}
 
                 {chatState.showChipSelector && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-4 w-4" />
-                    </div>
-                    <PersonalityTraitCloud
-                      initialTraits={createExpandedTraits(
-                        suggestedTraits.length > 0 ? suggestedTraits : [
-                          { id: '1', label: 'Friendly', selected: true, type: 'extracted' },
-                          { id: '2', label: 'Humorous', selected: true, type: 'extracted' },
-                          { id: '3', label: 'Engaging', selected: true, type: 'extracted' }
-                        ],
-                        messages.map(m => m.content),
-                        {
-                          includeAdjacent: true,
-                          includeAntonyms: true
-                        }
-                      )}
-                      onConfirm={handleChipConfirmation}
-                      showAntonyms={true}
-                      className="max-w-full"
-                    />
-                  </div>
+                  
+                  <PersonalityTraitCloud
+                    initialTraits={generateTraitsFromExtractedConfig(chatState.extractedConfig)}
+                    onConfirm={handleChipConfirmation}
+                    showAntonyms={true}
+                    className="max-w-full"
+                  />
+                
                 )}
               </div>
               <div ref={messagesEndRef} />
