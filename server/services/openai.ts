@@ -839,3 +839,50 @@ export class AIService {
       return 'concise'
     }
     return 'balanced'
+  }
+
+  /**
+   * Extracts mentioned topics from messages
+   */
+  private extractMentionedTopics(messages: any[]): string[] {
+    const topics: string[] = []
+    const text = messages.map(m => m.content).join(' ').toLowerCase()
+    
+    // Simple keyword extraction - could be enhanced with NLP
+    const keywords = text.match(/\b\w{4,}\b/g) || []
+    return [...new Set(keywords)].slice(0, 5)
+  }
+
+  /**
+   * Extracts user examples from messages
+   */
+  private extractUserExamples(messages: any[]): string[] {
+    return messages
+      .filter(m => m.role === 'user' && m.content.length > 50)
+      .map(m => m.content.substring(0, 100))
+      .slice(0, 3)
+  }
+
+  /**
+   * Detects user tone from messages
+   */
+  private detectUserTone(messages: any[]): string {
+    const userMessages = messages.filter(m => m.role === 'user')
+    if (userMessages.length === 0) return 'neutral'
+    
+    const text = userMessages.map(m => m.content).join(' ').toLowerCase()
+    
+    if (text.includes('!') || text.includes('awesome') || text.includes('great')) {
+      return 'enthusiastic'
+    } else if (text.includes('help') || text.includes('please') || text.includes('thanks')) {
+      return 'polite'
+    } else if (text.length > 200) {
+      return 'detailed'
+    }
+    
+    return 'casual'
+  }
+}
+
+// Export singleton instance
+export const aiService = new AIService()
