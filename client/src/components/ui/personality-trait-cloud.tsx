@@ -343,5 +343,47 @@ const PersonalityTraitCloud: React.FC<PersonalityTraitCloudProps> = ({
   )
 }
 
+// Helper function to generate traits from extracted config with limits
+const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
+  const traits: PersonalityTrait[] = [];
+  let traitCount = 0;
+  const maxTraits = 4; // Limit to 4 extracted traits
+
+  // Extract individual adjectives from toneDescription
+  if (config.toneDescription && traitCount < maxTraits) {
+    const adjectives = config.toneDescription
+      .split(/[,\s]+/)
+      .filter(word => word.length > 2)
+      .slice(0, 2); // Take only first 2 adjectives
+
+    adjectives.forEach((adjective, index) => {
+      if (traitCount < maxTraits) {
+        traits.push({ 
+          id: `tone-${index}`, 
+          label: adjective.charAt(0).toUpperCase() + adjective.slice(1).toLowerCase(), 
+          selected: true, 
+          type: 'extracted' 
+        });
+        traitCount++;
+      }
+    });
+  }
+
+  // Add style tags as separate traits
+  if (config.styleTags && traitCount < maxTraits) {
+    config.styleTags.slice(0, maxTraits - traitCount).forEach((tag, index) => {
+      traits.push({ 
+        id: `style-${index}`, 
+        label: tag, 
+        selected: true, 
+        type: 'extracted' 
+      });
+      traitCount++;
+    });
+  }
+
+  return traits;
+};
+
 export default PersonalityTraitCloud
 export type { PersonalityTrait }

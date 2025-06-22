@@ -465,21 +465,35 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
     })
   }
 
-  // Helper function to generate traits from extracted config
+  // Helper function to generate enhanced traits with proper categorization
   const generateTraitsFromExtractedConfig = (config: Partial<AvatarPersonaConfig>): PersonalityTrait[] => {
-    const traits: PersonalityTrait[] = [];
+    const baseTraits: PersonalityTrait[] = [];
 
-    if (config.toneDescription) {
-      traits.push({ id: 'toneDescription', label: config.toneDescription, selected: true, type: 'extracted' });
-    }
-
+    // Extract core traits from style tags (limit to 3-4 core traits)
     if (config.styleTags) {
-      config.styleTags.forEach((tag, index) => {
-        traits.push({ id: `styleTag-${index}`, label: tag, selected: true, type: 'extracted' });
+      config.styleTags.slice(0, 4).forEach((tag, index) => {
+        baseTraits.push({ 
+          id: `core-${index}`, 
+          label: tag, 
+          selected: true, 
+          type: 'extracted' 
+        });
       });
     }
 
-    return traits;
+    // Use conversation history to generate expanded traits
+    const conversationHistory = messages
+      .filter(msg => msg.role === 'user')
+      .map(msg => msg.content);
+
+    // Generate full trait set with adjacent and antonyms
+    const expandedTraits = createExpandedTraits(
+      baseTraits, 
+      conversationHistory, 
+      { includeAdjacent: true, includeAntonyms: true }
+    );
+
+    return expandedTraits;
   };
 
   return (
