@@ -558,14 +558,21 @@ export class AIService {
       console.log('[TRAIT-EXTRACTION-DEBUG] Conversation analysis:', {
         totalUserMessages: userMessages.length,
         conversationKeywords: userMessages.join(' ').toLowerCase().split(' ').filter(w => 
-          ['humor', 'humorous', 'joke', 'funny', 'help', 'helpful', 'casual', 'formal', 'creative', 'analytical', 'style', 'communication'].includes(w)
+          ['humor', 'humorous', 'joke', 'funny', 'help', 'helpful', 'casual', 'formal', 'creative', 'analytical', 'style', 'communication', 'friendly', 'professional', 'direct', 'detailed', 'concise'].includes(w)
         ),
         conversationSample: userMessages.slice(-3).map(msg => ({
           content: msg.content,
           length: msg.content.length,
-          hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional|style|communication/i.test(msg.content),
-          hasStyleWords: /style|approach|way|manner|method|communicate|talk|speak/i.test(msg.content)
-        }))
+          hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional|style|communication|direct|detailed|concise/i.test(msg.content),
+          hasStyleWords: /style|approach|way|manner|method|communicate|talk|speak|respond|reply|tone|vibe/i.test(msg.content),
+          extractableStyleTags: msg.content.match(/\b(friendly|professional|casual|formal|humorous|serious|direct|detailed|concise|creative|analytical|supportive|energetic|calm)\b/gi) || []
+        })),
+        // Enhanced extraction context
+        fullConversationText: userMessages.join(' ').substring(0, 500) + '...',
+        extractionHints: {
+          mentionedStyles: userMessages.join(' ').match(/\b(friendly|professional|casual|formal|humorous|serious|direct|detailed|concise|creative|analytical|supportive|energetic|calm)\b/gi) || [],
+          mentionedCommunication: userMessages.join(' ').match(/\b(brief|detailed|conversational|formal|informal|quick|thorough)\b/gi) || []
+        }
       })
 
       if (process.env.DEBUG_AI) {
@@ -604,7 +611,12 @@ export class AIService {
         extractedFields: Object.keys(result.extractedData),
         suggestedTraitsCount: result.suggestedTraits?.length || 0,
         suggestedTraits: result.suggestedTraits,
-        conversationContext: conversationState.conversationContext
+        conversationContext: conversationState.conversationContext,
+        // Enhanced field-specific logging
+        toneDescription: result.extractedData.toneDescription,
+        styleTags: result.extractedData.styleTags,
+        communicationStyle: result.extractedData.communicationStyle,
+        extractedDataFull: result.extractedData
       })
 
       if (process.env.DEBUG_AI) {
@@ -1010,6 +1022,8 @@ TRAIT EXTRACTION REQUIREMENTS:
 - Extract 3-5 specific traits from their communication style
 - Include traits in "suggestedTraits" field as an array of strings
 - Focus on adjectives that describe their personality, tone, or approach
+- Extract styleTags as an array of single-word descriptors (e.g., ["friendly", "casual", "professional"])
+- Extract communicationStyle preferences (e.g., "concise", "detailed", "conversational")
 
 CURRENT STAGE: ${currentPersonaStage.toUpperCase()}
 ${stageInstructions}
@@ -1032,7 +1046,14 @@ YOUR RESPONSE MUST:
 REQUIRED JSON FORMAT:
 {
   "response": "Your engaging follow-up question that builds on their response",
-  "extractedData": {relevant personality insights from their response},
+  "extractedData": {
+    "toneDescription": "single comprehensive tone description",
+    "styleTags": ["tag1", "tag2", "tag3"],
+    "communicationStyle": "communication preference description",
+    "audienceDescription": "audience details if mentioned",
+    "avatarObjective": "goals if mentioned",
+    "boundaries": "boundaries if mentioned"
+  },
   "suggestedTraits": ["trait1", "trait2", "trait3"],
   ${responseFormat}
   "personaMode": "${stage === 'completion' ? 'persona_preview' : stage === 'reflection_checkpoint' ? 'blended' : 'guidance'}",
@@ -1204,12 +1225,29 @@ REQUIRED JSON FORMAT:
       const value = data[key]
       if (value !== null && value !== undefined && value !== '') {
         if (typeof value === 'string' && value.length > 2) {
-          cleaned[key] = value.trim()
+          // Special handling for toneDescription to ensure it's comprehensive
+          if (key === 'toneDescription') {
+            cleaned[key] = value.trim()
+            console.log('[TONE-DEBUG] Extracted toneDescription:', value.trim())
+          } else {
+            cleaned[key] = value.trim()
+          }
         } else if (Array.isArray(value) && value.length > 0) {
-          cleaned[key] = value.filter(item => item && item.length > 0)
+          const filteredArray = value.filter(item => item && item.length > 0)
+          if (filteredArray.length > 0) {
+            cleaned[key] = filteredArray
+            if (key === 'styleTags') {
+              console.log('[STYLE-DEBUG] Extracted styleTags:', filteredArray)
+            }
+          }
         }
       }
     })
+
+    // Enhanced debug logging for key fields
+    if (cleaned.communicationStyle) {
+      console.log('[COMMUNICATION-DEBUG] Extracted communicationStyle:', cleaned.communicationStyle)
+    }
 
     return cleaned
   }
