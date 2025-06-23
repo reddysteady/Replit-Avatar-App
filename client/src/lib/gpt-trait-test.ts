@@ -72,10 +72,11 @@ export class GPTTraitTester {
 
   private async runSingleTest(testPayload: any): Promise<TraitTestResult> {
     const startTime = Date.now()
+    
+    // CRITICAL: Generate unique test session ID for complete isolation - moved outside try block
+    const testSessionId = `test_${testPayload.category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     try {
-      // CRITICAL: Generate unique test session ID for complete isolation
-      const testSessionId = `test_${testPayload.category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       
       // CRITICAL: Clear any cached data and ensure isolated test
       const testMessages = testPayload.messages.map((msg: any, index: number) => ({
@@ -166,7 +167,7 @@ export class GPTTraitTester {
 
     } catch (error: any) {
       console.log(`[GPT-TEST-ISOLATION] Test ${testPayload.name} failed with error:`, {
-        testSessionId: testSessionId || 'UNKNOWN',
+        testSessionId,
         error: error.message,
         isolationMaintained: true
       })
@@ -179,19 +180,19 @@ export class GPTTraitTester {
         unexpectedTraits: [],
         aiResponseValid: false,
         extractionTime: Date.now() - startTime,
-        testSessionId: testSessionId || 'UNKNOWN',
+        testSessionId,
         error: error.message
       }
     } finally {
       // CRITICAL: Ensure test session cleanup
-      console.log(`[GPT-TEST-CLEANUP] Cleaning up test session: ${testSessionId || 'UNKNOWN'}`)
+      console.log(`[GPT-TEST-CLEANUP] Cleaning up test session: ${testSessionId}`)
       
       // Optional: Call cleanup endpoint if needed
       try {
         await fetch('/api/cache/clear', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ testSessionId: testSessionId || 'UNKNOWN' })
+          body: JSON.stringify({ testSessionId })
         })
       } catch (cleanupError) {
         console.warn('[GPT-TEST-CLEANUP] Cache cleanup failed (non-critical):', cleanupError)
