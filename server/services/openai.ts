@@ -1025,10 +1025,16 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       // Determine if chip selector should be shown
       const showChipSelector = parsed.showChipSelector || conversationState.stage === 'reflection_checkpoint'
       
-      // Generate suggested traits if chip selector is active
+      // CRITICAL FIX: Always generate suggestedTraits from extracted data for client trait cloud
       let suggestedTraits = parsed.suggestedTraits || []
-      if (showChipSelector && suggestedTraits.length === 0) {
+      if (suggestedTraits.length === 0) {
+        // Generate traits from extracted data regardless of showChipSelector state
         suggestedTraits = this.generateFallbackTraits(extractedData, conversationState)
+        console.log('[TRAIT-GENERATION-FIX] Generated suggestedTraits from extracted data:', {
+          count: suggestedTraits.length,
+          extractedFields: Object.keys(extractedData),
+          showChipSelector
+        })
       }
 
       return {
