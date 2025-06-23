@@ -623,12 +623,26 @@ export class AIService {
         communicationPrefs: result.extractedData.communicationPrefs,
         toneDescription: result.extractedData.toneDescription,
         extractedDataFull: result.extractedData,
+        // NEW: Trait justifications logging
+        traitJustifications: result.traitJustifications,
+        justificationCount: result.traitJustifications ? Object.keys(result.traitJustifications).length : 0,
         // Trait generation pipeline status
         traitGenerationSuccess: result.suggestedTraits?.length > 0,
         hasExtractedTraits: result.suggestedTraits?.filter(t => t.type === 'extracted').length > 0,
         hasAdjacentTraits: result.suggestedTraits?.filter(t => t.type === 'adjacent').length > 0,
         hasAntonymTraits: result.suggestedTraits?.filter(t => t.type === 'antonym').length > 0
       })
+
+      // Log individual trait justifications for debugging
+      if (result.traitJustifications) {
+        console.log('[TRAIT-JUSTIFICATIONS] Extracted trait reasoning:')
+        Object.entries(result.traitJustifications).forEach(([category, justifications]) => {
+          console.log(`[TRAIT-JUSTIFICATIONS] ${category}:`)
+          Object.entries(justifications as Record<string, string>).forEach(([trait, reason]) => {
+            console.log(`  - ${trait}: ${reason}`)
+          })
+        })
+      }
 
       if (process.env.DEBUG_AI) {
         console.debug('[PERSONALITY-EXTRACT] Extraction completed:', {
@@ -983,6 +997,20 @@ Return valid JSON with this structure:
     "allowedTopics": ["Topics they're comfortable with"],
     "restrictedTopics": ["Topics to avoid"]
   },
+  "traitJustifications": {
+    "toneTraits": {
+      "Friendly": "User said 'I love helping people' showing warm, approachable communication",
+      "Warm": "Uses phrases like 'excited to chat' indicating welcoming personality"
+    },
+    "styleTags": {
+      "Conversational": "Uses informal language and asks follow-up questions",
+      "Detailed": "Provides thorough explanations with examples"
+    },
+    "communicationPrefs": {
+      "Interactive": "Frequently asks questions and encourages dialogue",
+      "Example-driven": "Consistently provides concrete examples to illustrate points"
+    }
+  },
   "showChipSelector": false,
   "suggestedTraits": [],
   "personaMode": "guidance",
@@ -1042,6 +1070,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         extractedData,
         showChipSelector,
         suggestedTraits,
+        traitJustifications: parsed.traitJustifications || {},
         personaMode: parsed.personaMode || 'guidance',
         confidenceScore: parsed.confidenceScore || 0.5,
         isComplete: parsed.isComplete || false,

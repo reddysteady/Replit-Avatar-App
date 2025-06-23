@@ -396,6 +396,18 @@ export default function PersonalityChat({ onComplete, onSkip }: PersonalityChatP
         if (aiResponse.suggestedTraits && aiResponse.suggestedTraits.length > 0) {
           // Use AI-generated traits with enhanced categorization
           console.log('[TRAIT-EXTRACTION-DEBUG] Using AI-suggested traits:', aiResponse.suggestedTraits)
+          
+          // Log trait justifications if available
+          if (aiResponse.traitJustifications) {
+            console.log('[TRAIT-JUSTIFICATIONS] AI provided reasoning for traits:')
+            Object.entries(aiResponse.traitJustifications).forEach(([category, justifications]) => {
+              console.log(`[TRAIT-JUSTIFICATIONS] ${category}:`)
+              Object.entries(justifications).forEach(([trait, reason]) => {
+                console.log(`  - ${trait}: ${reason}`)
+              })
+            })
+          }
+          
           setSuggestedTraits(aiResponse.suggestedTraits.map(trait => ({
             ...trait,
             type: trait.type || 'extracted' // Default to extracted if not specified

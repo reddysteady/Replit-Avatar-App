@@ -1,4 +1,3 @@
-
 /**
  * Core persona context for Phase 1 implementation
  */
@@ -76,7 +75,7 @@ export interface AvatarPersonaConfig {
    * Core persona context with structured tone profiles
    */
   corePersona?: CorePersonaContext
-  
+
   /**
    * Big Five personality assessment
    */
@@ -107,4 +106,25 @@ export interface ExtractionResult {
   fallbackUsed: boolean;
   parameters: Partial<CorePersonaContext>;
   errors?: string[];
+}
+
+export interface TraitJustifications {
+  toneTraits?: Record<string, string>
+  styleTags?: Record<string, string>
+  communicationPrefs?: Record<string, string>
+}
+
+export interface PersonalityExtractionResponse {
+  response: string
+  extractedData: Partial<AvatarPersonaConfig>
+  isComplete: boolean
+  personaMode: 'guidance' | 'blended' | 'persona_preview'
+  confidenceScore: number
+  transitionMessage?: string
+  isFinished?: boolean
+  showChipSelector?: boolean
+  suggestedTraits?: PersonalityTrait[]
+  traitJustifications?: TraitJustifications
+  reflectionCheckpoint?: boolean
+  sessionState?: any
 }

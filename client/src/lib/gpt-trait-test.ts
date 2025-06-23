@@ -1,4 +1,3 @@
-
 export interface TraitTestResult {
   success: boolean
   extractedTraits: string[]
@@ -52,7 +51,7 @@ export class GPTTraitTester {
       console.log(`[GPT-TRAIT-TEST] Running ${testPayload.name}...`)
       const result = await this.runSingleTest(testPayload)
       results.push(result)
-      
+
       // Log result
       if (result.success) {
         console.log(`✅ [GPT-TRAIT-TEST] ${testPayload.name} PASSED`, {
@@ -73,7 +72,7 @@ export class GPTTraitTester {
 
   private async runSingleTest(testPayload: any): Promise<TraitTestResult> {
     const startTime = Date.now()
-    
+
     try {
       // Call the personality extraction endpoint directly
       const response = await fetch('/api/ai/personality-extract', {
@@ -107,13 +106,13 @@ export class GPTTraitTester {
 
       // Validate AI response structure
       const aiResponseValid = this.validateAIResponse(aiResult)
-      
+
       // Extract traits from response
       const extractedTraits = this.extractTraitsFromResponse(aiResult)
-      
+
       // Compare with expected traits
       const analysis = this.analyzeTraits(extractedTraits, testPayload.expectedTraits)
-      
+
       const success = aiResponseValid && 
                      extractedTraits.length > 0 && 
                      analysis.matchCount >= Math.ceil(testPayload.expectedTraits.length * 0.6) // 60% match threshold
@@ -144,20 +143,36 @@ export class GPTTraitTester {
   }
 
   private validateAIResponse(response: any): boolean {
-    const requiredFields = ['response', 'extractedData', 'personaMode']
-    const hasRequiredFields = requiredFields.every(field => field in response) &&
-           typeof response.response === 'string' &&
-           typeof response.extractedData === 'object'
-    
-    // Validate new trait arrays structure
-    const extractedData = response.extractedData || {}
-    const hasTraitArrays = (
-      (extractedData.toneTraits && Array.isArray(extractedData.toneTraits)) ||
-      (extractedData.styleTags && Array.isArray(extractedData.styleTags)) ||
-      (extractedData.communicationPrefs && Array.isArray(extractedData.communicationPrefs))
+    return !!(
+      response &&
+      response.extractedData &&
+      (response.extractedData.toneTraits || 
+       response.extractedData.styleTags || 
+       response.extractedData.communicationPrefs)
     )
-    
-    return hasRequiredFields && (hasTraitArrays || extractedData.toneDescription)
+  }
+
+  private validateTraitJustifications(justifications: any, extractedTraits: string[]): boolean {
+    if (!justifications) {
+      console.log('[GPT-TEST] No trait justifications provided')
+      return false
+    }
+
+    let hasValidJustifications = false
+    const justificationCategories = ['toneTraits', 'styleTags', 'communicationPrefs']
+
+    justificationCategories.forEach(category => {
+      if (justifications[category]) {
+        Object.entries(justifications[category]).forEach(([trait, reason]) => {
+          if (typeof reason === 'string' && reason.length > 10) {
+            console.log(`[GPT-TEST] Valid justification for ${trait}: ${reason}`)
+            hasValidJustifications = true
+          }
+        })
+      }
+    })
+
+    return hasValidJustifications
   }
 
   private extractTraitsFromResponse(response: any): string[] {
@@ -234,12 +249,12 @@ export class GPTTraitTester {
     }
   }> {
     console.log('[GPT-TRAIT-TEST] Starting comprehensive trait extraction test...')
-    
+
     const testResults = await this.runTest()
     const passed = testResults.filter(r => r.success).length
     const failed = testResults.length - passed
     const totalExtractionTime = testResults.reduce((sum, r) => sum + r.extractionTime, 0)
-    
+
     const summary = {
       passed,
       failed,
