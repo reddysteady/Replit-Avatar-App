@@ -782,8 +782,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages)
     } catch (error) {
       console.error('Error fetching YouTube messages:', error)
-      res.status(500).json({ error:```python
- String(error) })
+      res.status(500).json({ error: String(error) })
     }
   })
 
