@@ -11,6 +11,7 @@
 // See CHANGELOG.md for 2025-06-11 [Changed-4]
 // See CHANGELOG.md for 2025-06-16 [Changed]
 // See CHANGELOG.md for 2025-06-16 [Changed-2]
+// See CHANGELOG.md for 2025-06-19 [Changed]
 
 // dotenv/config is imported in server/index.ts before this service is
 // instantiated, so manual .env parsing is unnecessary.
@@ -82,19 +83,22 @@ export class AIService {
 
   /**
    * Clears the system prompt cache for a specific user or all users
+   * Returns true if an entry was removed. See docs/specs/implemented/stage_1_persona.md
    */
-  clearSystemPromptCache(userId?: number): void {
+  clearSystemPromptCache(userId?: number): boolean {
     if (userId) {
-      this.systemPromptCache.delete(userId)
+      const cleared = this.systemPromptCache.delete(userId)
       if (process.env.DEBUG_AI) {
-        console.debug(`[DEBUG-AI] Cleared system prompt cache for user ${userId}`)
+        console.debug(`[DEBUG-AI] Cleared system prompt cache for user ${userId}: ${cleared}`)
       }
-    } else {
-      this.systemPromptCache.clear()
-      if (process.env.DEBUG_AI) {
-        console.debug('[DEBUG-AI] Cleared all system prompt cache')
-      }
+      return cleared
     }
+    const hadEntries = this.systemPromptCache.size > 0
+    this.systemPromptCache.clear()
+    if (process.env.DEBUG_AI) {
+      console.debug('[DEBUG-AI] Cleared all system prompt cache', { cleared: hadEntries })
+    }
+    return hadEntries
   }
 
   /**

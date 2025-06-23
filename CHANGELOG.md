@@ -271,3 +271,8 @@ CHANGLOG.md file.
 
 - [Codex][Fixed] Persona restrictedTopics schema uses z.string().min for validation.
 
+## 2025-06-19
+
+- [Codex][Changed] `clearSystemPromptCache` now returns a boolean for cache status.
+- [Codex][Added] `GPTTraitTester` logs cleanup responses and throws on cache clear failure.
+
