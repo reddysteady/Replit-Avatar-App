@@ -94,24 +94,28 @@ export class GPTTraitTester {
         isolationLevel: 'FULL'
       })
 
-      // Call the personality extraction endpoint with isolated data
+      // Call the personality extraction endpoint with maximum isolation
       const response = await fetch('/api/ai/personality-extract', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Test-Isolation': 'true', // Signal this is an isolated test
+          'X-Test-Isolation': 'true',
           'X-Test-Category': testPayload.category,
-          'X-Test-Session-ID': testSessionId, // Unique session for this test
-          'X-Cache-Bypass': 'true' // Force cache bypass for tests
+          'X-Test-Session-ID': testSessionId,
+          'X-Cache-Bypass': 'true',
+          'X-Context-Reset': 'true', // Force context reset
+          'X-Isolation-Level': 'MAXIMUM' // Maximum isolation
         },
         body: JSON.stringify({
           messages: testMessages,
-          currentConfig: {}, // Always start with empty config
+          currentConfig: {}, // Always empty for tests
           initialMessage: false,
-          testMode: true, // Flag for test mode
+          testMode: true,
           testCategory: testPayload.category,
-          testSessionId, // Include session ID in payload
-          isolationMode: 'STRICT' // Request strict isolation
+          testSessionId,
+          isolationMode: 'MAXIMUM',
+          contextReset: true, // Force context reset
+          expectMinimalTraits: true // Expect minimal trait extraction
         })
       })
 
@@ -243,16 +247,26 @@ export class GPTTraitTester {
 
     const traits: string[] = []
 
-    // PRIORITY 1: Use only EXTRACTED type traits from suggestedTraits for tests
+    // PRIORITY 1: STRICT filtering - only EXTRACTED type traits with limit
     if (response.suggestedTraits && Array.isArray(response.suggestedTraits)) {
       const extractedTraits = response.suggestedTraits
-        .filter((trait: any) => trait.type === 'extracted' || trait.selected === true)
+        .filter((trait: any) => trait.type === 'extracted' && trait.selected === true)
         .map((trait: any) => typeof trait === 'string' ? trait : trait.label)
         .filter(Boolean)
+        .slice(0, 8) // CRITICAL: Limit to max 8 traits to prevent contamination
       
       if (extractedTraits.length > 0) {
         traits.push(...extractedTraits)
-        console.log('[GPT-TEST-EXTRACTION] Found extracted traits from suggestedTraits:', extractedTraits)
+        console.log('[GPT-TEST-EXTRACTION] Found extracted traits (limited):', extractedTraits)
+        
+        // VALIDATION: Log if extraction seems contaminated
+        if (extractedTraits.length > 8) {
+          console.warn('[GPT-TEST-CONTAMINATION] Excessive traits detected:', {
+            count: extractedTraits.length,
+            traits: extractedTraits,
+            possibleContamination: true
+          })
+        }
       }
     }
 

@@ -463,7 +463,8 @@ export class AIService {
   confirmedTraits?: string[],
   testMode = false,
   testCategory?: string,
-  testSessionId?: string
+  testSessionId?: string,
+  headers?: Record<string, string>
 ): Promise<{
   response: string
   extractedData: Partial<AvatarPersonaConfig>
@@ -476,27 +477,35 @@ export class AIService {
   suggestedTraits?: Array<{id: string, label: string, selected: boolean}>
   reflectionCheckpoint?: boolean
   sessionState?: any
+  traitJustifications?: Record<string, Record<string, string>>
 }> {
+    // CRITICAL: Enhanced test isolation - clear ALL contamination sources
+    const isTestIsolationMode = testMode || headers?.['X-Test-Isolation'] === 'true'
+    const sessionId = testSessionId || headers?.['X-Test-Session-ID'] || 'default'
+    
+    if (isTestIsolationMode) {
+      // Clear all cached data that could cause contamination
+      this.clearSystemPromptCache() // Clear prompt cache
+      console.log('[TEST-ISOLATION] STRICT isolation activated:', {
+        testMode,
+        testCategory,
+        sessionId,
+        isolationLevel: 'MAXIMUM',
+        cacheCleared: true,
+        contextReset: true
+      })
+    }
+
     if (process.env.DEBUG_AI) {
-      console.debug('[PERSONALITY-EXTRACT] Starting extraction with:', {
+      console.debug('[PERSONALITY-EXTRACT] Starting extraction with isolation:', {
         messageCount: messages?.length || 0,
         initialMessage,
         hasCurrentConfig: !!currentConfig,
         confirmedTraits: confirmedTraits?.length || 0,
         testMode,
-        testCategory
-      })
-    }
-
-    // CRITICAL: Enhanced test isolation to prevent contamination
-    if (testMode) {
-      this.clearSystemPromptCache() // Clear all cached prompts
-      console.log('[TEST-ISOLATION] Enhanced isolation activated:', {
-        testMode,
         testCategory,
-        testSessionId,
-        cacheCleared: true,
-        isolationLevel: 'STRICT'
+        sessionId,
+        isolationMode: isTestIsolationMode
       })
     }
 
@@ -568,28 +577,44 @@ export class AIService {
         })
       }
 
-      // Generate contextual system prompt with test isolation
+      // Generate contextual system prompt with enhanced test isolation
       let systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
       
-      // CRITICAL: Add test-specific prompt isolation
-      if (testMode && testCategory) {
-        systemPrompt += `
+      // CRITICAL: Add ultra-strict test mode isolation
+      if (isTestIsolationMode && testCategory) {
+        systemPrompt = `## ULTRA-STRICT TEST ISOLATION - SESSION: ${sessionId}
 
-## STRICT TEST MODE ISOLATION - SESSION: ${testSessionId || 'UNKNOWN'}
-This is an ISOLATED test for "${testCategory}" traits. CRITICAL REQUIREMENTS:
+You are analyzing a COMPLETELY ISOLATED test conversation for "${testCategory}" traits.
 
-1. **COMPLETE ISOLATION**: Ignore ALL previous conversations, cached data, or context
-2. **CATEGORY FOCUS**: Extract traits ONLY for "${testCategory}" category
-3. **CONVERSATION-SPECIFIC**: Base extraction ONLY on the provided test messages
-4. **NO GENERIC TRAITS**: Avoid default traits like "Friendly", "Responsive", "Engaging" unless explicitly demonstrated
-5. **PRECISE EXTRACTION**: Return minimal, conversation-evident traits only
-6. **TEST SESSION**: ${testSessionId || 'ISOLATED'} - treat as completely separate from any other interactions
+### MANDATORY ISOLATION RULES:
+1. **ZERO CONTEXT BLEED**: This conversation exists in complete isolation
+2. **FRESH START**: No memory of any previous conversations, responses, or patterns
+3. **CATEGORY-ONLY FOCUS**: Extract ONLY "${testCategory}"-related traits
+4. **EVIDENCE-BASED**: Only extract traits with clear evidence in the provided messages
+5. **NO DEFAULT FALLBACKS**: Do not use generic traits like "Friendly", "Helpful", "Engaging"
+6. **MINIMAL EXTRACTION**: Prefer 3-5 highly specific traits over many generic ones
 
-Expected trait category: ${testCategory}
-Isolation level: STRICT
-Test focus: Extract traits that specifically relate to ${testCategory} communication style from THIS conversation only.
+### TEST CONVERSATION ANALYSIS:
+Messages to analyze: ${messages.length}
+Expected category: ${testCategory}
+Session isolation: ${sessionId}
 
-IMPORTANT: This test must be completely isolated from any other conversation or context.`
+### TRAIT EXTRACTION REQUIREMENTS:
+- Extract maximum 5 traits total
+- Each trait must have clear justification from the conversation
+- Focus on ${testCategory} communication style only
+- Ignore any patterns that seem "too familiar" - start fresh
+
+### RESPONSE STRUCTURE:
+Return minimal suggestedTraits focusing only on conversation-evident ${testCategory} traits.
+
+${systemPrompt}`
+      } else if (isTestIsolationMode) {
+        systemPrompt = `## GENERAL TEST ISOLATION - SESSION: ${sessionId}
+
+This is an isolated test session. Start fresh without any previous context.
+
+${systemPrompt}`
       }
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
@@ -644,15 +669,21 @@ IMPORTANT: This test must be completely isolated from any other conversation or 
         console.debug('[PERSONALITY-DEBUG] Raw OpenAI response preview:', content.substring(0, 200) + (content.length > 200 ? '...' : ''))
       }
 
-      const result = this.processExtractionResponse(content, conversationState)
+      const result = this.processExtractionResponse(content, conversationState, isTestIsolationMode, testCategory)
 
-      // CRITICAL: Log trait extraction details
+      // CRITICAL: Enhanced logging with contamination detection
       console.log('[TRAIT-EXTRACTION-DEBUG] AI response processing:', {
+        testMode: isTestIsolationMode,
+        testCategory,
+        sessionId,
         personaMode: result.personaMode,
         isComplete: result.isComplete,
         showChipSelector: result.showChipSelector,
         extractedFields: Object.keys(result.extractedData),
         suggestedTraitsCount: result.suggestedTraits?.length || 0,
+        // CONTAMINATION DETECTION
+        possibleContamination: result.suggestedTraits?.length > 10,
+        contaminationWarning: result.suggestedTraits?.length > 10 ? 'HIGH_TRAIT_COUNT_DETECTED' : 'NORMAL',
         suggestedTraits: result.suggestedTraits,
         conversationContext: conversationState.conversationContext,
         // Enhanced field-specific logging
@@ -661,7 +692,7 @@ IMPORTANT: This test must be completely isolated from any other conversation or 
         communicationPrefs: result.extractedData.communicationPrefs,
         toneDescription: result.extractedData.toneDescription,
         extractedDataFull: result.extractedData,
-        // NEW: Trait justifications logging
+        // Trait justifications logging
         traitJustifications: result.traitJustifications,
         justificationCount: result.traitJustifications ? Object.keys(result.traitJustifications).length : 0,
         // Trait generation pipeline status
@@ -671,15 +702,17 @@ IMPORTANT: This test must be completely isolated from any other conversation or 
         hasAntonymTraits: result.suggestedTraits?.filter(t => t.type === 'antonym').length > 0
       })
 
-      // Log individual trait justifications for debugging
+      // Enhanced trait justification logging
       if (result.traitJustifications) {
-        console.log('[TRAIT-JUSTIFICATIONS] Extracted trait reasoning:')
+        console.log('[TRAIT-JUSTIFICATIONS] AI provided reasoning for traits:')
         Object.entries(result.traitJustifications).forEach(([category, justifications]) => {
           console.log(`[TRAIT-JUSTIFICATIONS] ${category}:`)
           Object.entries(justifications as Record<string, string>).forEach(([trait, reason]) => {
             console.log(`  - ${trait}: ${reason}`)
           })
         })
+      } else {
+        console.warn('[TRAIT-JUSTIFICATIONS] No trait justifications provided by AI')
       }
 
       if (process.env.DEBUG_AI) {
@@ -1079,9 +1112,9 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
   }
 
   /**
-   * Processes the AI extraction response
+   * Processes the AI extraction response with contamination detection
    */
-  private processExtractionResponse(content: string, conversationState: any): any {
+  private processExtractionResponse(content: string, conversationState: any, testMode: boolean = false, testCategory?: string): any {
     try {
       const parsed = JSON.parse(content)
       
@@ -1091,15 +1124,33 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       // Determine if chip selector should be shown
       const showChipSelector = parsed.showChipSelector || conversationState.stage === 'reflection_checkpoint'
       
-      // CRITICAL FIX: Always generate suggestedTraits from extracted data for client trait cloud
+      // CRITICAL FIX: Generate traits with contamination prevention
       let suggestedTraits = parsed.suggestedTraits || []
+      
+      // CONTAMINATION DETECTION AND FILTERING
+      if (testMode && suggestedTraits.length > 12) {
+        console.warn('[CONTAMINATION-DETECTED] Excessive traits in test mode:', {
+          testCategory,
+          traitCount: suggestedTraits.length,
+          traits: suggestedTraits.map(t => t.label || t),
+          action: 'FILTERING_TO_RELEVANT_ONLY'
+        })
+        
+        // Filter to only most relevant traits for test category
+        suggestedTraits = suggestedTraits
+          .filter(t => t.type === 'extracted')
+          .slice(0, 6) // Strict limit for tests
+      }
+      
       if (suggestedTraits.length === 0) {
-        // Generate traits from extracted data regardless of showChipSelector state
-        suggestedTraits = this.generateFallbackTraits(extractedData, conversationState)
-        console.log('[TRAIT-GENERATION-FIX] Generated suggestedTraits from extracted data:', {
+        // Generate clean traits from extracted data
+        suggestedTraits = this.generateFallbackTraits(extractedData, conversationState, testMode, testCategory)
+        console.log('[TRAIT-GENERATION-FIX] Generated clean suggestedTraits:', {
           count: suggestedTraits.length,
           extractedFields: Object.keys(extractedData),
-          showChipSelector
+          showChipSelector,
+          testMode,
+          contaminationPrevented: true
         })
       }
 
@@ -1155,7 +1206,7 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
   /**
    * Generates fallback traits when AI doesn't provide them
    */
-  private generateFallbackTraits(extractedData: any, conversationState: any): any[] {
+  private generateFallbackTraits(extractedData: any, conversationState: any, testMode: boolean = false, testCategory?: string): any[] {
     const traits: any[] = []
     let idCounter = 1
     
@@ -1195,8 +1246,9 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       })
     }
     
-    // Add adjacent traits
-    const adjacentTraits = this.generateAdjacentTraits(traits.map(t => t.label))
+    // Add adjacent traits with limits for test mode
+    const maxAdjacent = testMode ? 3 : 6
+    const adjacentTraits = this.generateAdjacentTraits(traits.map(t => t.label)).slice(0, maxAdjacent)
     adjacentTraits.forEach(trait => {
       traits.push({
         id: (idCounter++).toString(),
@@ -1206,8 +1258,9 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
       })
     })
     
-    // Add antonym traits
-    const antonymTraits = this.generateAntonymTraits(traits.filter(t => t.type === 'extracted').map(t => t.label))
+    // Add antonym traits with limits for test mode
+    const maxAntonyms = testMode ? 2 : 4
+    const antonymTraits = this.generateAntonymTraits(traits.filter(t => t.type === 'extracted').map(t => t.label)).slice(0, maxAntonyms)
     antonymTraits.forEach(trait => {
       traits.push({
         id: (idCounter++).toString(),
@@ -1215,6 +1268,16 @@ Remember: Extract INDIVIDUAL TERMS only, not phrases. Focus on building natural 
         selected: false,
         type: 'antonym'
       })
+    })
+    
+    console.log('[TRAIT-GENERATION] Generated fallback traits:', {
+      testMode,
+      testCategory,
+      total: traits.length,
+      extracted: traits.filter(t => t.type === 'extracted').length,
+      adjacent: traits.filter(t => t.type === 'adjacent').length,
+      antonym: traits.filter(t => t.type === 'antonym').length,
+      contaminationPrevented: testMode
     })
     
     return traits

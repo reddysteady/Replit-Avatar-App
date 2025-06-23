@@ -782,7 +782,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(messages)
     } catch (error) {
       console.error('Error fetching YouTube messages:', error)
-      res.status(500).json({ error: String(error) })
+      res.status(500).json({ error:```python
+ String(error) })
     }
   })
 
@@ -1269,13 +1270,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         testSessionId,
         isolationMode
       } = req.body
-      
+
       // Detect test isolation headers
       const isIsolatedTest = req.headers['x-test-isolation'] === 'true'
       const testCategoryHeader = req.headers['x-test-category'] as string
       const sessionIdHeader = req.headers['x-test-session-id'] as string
       const cacheBypass = req.headers['x-cache-bypass'] === 'true'
-      
+
       console.log('[PERSONALITY-EXTRACTION] Starting extraction with isolation controls:', {
         messageCount: messages?.length || 0,
         hasCurrentConfig: !!currentConfig,
@@ -1334,15 +1335,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation with isolation controls')
-      const aiResult = await aiService.extractPersonalityFromConversation(
-        messages || [],
-        currentConfig || {},
-        initialMessage || false,
-        confirmedTraits,
-        testMode || isIsolatedTest,
-        testCategory || testCategoryHeader,
-        testSessionId || sessionIdHeader
-      )
+    try {
+    // Pass headers for enhanced test isolation
+    const result = await aiService.extractPersonalityFromConversation(
+      messages, 
+      currentConfig, 
+      initialMessage, 
+      confirmedTraits, 
+      testMode, 
+      testCategory, 
+      testSessionId,
+      req.headers as Record<string, string> // Pass headers for isolation
+    )
+
+    res.json(result)
+  } catch (error: any) {
 
       // CRITICAL: Log extraction results to debug field collection
       console.log('[FIELD-EXTRACTION-DEBUG] AI extraction result analysis:', {
@@ -1636,8 +1643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result)
     } catch (error: any) {
-      console.error('Instagram auth error:', error.message)
-      res.status(500).json({ message: error.message })
+      console.error('Instagram auth error:', error.message })
     }
   })
 
