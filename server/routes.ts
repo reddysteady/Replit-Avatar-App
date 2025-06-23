@@ -1291,7 +1291,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const startTime = Date.now()
 
-      const aiResult = await aiService.extractPersonalityFromConversation(messages, currentConfig, initialMessage, confirmedTraits)
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Messages array is required' })
+      }
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
       const userMessages = messages?.filter(m => m.role === 'user') || []
@@ -1306,10 +1308,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hasPersonalityWords: /humor|help|casual|creative|fun|serious|friendly|professional/i.test(msg.content)
         }))
       })
-
-      if (!messages || !Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Messages array is required' })
-      }
 
       // Handle session state for Phase 1
       let session = null
@@ -1434,6 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(result)
+    } catch (error: any) {
       console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
         message: error.message,
         stack: error.stack?.split('\n').slice(0, 3),
@@ -1637,7 +1636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(result)
     } catch (error: any) {
-      console.error('Instagram auth error:', error.message })
+      console.error('Instagram auth error:', error.message)
     }
   })
 
