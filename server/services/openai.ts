@@ -572,6 +572,11 @@ export class AIService {
         extractionHints: {
           mentionedStyles: userMessages.join(' ').match(/\b(friendly|professional|casual|formal|humorous|serious|direct|detailed|concise|creative|analytical|supportive|energetic|calm)\b/gi) || [],
           mentionedCommunication: userMessages.join(' ').match(/\b(brief|detailed|conversational|formal|informal|quick|thorough)\b/gi) || []
+        },
+        conversationState: {
+          stage: conversationState.stage,
+          fieldsCollected: conversationState.fieldsCollected,
+          shouldShowChipCloud: conversationState.shouldShowChipCloud
         }
       })
 
@@ -613,10 +618,16 @@ export class AIService {
         suggestedTraits: result.suggestedTraits,
         conversationContext: conversationState.conversationContext,
         // Enhanced field-specific logging
-        toneDescription: result.extractedData.toneDescription,
+        toneTraits: result.extractedData.toneTraits,
         styleTags: result.extractedData.styleTags,
-        communicationStyle: result.extractedData.communicationStyle,
-        extractedDataFull: result.extractedData
+        communicationPrefs: result.extractedData.communicationPrefs,
+        toneDescription: result.extractedData.toneDescription,
+        extractedDataFull: result.extractedData,
+        // Trait generation pipeline status
+        traitGenerationSuccess: result.suggestedTraits?.length > 0,
+        hasExtractedTraits: result.suggestedTraits?.filter(t => t.type === 'extracted').length > 0,
+        hasAdjacentTraits: result.suggestedTraits?.filter(t => t.type === 'adjacent').length > 0,
+        hasAntonymTraits: result.suggestedTraits?.filter(t => t.type === 'antonym').length > 0
       })
 
       if (process.env.DEBUG_AI) {
@@ -678,6 +689,8 @@ export class AIService {
     isComplete: boolean = false,
     shouldShowManualSetup: boolean = false
   ): any {
+    const fallbackUsed = true; // This is always true when creating a fallback response
+    
     return {
       response: responseText,
       extractedData: {},
@@ -948,6 +961,11 @@ For trait cloud display, extract these parameters as arrays of individual adject
 - **toneTraits**: 3-5 individual tone adjectives (e.g., ["Friendly", "Professional", "Enthusiastic"])
 - **styleTags**: 3-5 individual style terms (e.g., ["Conversational", "Detailed", "Direct"])  
 - **communicationPrefs**: 3-5 individual communication preferences (e.g., ["Concise", "Example-driven", "Interactive"])
+
+## IMPORTANT: Conversation Context Analysis
+Current conversation contains: ${conversationState.conversationContext?.topics?.join(', ') || 'general discussion'}
+User communication style detected: ${conversationTone}
+Extractable personality indicators: ${lastUserMessage.match(/\b(friendly|professional|casual|formal|humorous|serious|direct|detailed|concise|creative|analytical|supportive|energetic|calm|help|helpful|fun|funny|jokes|humor)\b/gi)?.join(', ') || 'analyze from context'}
 
 ## Response Format
 
