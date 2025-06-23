@@ -1291,7 +1291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const startTime = Date.now()
 
-      const result = await aiService.extractPersonalityFromConversation(messages, currentConfig, initialMessage, confirmedTraits)
+      const aiResult = await aiService.extractPersonalityFromConversation(messages, currentConfig, initialMessage, confirmedTraits)
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
       const userMessages = messages?.filter(m => m.role === 'user') || []
@@ -1334,46 +1334,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation with isolation controls')
-    try {
-    // Pass headers for enhanced test isolation
-    const result = await aiService.extractPersonalityFromConversation(
-      messages, 
-      currentConfig, 
-      initialMessage, 
-      confirmedTraits, 
-      testMode, 
-      testCategory, 
-      testSessionId,
-      req.headers as Record<string, string> // Pass headers for isolation
-    )
-
-    res.json(result)
-  } catch (error: any) {
+      
+      const result = await aiService.extractPersonalityFromConversation(
+        messages, 
+        currentConfig, 
+        initialMessage, 
+        confirmedTraits, 
+        testMode, 
+        testCategory, 
+        testSessionId,
+        req.headers as Record<string, string> // Pass headers for isolation
+      )
 
       // CRITICAL: Log extraction results to debug field collection
       console.log('[FIELD-EXTRACTION-DEBUG] AI extraction result analysis:', {
-        hasExtractedData: !!aiResult.extractedData,
-        extractedFields: aiResult.extractedData ? Object.keys(aiResult.extractedData) : [],
-        fieldValues: aiResult.extractedData,
+        hasExtractedData: !!result.extractedData,
+        extractedFields: result.extractedData ? Object.keys(result.extractedData) : [],
+        fieldValues: result.extractedData,
         messageCount: messages?.length || 0,
         lastUserMessage: messages?.filter(m => m.role === 'user')?.pop()?.content?.substring(0, 100)
       })
 
       // ENHANCED DEBUG: Detailed result analysis
       console.log('[PERSONALITY-ENDPOINT] aiService returned result:', {
-        personaMode: aiResult.personaMode,
-        isComplete: aiResult.isComplete,
-        showChipSelector: aiResult.showChipSelector,
-        hasResponse: !!aiResult.response,
-        responseLength: aiResult.response?.length || 0,
-        hasExtractedData: !!aiResult.extractedData && Object.keys(aiResult.extractedData).length > 0,
-        extractedDataKeys: aiResult.extractedData ? Object.keys(aiResult.extractedData) : [],
-        extractedDataValues: aiResult.extractedData,
-        hasSuggestedTraits: !!aiResult.suggestedTraits && aiResult.suggestedTraits.length > 0,
-        suggestedTraitsCount: aiResult.suggestedTraits?.length || 0,
-        suggestedTraitsDetail: aiResult.suggestedTraits,
-        fallbackUsed: aiResult.fallbackUsed,
-        confidenceScore: aiResult.confidenceScore
+        personaMode: result.personaMode,
+        isComplete: result.isComplete,
+        showChipSelector: result.showChipSelector,
+        hasResponse: !!result.response,
+        responseLength: result.response?.length || 0,
+        hasExtractedData: !!result.extractedData && Object.keys(result.extractedData).length > 0,
+        extractedDataKeys: result.extractedData ? Object.keys(result.extractedData) : [],
+        extractedDataValues: result.extractedData,
+        hasSuggestedTraits: !!result.suggestedTraits && result.suggestedTraits.length > 0,
+        suggestedTraitsCount: result.suggestedTraits?.length || 0,
+        suggestedTraitsDetail: result.suggestedTraits,
+        fallbackUsed: result.fallbackUsed,
+        confidenceScore: result.confidenceScore
       })
 
       // CRITICAL: Check if traits are being generated
@@ -1438,7 +1434,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(result)
-    } catch (error: any) {
       console.error('[PERSONALITY-ENDPOINT] Error in personality extraction:', {
         message: error.message,
         stack: error.stack?.split('\n').slice(0, 3),
