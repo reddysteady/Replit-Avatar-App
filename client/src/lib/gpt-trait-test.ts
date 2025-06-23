@@ -76,6 +76,8 @@ export class GPTTraitTester {
     // CRITICAL: Generate unique test session ID for complete isolation - moved outside try block
     const testSessionId = `test_${testPayload.category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
+    let result: TraitTestResult
+    let cleanupErr: any
     try {
       
       // CRITICAL: Clear any cached data and ensure isolated test
@@ -157,7 +159,7 @@ export class GPTTraitTester {
         isolationVerified: true
       })
 
-      return {
+      result = {
         success,
         extractedTraits,
         expectedTraits: testPayload.expectedTraits,
@@ -176,7 +178,7 @@ export class GPTTraitTester {
         isolationMaintained: true
       })
 
-      return {
+      result = {
         success: false,
         extractedTraits: [],
         expectedTraits: testPayload.expectedTraits,
@@ -190,18 +192,26 @@ export class GPTTraitTester {
     } finally {
       // CRITICAL: Ensure test session cleanup
       console.log(`[GPT-TEST-CLEANUP] Cleaning up test session: ${testSessionId}`)
-      
+
       // Optional: Call cleanup endpoint if needed
       try {
-        await fetch('/api/cache/clear', {
+        const res = await fetch('/api/cache/clear', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ testSessionId })
         })
+        const result = await res.json()
+        console.log('[GPT-TEST-CLEANUP] Cache clear response:', result)
+        if (!result.success) {
+          cleanupErr = new Error('Cache clearing failed during test mode')
+        }
       } catch (cleanupError) {
-        console.warn('[GPT-TEST-CLEANUP] Cache cleanup failed (non-critical):', cleanupError)
+        console.warn('[GPT-TEST-CLEANUP] Cache cleanup failed:', cleanupError)
+        cleanupErr = cleanupError
       }
     }
+    if (cleanupErr) throw cleanupErr
+    return result
   }
 
   private validateAIResponse(response: any): boolean {
