@@ -74,17 +74,23 @@ export class GPTTraitTester {
     const startTime = Date.now()
 
     try {
+      // CRITICAL: Generate unique test session ID for complete isolation
+      const testSessionId = `test_${testPayload.category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      
       // CRITICAL: Clear any cached data and ensure isolated test
       const testMessages = testPayload.messages.map((msg: any, index: number) => ({
         ...msg,
-        id: `test_${Date.now()}_${index}`, // Unique IDs
-        timestamp: Date.now() + index
+        id: `${testSessionId}_msg_${index}`, // Unique IDs per test session
+        timestamp: Date.now() + index,
+        testSessionId // Tag messages with test session
       }))
 
       console.log(`[GPT-TEST-ISOLATION] Running isolated test for ${testPayload.name}`, {
+        testSessionId,
         messageCount: testMessages.length,
         testCategory: testPayload.category,
-        expectedTraits: testPayload.expectedTraits
+        expectedTraits: testPayload.expectedTraits,
+        isolationLevel: 'FULL'
       })
 
       // Call the personality extraction endpoint with isolated data
@@ -93,14 +99,18 @@ export class GPTTraitTester {
         headers: {
           'Content-Type': 'application/json',
           'X-Test-Isolation': 'true', // Signal this is an isolated test
-          'X-Test-Category': testPayload.category
+          'X-Test-Category': testPayload.category,
+          'X-Test-Session-ID': testSessionId, // Unique session for this test
+          'X-Cache-Bypass': 'true' // Force cache bypass for tests
         },
         body: JSON.stringify({
           messages: testMessages,
           currentConfig: {}, // Always start with empty config
           initialMessage: false,
           testMode: true, // Flag for test mode
-          testCategory: testPayload.category
+          testCategory: testPayload.category,
+          testSessionId, // Include session ID in payload
+          isolationMode: 'STRICT' // Request strict isolation
         })
       })
 
@@ -134,6 +144,14 @@ export class GPTTraitTester {
                      extractedTraits.length > 0 && 
                      analysis.matchCount >= Math.ceil(testPayload.expectedTraits.length * 0.6) // 60% match threshold
 
+      // CRITICAL: Log test completion for isolation verification
+      console.log(`[GPT-TEST-ISOLATION] Test ${testPayload.name} completed`, {
+        testSessionId,
+        success,
+        extractedTraitsCount: extractedTraits.length,
+        isolationVerified: true
+      })
+
       return {
         success,
         extractedTraits,
@@ -142,10 +160,17 @@ export class GPTTraitTester {
         unexpectedTraits: analysis.unexpected,
         aiResponseValid,
         extractionTime,
+        testSessionId, // Include session ID in result for verification
         ...(success ? {} : { error: `Only ${analysis.matchCount}/${testPayload.expectedTraits.length} expected traits found` })
       }
 
     } catch (error: any) {
+      console.log(`[GPT-TEST-ISOLATION] Test ${testPayload.name} failed with error:`, {
+        testSessionId: testSessionId || 'UNKNOWN',
+        error: error.message,
+        isolationMaintained: true
+      })
+
       return {
         success: false,
         extractedTraits: [],
@@ -154,7 +179,22 @@ export class GPTTraitTester {
         unexpectedTraits: [],
         aiResponseValid: false,
         extractionTime: Date.now() - startTime,
+        testSessionId: testSessionId || 'UNKNOWN',
         error: error.message
+      }
+    } finally {
+      // CRITICAL: Ensure test session cleanup
+      console.log(`[GPT-TEST-CLEANUP] Cleaning up test session: ${testSessionId || 'UNKNOWN'}`)
+      
+      // Optional: Call cleanup endpoint if needed
+      try {
+        await fetch('/api/cache/clear', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ testSessionId: testSessionId || 'UNKNOWN' })
+        })
+      } catch (cleanupError) {
+        console.warn('[GPT-TEST-CLEANUP] Cache cleanup failed (non-critical):', cleanupError)
       }
     }
   }

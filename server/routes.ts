@@ -1259,12 +1259,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req: Request, res: Response) => {
     try {
-      const { messages, currentConfig = {}, initialMessage = false, confirmedTraits } = req.body
-      console.log('[PERSONALITY-EXTRACTION] Starting extraction:', {
+      const { 
+        messages, 
+        currentConfig = {}, 
+        initialMessage = false, 
+        confirmedTraits,
+        testMode = false,
+        testCategory,
+        testSessionId,
+        isolationMode
+      } = req.body
+      
+      // Detect test isolation headers
+      const isIsolatedTest = req.headers['x-test-isolation'] === 'true'
+      const testCategoryHeader = req.headers['x-test-category'] as string
+      const sessionIdHeader = req.headers['x-test-session-id'] as string
+      const cacheBypass = req.headers['x-cache-bypass'] === 'true'
+      
+      console.log('[PERSONALITY-EXTRACTION] Starting extraction with isolation controls:', {
         messageCount: messages?.length || 0,
         hasCurrentConfig: !!currentConfig,
         initialMessage,
-        isTestPayload: messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('professional tone'))
+        isTestPayload: messages?.some((m: any) => m.content?.includes('cracking jokes') || m.content?.includes('professional tone')),
+        testMode: testMode || isIsolatedTest,
+        testCategory: testCategory || testCategoryHeader,
+        testSessionId: testSessionId || sessionIdHeader,
+        isolationMode,
+        cacheBypass,
+        isolationLevel: isIsolatedTest ? 'STRICT' : 'NORMAL'
       })
 
       const startTime = Date.now()
@@ -1311,12 +1333,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation')
+      console.log('[PERSONALITY-ENDPOINT] Calling aiService.extractPersonalityFromConversation with isolation controls')
       const aiResult = await aiService.extractPersonalityFromConversation(
         messages || [],
         currentConfig || {},
         initialMessage || false,
-        confirmedTraits
+        confirmedTraits,
+        testMode || isIsolatedTest,
+        testCategory || testCategoryHeader,
+        testSessionId || sessionIdHeader
       )
 
       // CRITICAL: Log extraction results to debug field collection

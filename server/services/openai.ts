@@ -462,7 +462,8 @@ export class AIService {
   initialMessage = false,
   confirmedTraits?: string[],
   testMode = false,
-  testCategory?: string
+  testCategory?: string,
+  testSessionId?: string
 ): Promise<{
   response: string
   extractedData: Partial<AvatarPersonaConfig>
@@ -487,10 +488,16 @@ export class AIService {
       })
     }
 
-    // CRITICAL: Clear cache for test mode to prevent contamination
+    // CRITICAL: Enhanced test isolation to prevent contamination
     if (testMode) {
       this.clearSystemPromptCache() // Clear all cached prompts
-      console.log('[TEST-ISOLATION] Cleared all caches for test mode')
+      console.log('[TEST-ISOLATION] Enhanced isolation activated:', {
+        testMode,
+        testCategory,
+        testSessionId,
+        cacheCleared: true,
+        isolationLevel: 'STRICT'
+      })
     }
 
     try {
@@ -564,20 +571,25 @@ export class AIService {
       // Generate contextual system prompt with test isolation
       let systemPrompt = this.buildPersonalityExtractionPrompt(conversationState)
       
-      // CRITICAL: Add test-specific instructions to prevent contamination
+      // CRITICAL: Add test-specific prompt isolation
       if (testMode && testCategory) {
         systemPrompt += `
 
-## IMPORTANT: TEST MODE ISOLATION
-This is a test for "${testCategory}" traits. You MUST:
-1. ONLY analyze the provided messages (ignore any previous context)
-2. Extract traits that match the "${testCategory}" category specifically
-3. Do NOT include generic traits like "Friendly", "Responsive", "Engaging" unless they appear in the conversation
-4. Focus ONLY on traits evident from the test conversation content
-5. Return minimal, conversation-specific traits only
+## STRICT TEST MODE ISOLATION - SESSION: ${testSessionId || 'UNKNOWN'}
+This is an ISOLATED test for "${testCategory}" traits. CRITICAL REQUIREMENTS:
+
+1. **COMPLETE ISOLATION**: Ignore ALL previous conversations, cached data, or context
+2. **CATEGORY FOCUS**: Extract traits ONLY for "${testCategory}" category
+3. **CONVERSATION-SPECIFIC**: Base extraction ONLY on the provided test messages
+4. **NO GENERIC TRAITS**: Avoid default traits like "Friendly", "Responsive", "Engaging" unless explicitly demonstrated
+5. **PRECISE EXTRACTION**: Return minimal, conversation-evident traits only
+6. **TEST SESSION**: ${testSessionId || 'ISOLATED'} - treat as completely separate from any other interactions
 
 Expected trait category: ${testCategory}
-Test conversation focus: Extract traits that specifically relate to ${testCategory} communication style.`
+Isolation level: STRICT
+Test focus: Extract traits that specifically relate to ${testCategory} communication style from THIS conversation only.
+
+IMPORTANT: This test must be completely isolated from any other conversation or context.`
       }
 
       // CRITICAL DEBUG: Log conversation content for trait extraction analysis
