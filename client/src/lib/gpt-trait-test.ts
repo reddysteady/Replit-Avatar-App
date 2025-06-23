@@ -74,16 +74,33 @@ export class GPTTraitTester {
     const startTime = Date.now()
 
     try {
-      // Call the personality extraction endpoint directly
+      // CRITICAL: Clear any cached data and ensure isolated test
+      const testMessages = testPayload.messages.map((msg: any, index: number) => ({
+        ...msg,
+        id: `test_${Date.now()}_${index}`, // Unique IDs
+        timestamp: Date.now() + index
+      }))
+
+      console.log(`[GPT-TEST-ISOLATION] Running isolated test for ${testPayload.name}`, {
+        messageCount: testMessages.length,
+        testCategory: testPayload.category,
+        expectedTraits: testPayload.expectedTraits
+      })
+
+      // Call the personality extraction endpoint with isolated data
       const response = await fetch('/api/ai/personality-extract', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-Test-Isolation': 'true', // Signal this is an isolated test
+          'X-Test-Category': testPayload.category
         },
         body: JSON.stringify({
-          messages: testPayload.messages,
-          currentConfig: {},
-          initialMessage: false
+          messages: testMessages,
+          currentConfig: {}, // Always start with empty config
+          initialMessage: false,
+          testMode: true, // Flag for test mode
+          testCategory: testPayload.category
         })
       })
 
@@ -176,40 +193,52 @@ export class GPTTraitTester {
   }
 
   private extractTraitsFromResponse(response: any): string[] {
+    console.log('[GPT-TEST-EXTRACTION] Raw response structure:', {
+      hasSuggestedTraits: !!(response.suggestedTraits?.length),
+      hasExtractedData: !!response.extractedData,
+      extractedDataKeys: response.extractedData ? Object.keys(response.extractedData) : [],
+      suggestedTraitsCount: response.suggestedTraits?.length || 0
+    })
+
     const traits: string[] = []
 
-    // Extract from suggestedTraits
+    // PRIORITY 1: Use only EXTRACTED type traits from suggestedTraits for tests
     if (response.suggestedTraits && Array.isArray(response.suggestedTraits)) {
-      traits.push(...response.suggestedTraits.map((trait: any) => 
-        typeof trait === 'string' ? trait : trait.label
-      ).filter(Boolean))
+      const extractedTraits = response.suggestedTraits
+        .filter((trait: any) => trait.type === 'extracted' || trait.selected === true)
+        .map((trait: any) => typeof trait === 'string' ? trait : trait.label)
+        .filter(Boolean)
+      
+      if (extractedTraits.length > 0) {
+        traits.push(...extractedTraits)
+        console.log('[GPT-TEST-EXTRACTION] Found extracted traits from suggestedTraits:', extractedTraits)
+      }
     }
 
-    // Extract from extractedData.toneTraits (NEW)
-    if (response.extractedData?.toneTraits && Array.isArray(response.extractedData.toneTraits)) {
-      traits.push(...response.extractedData.toneTraits)
+    // PRIORITY 2: Extract from new trait arrays (only if no suggestedTraits)
+    if (traits.length === 0) {
+      ['toneTraits', 'styleTags', 'communicationPrefs'].forEach(field => {
+        if (response.extractedData?.[field] && Array.isArray(response.extractedData[field])) {
+          traits.push(...response.extractedData[field])
+          console.log(`[GPT-TEST-EXTRACTION] Added traits from ${field}:`, response.extractedData[field])
+        }
+      })
     }
 
-    // Extract from extractedData.styleTags
-    if (response.extractedData?.styleTags && Array.isArray(response.extractedData.styleTags)) {
-      traits.push(...response.extractedData.styleTags)
-    }
-
-    // Extract from extractedData.communicationPrefs (NEW)
-    if (response.extractedData?.communicationPrefs && Array.isArray(response.extractedData.communicationPrefs)) {
-      traits.push(...response.extractedData.communicationPrefs)
-    }
-
-    // Extract from toneDescription (fallback for legacy responses)
-    if (response.extractedData?.toneDescription && traits.length === 0) {
+    // FALLBACK: Parse from description (only if still no traits)
+    if (traits.length === 0 && response.extractedData?.toneDescription) {
       const toneWords = response.extractedData.toneDescription
         .split(/[,\s]+/)
         .filter((word: string) => word.length > 3 && /^[a-zA-Z]+$/.test(word))
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .slice(0, 5) // Limit to prevent noise
       traits.push(...toneWords)
+      console.log('[GPT-TEST-EXTRACTION] Fallback traits from toneDescription:', toneWords)
     }
 
-    return [...new Set(traits)] // Remove duplicates
+    const finalTraits = [...new Set(traits)] // Remove duplicates
+    console.log('[GPT-TEST-EXTRACTION] Final extracted traits:', finalTraits)
+    return finalTraits
   }
 
   private analyzeTraits(extracted: string[], expected: string[]): {

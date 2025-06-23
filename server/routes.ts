@@ -2216,30 +2216,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/ai/personality-extract - Extract personality from conversation with state management
   app.post('/api/ai/personality-extract', async (req, res) => {
     try {
-      const { message, messageCount = 1 } = req.body
-      const userId = 1 // Default user for now
-      const sessionId = req.headers['x-session-id'] as string || 'session-' + Date.now()
+      const { messages, currentConfig, initialMessage, confirmedTraits, testMode, testCategory } = req.body
+      console.log('[PERSONALITY-BACKEND] Extracting for message: "' + message.substring(0, 50) + '..." (count: ' + messageCount + ')')
 
-      if (!message || typeof message !== 'string') {
-        return res.status(400).json({ error: 'Message is required' })
-      }
-
-      const startTime = Date.now()
-
-      log('[PERSONALITY-BACKEND] Extracting for message: "' + message.substring(0, 50) + '..." (count: ' + messageCount + ')')
-
-      const result = await extractPersonalityAndRespond(message, messageCount)
-
-      const responseTime = Date.now() - startTime
-      log('[PERSONALITY-BACKEND] Extraction completed in ' + responseTime + 'ms')
-
-      // Log the conversation to chat logger
-      await chatLogger.logPersonalityExtraction(
-        userId,
-        message,
-        result,
-        sessionId,
-        responseTime
+      const result = await aiService.extractPersonalityFromConversation(
+        messages,
+        currentConfig,
+        initialMessage,
+        confirmedTraits,
+        testMode,
+        testCategory
       )
 
       res.json(result)
