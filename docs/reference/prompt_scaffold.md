@@ -1,5 +1,5 @@
-Avatar App – Codex Agent Prompt Scaffold
-Use this template for all engineering/feature/change requests to Codex or any AI dev agent. Follow the headings and provide clear, actionable instructions.
+Agent Prompt Scaffold
+Use this template for all engineering/feature/change requests to any AI dev agent. Follow the headings and provide clear, actionable instructions.
 ________________________________________
 1. Context & Background
 •	Explain the relevant business/product context.
